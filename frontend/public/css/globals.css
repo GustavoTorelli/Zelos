@@ -1,6 +1,1 @@
 @import "tailwindcss";
-
-.imagem {
-    background-image: url(../img/teste.jpg);
-    background-size: cover;
-}
