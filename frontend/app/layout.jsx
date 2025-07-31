@@ -13,7 +13,7 @@ export default function RootLayout({ children }) {
   return (
     
     <html lang="pt-br">
-      <body cz-shortcut-listen="true">
+      <body cz-shortcut-listen="true" className="bg-black">
         <Header />
         {children}
         <Footer></Footer>
