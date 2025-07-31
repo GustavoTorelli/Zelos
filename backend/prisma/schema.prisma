@@ -95,15 +95,29 @@ model Ticket {
   updated_at  DateTime @default(now()) @updatedAt
 
   category_id   Int
-  technician_id Int
+  technician_id Int?
   user_id       Int
+  patrimony_id  Int?
 
-  Category   Category @relation(fields: [category_id], references: [id])
-  Technician User     @relation(name: "TechnicianTicket", fields: [technician_id], references: [id])
-  User       User     @relation(name: "UserTicket", fields: [user_id], references: [id])
+  Category   Category   @relation(fields: [category_id], references: [id])
+  Technician User?      @relation(name: "TechnicianTicket", fields: [technician_id], references: [id])
+  User       User       @relation(name: "UserTicket", fields: [user_id], references: [id])
   Report     Report[]
+  Patrimony  Patrimony? @relation(fields: [patrimony_id], references: [id])
 
   @@map("ticket")
+}
+
+model Patrimony {
+  id          Int      @id @unique @default(autoincrement())
+  code        String   @unique
+  description String   @db.Text
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now()) @updatedAt
+
+  Tickets Ticket[]
+
+  @@map("patrimony")
 }
 
 model Report {
