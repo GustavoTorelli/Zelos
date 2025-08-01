@@ -1,6 +1,6 @@
 'use client'
 import { usePathname } from "next/navigation";
-import { Wrench, Camera } from 'lucide-react';
+// import { Wrench, Camera } from 'lucide-react';
 
 export default function Header() {
     const pathname = usePathname()
@@ -18,8 +18,6 @@ export default function Header() {
                     </a>
                 </div>
             </nav>
-            <Wrench color="white" size={48} />
-            <Camera color="white" size={48}/>
         </header>
     )
 
