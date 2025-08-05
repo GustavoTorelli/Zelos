@@ -3,9 +3,9 @@ export default async function Home() {
   await new Promise((resolve) => setTimeout(resolve, 1700));
 
   return (
-    <section className="w-screen h-screen flex flex-col items-center md:justify-center md:bg-[url('/img/senai.png')] md:bg-cover bg-black ">
-      <div className="flex flex-col items-center justify-center h-screen dark md:w-200 w-80">
-        <img src="/img/logo_branco.svg" alt="logoMobile" className="md:hidden h-12 mb-20" />
+    <section className="w-screen h-screen flex flex-col items-center md:justify-center md:bg-[url('/img/global/senai.png')] md:bg-cover bg-black ">
+      <div className="flex flex-col md:items-center md:justify-center h-screen dark md:w-200 w-80 items-center justify-evenly">
+        <img src="/img/global/logo_branco.svg" alt="logoMobile" className="md:hidden h-14 " />
         {/* Login form */}
         <div className="w-full max-w-md bg-zinc-900/70 rounded-xl shadow-lg p-8 py-10">
           <h2 className="text-2xl font-bold text-gray-200 mb-4">Bem vindo</h2>

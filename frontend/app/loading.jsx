@@ -1,7 +1,7 @@
-export default function loading() {
+export default function () {
     return (
 
-        <div role="status" className="bg-black h-screen w-screen flex justify-center items-center">
+        <div role="status" className="bg-zinc-800 h-screen w-screen flex justify-center items-center">
             <div className="flex flex-row gap-2">
                 <div className="w-4 h-4 rounded-full bg-red-700 animate-bounce"></div>
                 <div

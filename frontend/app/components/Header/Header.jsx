@@ -11,15 +11,13 @@ export default function Header() {
 
     return (
         <header className="flex flex-col">
-            <nav className="border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+            <nav className=" bg-zinc-900">
                 <div className=" flex flex-wrap items-center mx-auto p-4">
                     <a href="#" className="flex items-center  ">
-                        <img src="/img/logo_branco.svg" className="h-10" alt="Logo" />
+                        <img src="/img/global/logo_branco.svg" className="h-10" alt="Logo" />
                     </a>
                 </div>
             </nav>
         </header>
     )
-
-
 }
