@@ -11,11 +11,9 @@ export default function Header() {
 
     return (
         <header className="flex flex-col">
-            <nav className=" bg-zinc-900">
-                <div className=" flex flex-wrap items-center mx-auto p-4">
-                    <a href="#" className="flex items-center  ">
-                        <img src="/img/global/logo_branco.svg" className="h-10" alt="Logo" />
-                    </a>
+            <nav >
+                <div className=" flex flex-wrap items-center pt-5 pl-7">
+                        <img src="/img/global/logo_branco.svg" className="h-11" alt="Logo" />
                 </div>
             </nav>
         </header>
