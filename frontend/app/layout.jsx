@@ -1,8 +1,5 @@
 import "@/public/css/globals.css";
 import Header from "./components/Header/Header";
-import Footer from "./components/Footer/Footer";
-
-
 
 export const metadata = {
   favicon: '/favicon.ico',
@@ -13,10 +10,9 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-
     <html lang="pt-br" >
       <body cz-shortcut-listen="true" className="bg-zinc-800 font-inter">
-        <Header />
+        <Header/>
         {children}
       </body>
     </html>
