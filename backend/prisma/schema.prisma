@@ -29,6 +29,7 @@ enum Category_title {
 enum Status {
   pending
   in_progress
+  awaiting_approval
   completed
 }
 
@@ -88,6 +89,7 @@ model Ticket {
   status      Status   @default(pending)
   created_at  DateTime @default(now())
   updated_at  DateTime @default(now()) @updatedAt
+  closed_at   DateTime?
 
   category_id   Int
   technician_id Int?
@@ -118,7 +120,7 @@ model Patrimony {
 model Report {
   id               Int       @id @unique @default(autoincrement())
   description      String    @db.Text
-  started_at       DateTime  @default(now())
+  started_at       DateTime
   ended_at         DateTime?
   duration_seconds Int?
   created_at       DateTime  @default(now())
