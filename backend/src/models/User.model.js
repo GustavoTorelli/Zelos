@@ -1,11 +1,19 @@
 import prisma from '../config/prisma-client.js';
 import hashPassword from '../utils/hash-password.js';
 
+/**
+ * @class
+ * @classdesc Represents a user with static methods for CRUD operations and
+ * instance methods for manipulating a specific user.
+ */
 export class User {
-	constructor({ id, name, email }) {
+	/**
+	 * Creates an instance of User.
+	 * @param {Object} data - Data for the user instance.
+	 * @param {number} data.id - The user's ID.
+	 */
+	constructor({ id }) {
 		this.id = id;
-		this.name = name;
-		this.email = email;
 	}
 
 	/**
@@ -15,7 +23,7 @@ export class User {
 	 * @param {string} data.email - The email of the user
 	 * @param {string} data.password - The password of the user
 	 * @param {string} data.role - The role of the user
-	 * @returns {Promise<User>} A promise that resolves to the newly created user
+	 * @returns {Promise<Object>} A promise that resolves to the newly created user
 	 * @throws {Error} If there is an error creating the user
 	 */
 	static async create({ name, email, password, role }) {
@@ -28,79 +36,164 @@ export class User {
 					hashed_password: hashedPassword,
 					role,
 				},
+				select: {
+					id: true,
+					name: true,
+					email: true,
+					role: true,
+					is_active: true,
+					created_at: true,
+					updated_at: true,
+				},
 			});
 		} catch (error) {
+			if (error.code === 'P2002') {
+				throw new Error('EMAIL_ALREADY_EXISTS');
+			}
+
 			throw new Error(`Error creating user: ${error}`);
 		}
 	}
 
 	/**
 	 * Finds all users
-	 * @returns {Promise<Array<User>>} A promise that resolves to an array of users
+	 * @returns {Promise<Array<Object>>} A promise that resolves to an array of users
 	 * @throws {Error} If there is an error finding the users
 	 */
 	static async findAll() {
 		try {
-			return await prisma.user.findMany();
+			return await prisma.user.findMany({
+				select: {
+					id: true,
+					name: true,
+					email: true,
+					role: true,
+					is_active: true,
+					created_at: true,
+					updated_at: true,
+				},
+			});
 		} catch (error) {
 			throw new Error(`Error finding users: ${error}`);
 		}
 	}
 
 	/**
-	 * Finds a user by its ID
-	 * @param {number} id - The ID of the user
-	 * @returns {Promise<User | null>} A promise that resolves to the user if found, otherwise null
-	 * @throws {Error} If there is an error finding the user
+	 * Finds a user by ID
+	 * @param {number} id - The ID of the user to find
+	 * @returns {Promise<Object>} A promise that resolves to the user object if found
+	 * @throws {Error} If the user is not found or there is an error finding the user
 	 */
 	static async find(id) {
 		try {
-			return await prisma.user.findUnique({
+			const user = await prisma.user.findUnique({
 				where: {
 					id,
 				},
+				select: {
+					id: true,
+					name: true,
+					email: true,
+					role: true,
+					is_active: true,
+					created_at: true,
+					updated_at: true,
+				},
 			});
+
+			if (!user) throw new Error('NOT_FOUND');
+
+			return user;
 		} catch (error) {
+			if (error.message === 'NOT_FOUND') {
+				throw error;
+			}
+
 			throw new Error(`Error finding user: ${error}`);
 		}
 	}
 
 	/**
-	 * Updates a user
-	 * @param {Object} data - The data of the user to be updated
-	 * @param {number} data.id - The ID of the user
-	 * @param {string} data.name - The name of the user
-	 * @param {string} data.email - The email of the user
-	 * @param {string} data.password - The password of the user
-	 * @param {string} data.role - The role of the user
-	 * @returns {Promise<User>} A promise that resolves to the updated user
-	 * @throws {Error} If there is an error updating the user
+	 * Updates a user by ID
+	 * @param {number} id - The ID of the user to update
+	 * @param {{ name?: string, email?: string, password?: string, role?: string }} dataToUpdate - The data to update the user with
+	 * @returns {Promise<Object>} A promise that resolves to the updated user object
+	 * @throws {Error} If the user is not found or there is an error updating the user
 	 */
-	async update({ name, email, password, role }) {
+	static async update(id, { name, email, password, role }) {
 		try {
-			const hashedPassword = await hashPassword(password);
+			const dataToUpdate = {
+				...(name && { name }),
+				...(email && { email }),
+				...(password && {
+					hashed_password: await hashPassword(password),
+				}),
+				...(role && { role }),
+			};
+
 			return await prisma.user.update({
 				where: {
-					id: this.id,
+					id: id,
 				},
-				data: {
-					name,
-					email,
-					hashed_password: hashedPassword,
-					role,
+				data: dataToUpdate,
+				select: {
+					id: true,
+					name: true,
+					email: true,
+					role: true,
+					is_active: true,
+					created_at: true,
+					updated_at: true,
 				},
 			});
 		} catch (error) {
+			if (error.code === 'P2025') {
+				throw new Error('NOT_FOUND');
+			}
+
+			if (error.code === 'P2002') {
+				throw new Error('EMAIL_ALREADY_EXISTS');
+			}
+
 			throw new Error(`Error updating user: ${error}`);
 		}
 	}
 
 	/**
+	 * Deletes a user by ID
+	 * @param {number} id - The ID of the user to delete
+	 * @returns {Promise<Object>} A promise that resolves to the deleted user object
+	 * @throws {Error} If there is an error deleting the user
+	 */
+	static async delete(id) {
+		try {
+			return await prisma.user.delete({
+				where: {
+					id,
+				},
+				select: {
+					id: true,
+					name: true,
+					email: true,
+					role: true,
+					is_active: true,
+					created_at: true,
+					updated_at: true,
+				},
+			});
+		} catch (error) {
+			if (error.code === 'P2025') {
+				throw new Error('NOT_FOUND');
+			}
+
+			throw new Error(`Error deleting user: ${error}`);
+		}
+	}
+
+	/**
 	 * Sets the user as active
-	 * @param {Object} data - The data of the user to be activated
-	 * @param {number} data.id - The ID of the user
-	 * @returns {Promise<User>} A promise that resolves to the updated user
-	 * @throws {Error} If there is an error activating the user
+	 * @returns {Promise<User>} A promise that resolves to the updated user object.
+	 * @throws {Error} If the user is not found or there is an error activating the user.
 	 */
 	async active() {
 		try {
@@ -111,20 +204,29 @@ export class User {
 				data: {
 					is_active: true,
 				},
+				select: {
+					id: true,
+					name: true,
+					email: true,
+					role: true,
+					is_active: true,
+					created_at: true,
+					updated_at: true,
+				},
 			});
 		} catch (error) {
+			if (error.code === 'P2025') throw new Error('NOT_FOUND');
+
 			throw new Error(`Error activating user: ${error}`);
 		}
 	}
 
 	/**
 	 * Sets the user as inactive
-	 * @param {Object} data - The data of the user to be deactivated
-	 * @param {number} data.id - The ID of the user
-	 * @returns {Promise<User>} A promise that resolves to the updated user
-	 * @throws {Error} If there is an error deactivating the user
+	 * @returns {Promise<User>} A promise that resolves to the updated user object.
+	 * @throws {Error} If the user is not found or there is an error deactivating the user.
 	 */
-	async disable() {
+	async deactivate() {
 		try {
 			return await prisma.user.update({
 				where: {
@@ -139,9 +241,13 @@ export class User {
 					email: true,
 					role: true,
 					is_active: true,
+					created_at: true,
+					updated_at: true,
 				},
 			});
 		} catch (error) {
+			if (error.code === 'P2025') throw new Error('NOT_FOUND');
+
 			throw new Error(`Error deactivating user: ${error}`);
 		}
 	}

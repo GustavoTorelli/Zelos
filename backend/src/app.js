@@ -1,16 +1,20 @@
 import express from 'express';
+import apiResponse from './utils/api-response';
 
 const app = express();
 const port = 3000;
 
+app.use(express.json());
+
 app.get('/health', (req, res) => {
-	res.status(200).json({
-		success: true,
-		message: 'online',
-		data: null,
-		errors: null,
-		code: 200,
-	});
+	return apiResponse(
+		{
+			success: true,
+			message: 'Online',
+			code: 200,
+		},
+		res,
+	);
 });
 
 app.listen(port, () => {
