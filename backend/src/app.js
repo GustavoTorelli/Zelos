@@ -1,6 +1,8 @@
 import express from 'express';
 import apiResponse from './utils/api-response.js';
 import seedAdmin from './utils/seed-admin.js';
+import userRoutes from './routes/User.route.js';
+import authRoutes from './routes/Auth.route.js';
 
 const app = express();
 const port = 3000;
@@ -17,6 +19,10 @@ app.get('/health', (req, res) => {
 		res,
 	);
 });
+
+// Routes
+app.use('/users', userRoutes);
+app.use('/auth', authRoutes);
 
 async function start() {
 	await seedAdmin();

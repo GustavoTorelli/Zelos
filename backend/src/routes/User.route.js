@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { UserController } from '../controllers/User.controller.js';
 import { auth } from '../middlewares/auth.js';
-import apiResponse from '../utils/api-response';
+import apiResponse from '../utils/api-response.js';
 
 const router = Router();
 const userController = new UserController();
