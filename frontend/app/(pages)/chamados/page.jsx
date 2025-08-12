@@ -13,7 +13,7 @@ export default function Chamados() {
         <section className="flex  justify-center h-screen w-auto">
             <Header/>
             <Sidebar onSelect={setActiveComponent} />
-            <div className="w-12/12 h-6/12 m-10 flex flex-col items-center mt-50 ">
+            <div className="w-full h-6/12 m-10 flex flex-col items-center mt-50  ">
                 <div className={activeComponent === 1 ? 'block' : 'hidden'}>
                     <Solicitar />
                 </div>
