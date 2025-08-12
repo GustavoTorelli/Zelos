@@ -1,336 +1,110 @@
-import prisma from '../config/prisma-client';
+import prisma from '../config/prisma-client.js';
 
 export class Ticket {
-	constructor({
-		id,
-		title,
-		description,
-		status,
-		created_at,
-		updated_at,
-		category_id,
-		technician_id = null,
-		user_id,
-		patrimony_id,
-	}) {
+	constructor({ id }) {
 		this.id = id;
-		this.title = title;
-		this.description = description;
-		this.status = status;
-		this.createdAt = created_at;
-		this.updatedAt = updated_at;
-		this.categoryId = category_id;
-		this.technicianId = technician_id;
-		this.userId = user_id;
-		this.patrimonyId = patrimony_id;
 	}
 
-	/**
-	 * Creates a new ticket
-	 * @param {Object} data - The data of the ticket to be created
-	 * @param {string} data.title - The title of the ticket
-	 * @param {string} data.description - The description of the ticket
-	 * @param {number} data.userId - The ID of the user who created the ticket
-	 * @param {number} data.patrimonyId - The ID of the patrimony the ticket belongs to
-	 * @param {number} data.categoryId - The ID of the category the ticket belongs to
-	 * @returns {Promise<Ticket>} A promise that resolves to the newly created ticket
-	 * @throws {Error} If there is an error creating the ticket
-	 */
 	static async create({
 		title,
 		description,
-		userId,
-		patrimonyId,
-		categoryId,
+		category_id,
+		patrimony_id,
+		user_id,
 	}) {
 		try {
-			const activePatrimonyTicket = await prisma.ticket.findFirst({
-				where: {
-					patrimonyId,
-					category_id: categoryId,
-					OR: [{ status: 'open' }, { status: 'in_progress' }],
-				},
-			});
+			if (patrimony_id) {
+				const existing = await prisma.ticket.findFirst({
+					where: { patrimony_id, status: { not: 'completed' } },
+				});
 
-			if (activePatrimonyTicket) {
-				throw new Error(
-					'Patrimony already has an active ticket for this category',
-				);
+				if (existing) throw new Error('DUPLICATED_TICKET');
 			}
 
 			return await prisma.ticket.create({
 				data: {
 					title,
 					description,
-					userId,
-					patrimonyId,
-					categoryId,
+					category_id,
+					patrimony_id,
+					user_id,
 				},
+				select: this._baseSelect,
 			});
 		} catch (error) {
 			throw new Error(`Error creating ticket: ${error}`);
 		}
 	}
 
-	/**
-	 * Finds a ticket by its ID
-	 * @param {number} id - The ID of the ticket
-	 * @returns {Promise<Ticket | null>} A promise that resolves to the ticket if found, otherwise null
-	 * @throws {Error} If there is an error finding the ticket
-	 */
-	static async find(id) {
-		try {
-			return await prisma.ticket.findUnique({
-				where: {
-					id,
-				},
-			});
-		} catch (error) {
-			throw new Error(`Error finding ticket: ${error}`);
-		}
+	static async findAll({ userId, role }, { categoryId, patrimonyId }) {
+		const where = {};
+		if (role === 'technician') where.technician_id = userId;
+		if (role === 'user') where.user_id = userId;
+
+		if (categoryId) where.category_id = categoryId;
+		if (patrimonyId) where.patrimony_id = patrimonyId;
+
+		return await prisma.ticket.findMany({
+			where,
+			select: this._baseSelect,
+		});
 	}
 
-	/**
-	 * Finds all tickets
-	 * @returns {Promise<Array<Ticket>>} A promise that resolves to an array of tickets
-	 * @throws {Error} If there is an error finding the tickets
-	 */
-	static async findAll() {
-		try {
-			return await prisma.ticket.findMany({
-				select: {
-					id: true,
-					title: true,
-					description: true,
-					status: true,
-					created_at: true,
-					updated_at: true,
-					Category: {
-						select: {
-							id: true,
-							title: true,
-						},
-					},
-					Technician: {
-						select: {
-							id: true,
-							name: true,
-							email: true,
-						},
-					},
-					User: {
-						select: {
-							id: true,
-							name: true,
-							email: true,
-						},
-					},
-					Patrimony: {
-						select: {
-							id: true,
-							code: true,
-							description: true,
-						},
-					},
-				},
-			});
-		} catch (error) {
-			throw new Error(`Error finding tickets: ${error}`);
-		}
+	static async findById({ ticketId, userId, role }) {
+		const ticket = await prisma.ticket.findUnique({
+			where: { id: ticketId },
+			select: this._baseSelect,
+		});
+
+		if (!ticket) throw new Error('NOT_FOUND');
+
+		if (
+			role !== 'admin' &&
+			ticket.user_id !== userId &&
+			ticket.technician_id !== userId
+		)
+			throw new Error('FORBIDDEN');
+
+		return ticket;
 	}
 
-	/**
-	 * Finds all tickets for a given user
-	 * @param {number} userId - The ID of the user
-	 * @returns {Promise<Array<Ticket>>} A promise that resolves to an array of tickets
-	 * @throws {Error} If there is an error finding the tickets
-	 */
-	static async findAllByUserId(userId) {
-		try {
-			return await prisma.ticket.findMany({
-				where: {
-					userId,
-				},
-				select: {
-					id: true,
-					title: true,
-					description: true,
-					status: true,
-					created_at: true,
-					updated_at: true,
-					Category: {
-						select: {
-							id: true,
-							title: true,
-						},
-					},
-					Technician: {
-						select: {
-							id: true,
-							name: true,
-							email: true,
-						},
-					},
-					Patrimony: {
-						select: {
-							id: true,
-							code: true,
-							description: true,
-						},
-					},
-				},
-			});
-		} catch (error) {
-			throw new Error(
-				`Error finding tickets for user ${userId}: ${error}`,
-			);
-		}
-	}
-
-	/**
-	 * Find all tickets by category ID
-	 * @param {number} categoryId - The ID of the category
-	 * @returns {Promise<Array>} A promise that resolves to an array of tickets
-	 * @throws {Error} If there is an error finding the tickets
-	 */
-	static async findAllByCategoryId(categoryId) {
-		try {
-			return await prisma.ticket.findMany({
-				where: {
-					categoryId,
-				},
-				select: {
-					id: true,
-					title: true,
-					description: true,
-					status: true,
-					created_at: true,
-					updated_at: true,
-					User: {
-						select: {
-							id: true,
-							name: true,
-							email: true,
-						},
-					},
-					Technician: {
-						select: {
-							id: true,
-							name: true,
-							email: true,
-						},
-					},
-					Patrimony: {
-						select: {
-							id: true,
-							code: true,
-							description: true,
-						},
-					},
-				},
-			});
-		} catch (error) {
-			throw new Error(
-				`Error finding tickets for category ${categoryId}: ${error}`,
-			);
-		}
-	}
-
-	/**
-	 * Find all tickets by patrimony ID
-	 * @param {number} patrimonyId - The ID of the patrimony
-	 * @returns {Promise<Array>} A promise that resolves to an array of tickets
-	 * @throws {Error} If there is an error finding the tickets
-	 */
-	static async findAllByPatrimonyId(patrimonyId) {
-		try {
-			return await prisma.ticket.findMany({
-				where: {
-					patrimonyId,
-				},
-				select: {
-					id: true,
-					title: true,
-					description: true,
-					status: true,
-					created_at: true,
-					updated_at: true,
-					Category: {
-						select: {
-							id: true,
-							title: true,
-						},
-					},
-					User: {
-						select: {
-							id: true,
-							name: true,
-							email: true,
-						},
-					},
-					Technician: {
-						select: {
-							id: true,
-							name: true,
-							email: true,
-						},
-					},
-				},
-			});
-		} catch (error) {
-			throw new Error(
-				`Error finding tickets for patrimony ${patrimonyId}: ${error}`,
-			);
-		}
-	}
-
-	/**
-	 * Set the status of the ticket to 'in_progress'
-	 * @returns {Promise<Ticket>} The updated ticket
-	 * @throws {Error} If the ticket is not found
-	 * @throws {Error} If there is an error updating the ticket
-	 */
-	async setInProgress() {
+	static async update({ ticketId, data }) {
 		try {
 			return await prisma.ticket.update({
-				where: {
-					id: this.id,
-				},
-				data: {
-					status: 'in_progress',
-				},
+				where: { id: ticketId },
+				data,
+				select: this._baseSelect,
 			});
 		} catch (error) {
-			if (error.code === 'P2025') {
-				throw new Error(`Ticket ${this.id} not found`);
-			}
-
-			throw new Error('Error updating ticket: ', error);
+			if (error.code === 'P2025') throw new Error('NOT_FOUND');
+			throw new Error(`Error updating ticket: ${error}`);
 		}
 	}
 
-	/**
-	 * Set the status of the ticket to 'completed'
-	 * @returns {Promise<Ticket>} The updated ticket
-	 * @throws {Error} If the ticket is not found
-	 * @throws {Error} If there is an error updating the ticket
-	 */
-	async setCompleted() {
+	async updateStatus({ status }) {
 		try {
 			return await prisma.ticket.update({
-				where: {
-					id: this.id,
-				},
-				data: {
-					status: 'completed',
-				},
+				where: { id: this.id },
+				data: { status },
+				select: this._baseSelect,
 			});
 		} catch (error) {
-			if (error.code === 'P2025') {
-				throw new Error(`Ticket ${this.id} not found`);
-			}
-
-			throw new Error('Error updating ticket: ', error);
+			if (error.code === 'P2025') throw new Error('NOT_FOUND');
+			throw new Error(`Error updating ticket: ${error}`);
 		}
 	}
+
+	static _baseSelect = {
+		id: true,
+		title: true,
+		description: true,
+		status: true,
+		closed_at: true,
+		created_at: true,
+		updated_at: true,
+		user_id: true,
+		technician_id: true,
+		category_id: true,
+		patrimony_id: true,
+	};
 }
