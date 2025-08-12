@@ -1,23 +1,17 @@
 export default function () {
     return (
-        <section className=" w-screen h-screen flex flex-col items-center justify-center">
+        <section className=" w-screen h-screen flex flex-col items-center justify-center bg-[url('/img/global/senai.png')] bg-cover">
             <h1 className="text-9xl font-extrabold text-white tracking-widest">404</h1>
-            <div className="bg-red-800 px-3 py-1 text-sm rounded rotate-12 absolute text-white">
-                Page Not Found
+            <div className="bg-gradient-to-r from-red-800 to-red-700 px-3 py-1 text-sm rounded rotate-12 absolute text-white">
+                Nada aqui =(
             </div>
-            <button className="mt-5">
-                <a
-                    className="relative inline-block text-sm font-medium text-[#FF6A3D] group active:text-orange-500 focus:outline-none focus:ring"
+            <a href="chamados">
+                <button
+                    className="bg-gradient-to-r from-red-800 to-red-700 text-white font-bold py-2 px-4 rounded-md mt-4 hover:from-red-900 hover:to-red-900 transition ease-in-out duration-150 cursor-pointer w-full sm:w-70"
                 >
-                    <span
-                        className="absolute inset-0 transition-transform translate-x-0.5 translate-y-0.5 bg-[#FF6A3D] group-hover:translate-y-0 group-hover:translate-x-0"
-                    ></span>
-
-                    <span className="relative block px-8 py-3 bg-[#1A2238] border border-current">
-                        <router-link to="/">Go Home</router-link>
-                    </span>
-                </a>
-            </button>
+                    Voltar
+                </button>
+            </a>
         </section>
     )
 }

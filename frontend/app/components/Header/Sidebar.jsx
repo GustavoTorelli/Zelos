@@ -1,5 +1,5 @@
 'use client'
-import { Boxes, ChartPie, Headset, Power } from "lucide-react"
+import { Boxes, ChartPie, Headset, Mail, Power} from "lucide-react"
 
 export default function Sidebar({ onSelect }) {
     return (
@@ -10,35 +10,42 @@ export default function Sidebar({ onSelect }) {
 
             <div className=" w-12/12 h-10/12 flex flex-col items-center justify-center">
                 <nav className="flex min-w-[240px] flex-col gap-1 p-2 font-sans text-base font-normal text-blue-gray-700 text-white justify-center items-center">
-                    <button  type="button" onClick={() => onSelect(1)}
+                    <button type="button" onClick={() => onSelect(1)}
                         className=" cursor-pointer flex items-center w-full p-3 leading-tight transition-all rounded-lg outline-none text-start hover:text-red-800">
                         <div className="grid mr-4 place-items-center">
-                            <Headset/>
+                            <Headset />
                         </div>
                         Solicitar Chamado
                     </button>
 
-                    <button  type="button" onClick={() => onSelect(2)}
+                    <button type="button" onClick={() => onSelect(2)}
                         className=" cursor-pointer flex items-center w-full p-3 leading-tight transition-all rounded-lg outline-none text-start hover:text-red-800">
                         <div className="grid mr-4 place-items-center">
-                            <ChartPie/>
+                            <ChartPie />
                         </div>
                         Status do Chamado
                     </button>
 
-                    
-                    <button  type="button" onClick={() => onSelect(3)}
+                    <button type="button" onClick={() => onSelect(3)}
                         className=" cursor-pointer flex items-center w-full p-3 leading-tight transition-all rounded-lg outline-none text-start hover:text-red-800">
                         <div className="grid mr-4 place-items-center">
-                            <Boxes/>
+                            <Mail/>
+                        </div>
+                        Meus Chamados
+                    </button>
+
+                    <button type="button" onClick={() => onSelect(4)}
+                        className=" cursor-pointer flex items-center w-full p-3 leading-tight transition-all rounded-lg outline-none text-start hover:text-red-800">
+                        <div className="grid mr-4 place-items-center">
+                            <Boxes />
                         </div>
                         Atribuir Chamado
                     </button>
-                   
-                    <button  type="button"
+
+                    <button type="button"
                         className=" cursor-pointer flex items-center w-full p-3 leading-tight transition-all rounded-lg outline-none text-start hover:text-red-800">
                         <div className="grid mr-4 place-items-center">
-                            <Power/>
+                            <Power />
                         </div>
                         Sair
                     </button>
