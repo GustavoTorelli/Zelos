@@ -2,7 +2,12 @@ import { Ticket } from '../models/Ticket.model.js';
 import { ZodError } from 'zod';
 import apiResponse from '../utils/api-response.js';
 import zodErrorFormatter from '../utils/zod-error-formatter.js';
-import { createTicket, updateTicket } from '../schemas/ticket.schema.js';
+import {
+	createTicket,
+	updateTicket,
+	updateStatus,
+	assignTechnician,
+} from '../schemas/ticket.schema.js';
 import { idSchema } from '../schemas/generic.schema.js';
 
 export class TicketController {
@@ -53,7 +58,7 @@ export class TicketController {
 				{
 					success: false,
 					message: 'An unexpected error occurred',
-					errors: error.errors,
+					errors: error.message,
 					code: 500,
 				},
 				res,
@@ -64,13 +69,24 @@ export class TicketController {
 	async findAll(req, res) {
 		try {
 			const { id, role } = req.user;
-			const { categoryId, patrimonyId } = req.query;
+			const {
+				categoryId,
+				patrimonyId,
+				status,
+				technicianId,
+				createdAfter,
+				createdBefore,
+			} = req.query;
 
 			const tickets = await Ticket.findAll(
 				{ userId: id, role },
 				{
 					categoryId,
 					patrimonyId,
+					status,
+					technicianId,
+					createdAfter,
+					createdBefore,
 				},
 			);
 
@@ -205,6 +221,118 @@ export class TicketController {
 				);
 			}
 
+			return apiResponse(
+				{
+					success: false,
+					message: 'An unexpected error occurred',
+					errors: error.message,
+					code: 500,
+				},
+				res,
+			);
+		}
+	}
+
+	async updateStatus(req, res) {
+		try {
+			const parsedId = idSchema.parse(req.params.id);
+			const { status } = updateStatus.parse(req.body);
+
+			const ticketInstance = new Ticket({ id: parsedId });
+			const updated = await ticketInstance.updateStatus({
+				status,
+				userId: req.user.id,
+				role: req.user.role,
+			});
+
+			return apiResponse(
+				{
+					success: true,
+					message: 'Ticket status updated successfully',
+					data: updated,
+					code: 200,
+				},
+				res,
+			);
+		} catch (error) {
+			if (error instanceof ZodError)
+				return apiResponse(
+					{
+						success: false,
+						message: 'Invalid status',
+						errors: zodErrorFormatter(error),
+						code: 400,
+					},
+					res,
+				);
+			if (error.message === 'NOT_FOUND')
+				return apiResponse(
+					{ success: false, message: 'Ticket not found', code: 404 },
+					res,
+				);
+			if (error.message === 'FORBIDDEN')
+				return apiResponse(
+					{
+						success: false,
+						message:
+							'You do not have permission to change this ticket status',
+						code: 403,
+					},
+					res,
+				);
+			return apiResponse(
+				{
+					success: false,
+					message: 'An unexpected error occurred',
+					errors: error.message,
+					code: 500,
+				},
+				res,
+			);
+		}
+	}
+
+	async assignTechnician(req, res) {
+		try {
+			const parsedId = idSchema.parse(req.params.id);
+			const { technicianId } = assignTechnician.parse(req.body);
+
+			const ticket = new Ticket({ id: parsedId });
+			const updated = await ticket.assignTechnician({
+				technicianId,
+				role: req.user.role,
+			});
+
+			return apiResponse(
+				{
+					success: true,
+					message: 'Technician assigned successfully',
+					data: updated,
+					code: 200,
+				},
+				res,
+			);
+		} catch (error) {
+			if (error instanceof ZodError)
+				return apiResponse(
+					{
+						success: false,
+						message: 'Invalid request data',
+						errors: zodErrorFormatter(error),
+						code: 400,
+					},
+					res,
+				);
+			if (error.message === 'FORBIDDEN')
+				return apiResponse(
+					{
+						success: false,
+						message:
+							'You do not have permission to assign technician',
+						code: 403,
+					},
+					res,
+				);
 			return apiResponse(
 				{
 					success: false,
