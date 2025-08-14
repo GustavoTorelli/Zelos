@@ -29,14 +29,6 @@ export default function Sidebar({ onSelect }) {
                     <button type="button" onClick={() => onSelect(3)}
                         className=" cursor-pointer flex items-center w-full p-3 leading-tight transition-all rounded-lg outline-none text-start hover:text-red-800">
                         <div className="grid mr-4 place-items-center">
-                            <Mail />
-                        </div>
-                        Meus Chamados
-                    </button>
-
-                    <button type="button" onClick={() => onSelect(4)}
-                        className=" cursor-pointer flex items-center w-full p-3 leading-tight transition-all rounded-lg outline-none text-start hover:text-red-800">
-                        <div className="grid mr-4 place-items-center">
                             <Boxes />
                         </div>
                         Atribuir Chamado

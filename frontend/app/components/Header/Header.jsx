@@ -10,9 +10,9 @@ export default function Header() {
     }
 
     return (
-        <header className="flex flex-col bg-zinc-900 w-full h-15 fixed top-0">
+        <header className="flex flex-col items-end justify-center bg-zinc-900 w-full h-15 fixed top-0">
+       
 
-            
         </header>
     )
 }

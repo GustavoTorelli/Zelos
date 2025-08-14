@@ -1,12 +1,12 @@
 'use client'
 import { useState } from 'react';
-import { ChevronsRight, Goal, CirclePlay } from "lucide-react"
+import { ChevronsRight, Goal, CirclePlay, BadgeCheck} from "lucide-react"
 import StatusModal from "../Modals/StatusModal"
 export default function Status() {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-        <section className="w-full h-full">
+        <section className="w-full h-full ">
             {/* modal */}
             <StatusModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
 
@@ -23,7 +23,7 @@ export default function Status() {
                 <button type="button" className='flex'>
                     <label className="relative inline-flex items-center cursor-pointer">
                         <input className="sr-only peer" value="button" type="checkbox"></input>
-                        <div className=" flex items-center justify-around peer rounded-[100px] outline-none duration-100 after:duration-500 w-20 h-10 bg-orange-500 after:content-[''] after:absolute after:outline-none after:rounded-full after:h-8 after:w-8 text-white after:border-zinc-800 after:dark:bg-gray-500 after:border-3 after:top-2 after:left-1 after:flex after:justify-between after:items-center peer-checked:bg-green-500 peer-checked:after:translate-x-10 peer-checked:after:content-[''] ">
+                        <div className=" flex items-center justify-around peer rounded-[100px] outline-none duration-100 after:duration-500 w-20 h-10 bg-orange-500 after:content-[''] after:absolute after:outline-none after:rounded-full after:h-8 after:w-8 text-white after:border-zinc-800 after:dark:bg-white after:border-3 after:top-2 after:left-1 after:flex after:justify-between after:items-center peer-checked:bg-green-500 peer-checked:after:translate-x-10 peer-checked:after:content-[''] ">
                             <CirclePlay size={25} />
                             <Goal size={25} />
                         </div>
@@ -33,62 +33,65 @@ export default function Status() {
             </div>
 
             {/* seção dos chamados */}
-            <div className="flex flex-wrap w-300 items-center justify-center">
+            <section className="flex flex-wrap  w-300 h-auto items-start justify-center ">
 
                 {/* quando não houver chamados */}
-                <div className='w-full h-full hidden flex-col justify-center items-center text-gray-100 font-semibold text-2xl '>
-                    <img className='h-80 mt-17' src="/img/status/statusNulo.svg" alt="nenhum chamado" />
-                    <h1>Você não solicitou nenhum chamado!</h1>
+                <div className='hidden items-center justify-center w-full h-130  bg-[#1d1e21] rounded-xl gap-2 shadow-[-4px_8px_15px_-9px_rgba(0,_0,_0,_0.7)] '>
+                    <BadgeCheck size={180} color='#B91C1C' />
+                    <h1 className='text-3xl text-white font-semibold h-1'>Você não solicitou nenhum chamado.</h1>
                 </div>
 
-                {/* chamado individual */}
-                <div className="w-full min-h-[60px] rounded-[10px] flex items-center justify-between hover:shadow-lg dark:bg-gray-600/80 dark:text-white m-2 px-6 py-3 transition-all duration-300">
-                    {/* Esquerda */}
-                    <div className="flex items-center gap-6">
+                {/* Chamado individual */}
+                <div className="flex items-center justify-between w-full h-20  bg-[#1d1e21] rounded-xl gap-2 shadow-[-4px_8px_15px_-9px_rgba(0,_0,_0,_0.7)] m-2">
+                    {/* dados */}
+                    <div className='w-[90%] h-full flex items-center justify-start gap-2'>
 
-                        {/* ID */}
-                        <span className="text-lg font-semibold  text-gray-800 dark:text-white">
-                            #ID
-                        </span>
+                        {/* id e status */}
+                        <div className='mx-5 h-full flex justify-center items-center gap-5'>
+                            {/* id do chamado */}
+                            <h1 className='text-2xs font-medium text-gray-200 flex '>
+                                #
+                                <span className="text-2xs font-medium text-gray-200">
+                                    1
+                                </span>
+                            </h1>
 
-                        {/* Nome do patrimonio */}
-                        <div className="flex items-center gap-2 text-base font-medium text-gray-800 dark:text-white truncate max-w-[50%] ">
-                            <span className="text-white dark:text-gray-100">Nome do patrimonio</span>
+                            {/* status em andamento */}
+                            <div className="w-1 h-4/5 bg-orange-500 hidden"></div>
+                            {/* status concluido */}
+                            <div className="w-1 h-4/5 bg-green-500 "></div>
+
                         </div>
 
-                        {/*status*/}
-
-                        {/* em andamento */}
-                        <span className="flex items-center text-base font-medium text-gray-800 dark:text-white gap-2 ">
-                            <span className="flex w-3.5 h-3.5 bg-orange-500 rounded-full  shrink-0"></span>
-                   
-                            Em andamento...
+                        {/* Nome do patrimônio */}
+                        <span className="text-2xs font-medium text-gray-200 truncate uppercase">
+                            Nome do patrimônio
                         </span>
 
-                        {/* concluido */}
-                        {/* <span className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 gap-2">
-                            <span className="flex w-3.5 h-3.5 bg-green-500 rounded-full shrink-0"></span>
-                            Concluido!
-                        </span> */}
+                        {/* ID do patrimonio */}
+                        <h1 className='text-2xs font-medium text-gray-200 flex gap-1'>
+                            ID:
+                            <span className="text-2xs font-medium text-gray-200">
+                                2
+                            </span>
+                        </h1>
                     </div>
 
+                    {/* botão do modal de apontamentos */}
+                    <div className='w-[10%] h-full flex items-center justify-center'>
+                        <button
+                            onClick={() => setIsOpen(true)}
+                            type="button"
+                            aria-label="Ver detalhes do chamado"
+                            className="cursor-pointer bg-gray-300 dark:bg-gray-200 w-10 h-10 rounded-full flex justify-center items-center hover:ring-4 ring-gray-200 dark:ring-gray-600 transition duration-300 ease-in-out"
+                        >
+                            <ChevronsRight />
+                        </button>
+                    </div>
 
-
-                    {/* Direita */}
-                    <button
-                        onClick={() => setIsOpen(true)}
-                        type="button"
-                        aria-label="Ver detalhes do chamado"
-                        className="cursor-pointer bg-gray-300 dark:bg-gray-500 w-10 h-10 rounded-full flex justify-center items-center hover:ring-4 ring-gray-200 dark:ring-gray-400 transition duration-300 ease-in-out"
-                    >
-                        <ChevronsRight />
-
-                    </button>
                 </div>
 
-                
-            </div>
+            </section>
         </section>
-
     )
 }
