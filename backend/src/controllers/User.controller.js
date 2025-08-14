@@ -56,7 +56,7 @@ export class UserController {
 					{
 						success: false,
 						message: 'Email already exists',
-						code: 400,
+						code: 409,
 					},
 					res,
 				);

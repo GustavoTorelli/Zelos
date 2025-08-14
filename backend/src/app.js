@@ -1,6 +1,6 @@
 import express from 'express';
 import apiResponse from './utils/api-response.js';
-import seedAdmin from './utils/seed-admin.js';
+import seedAdmin from './config/seed-admin.js';
 import userRoutes from './routes/User.route.js';
 import authRoutes from './routes/Auth.route.js';
 

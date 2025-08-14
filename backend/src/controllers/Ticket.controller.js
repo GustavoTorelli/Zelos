@@ -131,6 +131,18 @@ export class TicketController {
 				res,
 			);
 		} catch (error) {
+			if (error instanceof ZodError) {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Invalid request data',
+						errors: zodErrorFormatter(error),
+						code: 400,
+					},
+					res,
+				);
+			}
+
 			if (error.message === 'NOT_FOUND') {
 				return apiResponse(
 					{
