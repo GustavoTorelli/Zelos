@@ -1,7 +1,7 @@
 import { z, ZodError } from 'zod';
-import prisma from '../config/prisma-client.js';
-import hashPassword from './hash-password.js';
-import zodErrorFormatter from './zod-error-formatter.js';
+import prisma from './prisma-client.js';
+import hashPassword from '../utils/hash-password.js';
+import zodErrorFormatter from '../utils/zod-error-formatter.js';
 
 export default async function seedAdmin() {
 	try {
