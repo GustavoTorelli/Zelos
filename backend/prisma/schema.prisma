@@ -14,18 +14,6 @@ enum Role {
   technician
 }
 
-enum Category_title {
-  technical_support
-  maintenance
-  cleaning
-  external_service
-  network
-  hardware
-  software
-  logistics
-  other
-}
-
 enum Status {
   pending
   in_progress
@@ -53,12 +41,12 @@ model User {
 }
 
 model Category {
-  id          Int            @id @unique @default(autoincrement())
-  title       Category_title
-  description String         @db.Text
-  is_active   Boolean        @default(true)
-  created_at  DateTime       @default(now())
-  updated_at  DateTime       @default(now()) @updatedAt
+  id          Int      @id @unique @default(autoincrement())
+  title       String   @unique
+  description String   @db.Text
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now()) @updatedAt
   created_by  Int
   updated_by  Int
 
@@ -82,12 +70,12 @@ model Technician_Category {
 }
 
 model Ticket {
-  id          Int      @id @unique @default(autoincrement())
+  id          Int       @id @unique @default(autoincrement())
   title       String
-  description String   @db.Text
-  status      Status   @default(pending)
-  created_at  DateTime @default(now())
-  updated_at  DateTime @default(now()) @updatedAt
+  description String    @db.Text
+  status      Status    @default(pending)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @default(now()) @updatedAt
   closed_at   DateTime?
 
   category_id   Int
