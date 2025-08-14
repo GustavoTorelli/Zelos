@@ -174,6 +174,7 @@ export class TicketController {
 			const ticket = await Ticket.update({
 				ticketId: parsedId,
 				data: parsedData,
+				role: req.user.role,
 			});
 
 			return apiResponse(

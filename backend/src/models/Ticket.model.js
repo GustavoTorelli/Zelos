@@ -128,8 +128,7 @@ export class Ticket {
 	 * @throws {Error} If the ticket is not found or the user does not have permission to update the ticket
 	 */
 	static async update({ ticketId, data, role }) {
-		if (role !== 'admin' && !data.patrimony_id)
-			throw new Error('FORBIDDEN');
+		if (role !== 'admin' && data.patrimony_id) throw new Error('FORBIDDEN');
 
 		try {
 			return await prisma.ticket.update({
@@ -157,10 +156,12 @@ export class Ticket {
 
 		if (!ticket) throw new Error('NOT_FOUND');
 
+		if (ticket.status === 'completed') throw new Error('FORBIDDEN');
+
 		// Only admin and technician can change status
 		if (
 			role !== 'admin' &&
-			(role !== 'technician' || ticket.user_id !== userId)
+			(role !== 'technician' || ticket.technician_id !== userId)
 		)
 			throw new Error('FORBIDDEN');
 
