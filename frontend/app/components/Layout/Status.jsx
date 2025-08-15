@@ -1,7 +1,8 @@
 'use client'
 import { useState } from 'react';
-import { ChevronsRight, Goal, CirclePlay, BadgeCheck } from "lucide-react"
+import { ChevronsRight, Goal, CirclePlay, BadgeCheck, MonitorDot, Wrench } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion";
+import StatusButton from '../button/StatusButton';
 export default function Status() {
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -15,18 +16,8 @@ export default function Status() {
                     </h1>
                     <div className="w-24 h-1 bg-red-700 rounded"></div>
                 </div>
-
                 {/* botão para filtrar status */}
-                <button type="button" className='flex'>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                        <input className="sr-only peer" value="button" type="checkbox"></input>
-                        <div className=" flex items-center justify-around peer rounded-[100px] outline-none duration-100 after:duration-500 w-20 h-10 bg-orange-500 after:content-[''] after:absolute after:outline-none after:rounded-full after:h-8 after:w-8 text-white after:border-zinc-800 after:dark:bg-white after:border-3 after:top-2 after:left-1 after:flex after:justify-between after:items-center peer-checked:bg-green-500 peer-checked:after:translate-x-10 peer-checked:after:content-[''] ">
-                            <CirclePlay size={25} />
-                            <Goal size={25} />
-                        </div>
-
-                    </label>
-                </button>
+                <StatusButton />
             </div>
 
             {/* seção dos chamados */}
@@ -65,7 +56,7 @@ export default function Status() {
                                 <span className="text-2xs font-medium text-gray-200 truncate uppercase">
                                     Nome do patrimônio
                                 </span>
-                                <h1 className="text-2xs font-medium text-gray-200 flex gap-1 flex-shrink-0">
+                                <h1 className="text-2xs font-medium text-gray-200 flex gap-1 flex-shrink-0 uppercase">
                                     ID: <span>2</span>
                                 </h1>
                             </div>
