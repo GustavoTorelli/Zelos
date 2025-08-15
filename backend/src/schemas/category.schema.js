@@ -5,8 +5,7 @@ export const createCategory = z.object({
 	description: z
 		.string('Description is required')
 		.min(1, 'Description cannot be empty')
-		.trim()
-		.toLowerCase(),
+		.trim(),
 });
 
 export const updateCategory = z.object({
@@ -16,8 +15,4 @@ export const updateCategory = z.object({
 		.min(1, 'Description cannot be empty')
 		.trim()
 		.optional(),
-});
-
-export const toggleActive = z.object({
-	is_active: z.boolean('is_active is required'),
 });

@@ -1,9 +1,5 @@
 import { Category } from '../models/Category.model.js';
-import {
-	createCategory,
-	updateCategory,
-	toggleActive,
-} from '../schemas/category.schema.js';
+import { createCategory, updateCategory } from '../schemas/category.schema.js';
 import { idSchema } from '../schemas/generic.schema.js';
 import apiResponse from '../utils/api-response.js';
 import { ZodError } from 'zod';
@@ -13,10 +9,14 @@ export class CategoryController {
 	constructor() {}
 
 	async create(req, res) {
-		const parsedData = createCategory.parse(req.body);
-		const userId = req.user.id;
 		try {
-			const category = await Category.create({ ...parsedData, userId });
+			const parsedData = createCategory.parse(req.body);
+
+			const category = await Category.create({
+				...parsedData,
+				userId: req.user.id,
+				role: req.user.role,
+			});
 			return apiResponse(
 				{
 					code: 201,
@@ -34,6 +34,17 @@ export class CategoryController {
 						success: false,
 						message: 'Validation error',
 						errors: zodErrorFormatter(error),
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'FORBIDDEN') {
+				return apiResponse(
+					{
+						code: 403,
+						success: false,
+						message: 'You are not allowed to perform this action',
 					},
 					res,
 				);
@@ -151,6 +162,7 @@ export class CategoryController {
 				categoryId: parsedId,
 				data: parsedData,
 				userId: req.user.id,
+				role: req.user.role,
 			});
 
 			return apiResponse(
@@ -170,6 +182,17 @@ export class CategoryController {
 						success: false,
 						message: 'Validation error',
 						errors: zodErrorFormatter(error),
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'FORBIDDEN') {
+				return apiResponse(
+					{
+						code: 403,
+						success: false,
+						message: 'You are not allowed to perform this action',
 					},
 					res,
 				);
@@ -209,39 +232,24 @@ export class CategoryController {
 		}
 	}
 
-	async toggleActive(req, res) {
+	async activate(req, res) {
 		try {
 			const parsedId = idSchema.parse(req.params.id);
-			const parsedData = toggleActive.parse(req.body);
-
-			const category = await Category.toggleActive({
+			const category = await Category.activate({
 				categoryId: parsedId,
-				isActive: parsedData,
 				userId: req.user.id,
+				role: req.user.role,
 			});
-
 			return apiResponse(
 				{
 					code: 200,
 					success: true,
-					message: 'Category updated successfully',
+					message: 'Category activated successfully',
 					data: category,
 				},
 				res,
 			);
 		} catch (error) {
-			if (error instanceof ZodError) {
-				return apiResponse(
-					{
-						code: 400,
-						success: false,
-						message: 'Validation error',
-						errors: zodErrorFormatter(error),
-					},
-					res,
-				);
-			}
-
 			if (error.message === 'NOT_FOUND') {
 				return apiResponse(
 					{
@@ -252,7 +260,66 @@ export class CategoryController {
 					res,
 				);
 			}
+			if (error.message === 'FORBIDDEN') {
+				return apiResponse(
+					{
+						code: 403,
+						success: false,
+						message: 'You are not allowed to perform this action',
+					},
+					res,
+				);
+			}
+			return apiResponse(
+				{
+					code: 500,
+					success: false,
+					message: 'An unexpected error occurred',
+					errors: error.message,
+				},
+				res,
+			);
+		}
+	}
 
+	async deactivate(req, res) {
+		try {
+			const parsedId = idSchema.parse(req.params.id);
+			const category = await Category.deactivate({
+				categoryId: parsedId,
+				userId: req.user.id,
+				role: req.user.role,
+			});
+			return apiResponse(
+				{
+					code: 200,
+					success: true,
+					message: 'Category deactivated successfully',
+					data: category,
+				},
+				res,
+			);
+		} catch (error) {
+			if (error.message === 'NOT_FOUND') {
+				return apiResponse(
+					{
+						code: 404,
+						success: false,
+						message: 'Category not found',
+					},
+					res,
+				);
+			}
+			if (error.message === 'FORBIDDEN') {
+				return apiResponse(
+					{
+						code: 403,
+						success: false,
+						message: 'You are not allowed to perform this action',
+					},
+					res,
+				);
+			}
 			return apiResponse(
 				{
 					code: 500,

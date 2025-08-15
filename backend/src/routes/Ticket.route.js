@@ -28,3 +28,5 @@ router.put('/:id/status', auth(), async (req, res) => {
 router.post('/:id/assign', auth(), async (req, res) => {
 	return await ticketController.assignTechnician(req, res);
 });
+
+export default router;

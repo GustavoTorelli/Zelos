@@ -7,7 +7,9 @@ export class Category {
 	 * @returns {Promise<Object>} A promise that resolves to the newly created category object
 	 * @throws {Error} If there is an error creating the category
 	 */
-	static async create({ title, description, userId }) {
+	static async create({ title, description, userId, role }) {
+		if (role !== 'admin') throw new Error('FORBIDDEN');
+
 		try {
 			return await prisma.category.create({
 				data: {
@@ -60,7 +62,9 @@ export class Category {
 	 * @throws {Error} If the category is not found
 	 * @throws {Error} If there is an error updating the category
 	 */
-	static async update({ categoryId, data, userId }) {
+	static async update({ categoryId, data, userId, role }) {
+		if (role !== 'admin') throw new Error('FORBIDDEN');
+
 		try {
 			return await prisma.category.update({
 				where: { id: categoryId },
@@ -74,23 +78,33 @@ export class Category {
 		}
 	}
 
-	/**
-	 * Toggles the active state of a category by ID
-	 * @param {{ categoryId: number, isActive: boolean, userId: number }} data - The data containing the category ID, the new active state, and the user ID
-	 * @returns {Promise<Object>} A promise that resolves to the updated category object
-	 * @throws {Error} If the category is not found
-	 * @throws {Error} If there is an error updating the category
-	 */
-	static async toggleActive({ categoryId, isActive, userId }) {
+	static async activate({ categoryId, userId, role }) {
+		if (role !== 'admin') throw new Error('FORBIDDEN');
+
 		try {
 			return await prisma.category.update({
 				where: { id: categoryId },
-				data: { is_active: isActive, updated_by: userId },
+				data: { is_active: true, updated_by: userId },
 				select: this._baseSelect,
 			});
 		} catch (error) {
 			if (error.code === 'P2025') throw new Error('NOT_FOUND');
-			throw new Error(`Error updating category: ${error}`);
+			throw new Error(`Error activating category: ${error}`);
+		}
+	}
+
+	static async deactivate({ categoryId, userId, role }) {
+		if (role !== 'admin') throw new Error('FORBIDDEN');
+
+		try {
+			return await prisma.category.update({
+				where: { id: categoryId },
+				data: { is_active: false, updated_by: userId },
+				select: this._baseSelect,
+			});
+		} catch (error) {
+			if (error.code === 'P2025') throw new Error('NOT_FOUND');
+			throw new Error(`Error deactivating category: ${error}`);
 		}
 	}
 
