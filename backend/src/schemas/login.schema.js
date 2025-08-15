@@ -1,6 +1,7 @@
 import { z } from 'zod';
+import { emailSchema } from './generic.schema.js';
 
 export const loginSchema = z.object({
-	email: z.email('Invalid e-mail'),
+	email: emailSchema(),
 	password: z.string().min(6, 'Password must be at least 6 characters long.'),
 });
