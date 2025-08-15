@@ -1,30 +1,32 @@
 'use client'
-import { useState } from "react"
-import Sidebar from "@/app/components/Header/Sidebar"
-import Atribuir from "@/app/components/Layout/Atribuir"
-import Solicitar from "@/app/components/Layout/Solicitar"
-import Status from "@/app/components/Layout/Status"
-import Header from "@/app/components/Header/Header"
+import { useState } from "react";
+import Sidebar from "@/app/components/Header/Sidebar";
+import Atribuir from "@/app/components/Layout/Atribuir";
+import Solicitar from "@/app/components/Layout/Solicitar";
+import Status from "@/app/components/Layout/Status";
+import Header from "@/app/components/Header/Header";
 
 export default function Chamados() {
     const [activeComponent, setActiveComponent] = useState(1);
+
     return (
-        <section className="flex  justify-center h-screen w-auto">
-            <Header/>
-            <Sidebar onSelect={setActiveComponent} />
-            <div className="w-screen h-auto m-10 flex flex-col items-center mt-50  ">
-                <div className={activeComponent === 1 ? 'block' : 'hidden'}>
-                    <Solicitar />
-                </div>
+        <div className="flex flex-col h-screen">
+            {/* Header */}
+            <Header />
 
-                <div className={activeComponent === 2 ? 'block' : 'hidden'}>
-                    <Status />
-                </div>
+            {/* Conteúdo com Sidebar */}
+            <div className="flex flex-1 pt-16">
+                {/* Sidebar */}
+                <Sidebar onSelect={setActiveComponent} />
 
-                <div className={activeComponent === 3 ? 'block' : 'hidden'}>
-                    <Atribuir />
-                </div>
+                {/* Área principal */}
+                <section className="
+                    flex ml-60 overflow-y-auto p-6 bg-zinc-100 dark:bg-zinc-800 justify-center items-center ">
+                    {activeComponent === 1 && <Solicitar />}
+                    {activeComponent === 2 && <Status />}
+                    {activeComponent === 3 && <Atribuir />}
+                </section>
             </div>
-        </section>
-    )
+        </div>
+    );
 }
