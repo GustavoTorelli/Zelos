@@ -23,6 +23,11 @@ export const updateStatus = z.object({
 	),
 });
 
-export const assignTechnician = z.object({
-	technician_id: idSchema,
-});
+export const assignTechnician = z
+	.object({
+		technician_id: idSchema,
+	})
+	.refine(
+		(obj) => Object.keys(obj).length > 0,
+		'At last one field is required',
+	);
