@@ -76,7 +76,7 @@ export class CategoryController {
 	async findAll(req, res) {
 		try {
 			const includeInactive =
-				req.query.includeInactive === 'true' ? true : false;
+				req.query.inactive === 'true' ? true : false;
 
 			const categories = await Category.findAll({
 				includeInactive,

@@ -24,28 +24,54 @@ export class UserController {
 	 */
 	async create(req, res) {
 		try {
-			// Parse the request body using the userCreateSchema
 			const parsedData = userCreateSchema.parse(req.body);
-			// Create the user
+
 			const user = await User.create(parsedData);
+
 			return apiResponse(
 				{
+					code: 201,
 					success: true,
 					message: 'User created successfully',
 					data: user,
-					code: 201,
 				},
 				res,
 			);
 		} catch (error) {
-			// If the error is a Zod error, return a 400 response with the validation errors
 			if (error instanceof ZodError) {
 				return apiResponse(
 					{
-						success: false,
-						message: 'Invalid request data',
-						errors: zodErrorFormatter(error),
 						code: 400,
+						success: false,
+						message: 'Validation error',
+						errors: zodErrorFormatter(error),
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'ROLE_NOT_TECHNICIAN') {
+				return apiResponse(
+					{
+						code: 400,
+						success: false,
+						message:
+							'Categories can only be assigned to technicians',
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'INVALID_CATEGORIES') {
+				return apiResponse(
+					{
+						code: 422,
+						success: false,
+						message: 'Some categories are invalid or inactive',
+						errors: {
+							invalid: error.invalidCategories || [],
+							inactive: error.inactiveCategories || [],
+						},
 					},
 					res,
 				);
@@ -54,21 +80,20 @@ export class UserController {
 			if (error.message === 'EMAIL_ALREADY_EXISTS') {
 				return apiResponse(
 					{
+						code: 409,
 						success: false,
 						message: 'Email already exists',
-						code: 409,
 					},
 					res,
 				);
 			}
 
-			// Otherwise, return a 500 response with the error message
 			return apiResponse(
 				{
+					code: 500,
 					success: false,
 					message: 'An unexpected error occurred',
 					errors: error.message,
-					code: 500,
 				},
 				res,
 			);
@@ -83,8 +108,11 @@ export class UserController {
 	 */
 	async getAll(req, res) {
 		try {
+			const includeInactive =
+				req.query.inactive === 'true' ? true : false;
+
 			// Retrieve all users
-			const users = await User.findAll();
+			const users = await User.findAll({ includeInactive });
 
 			// Return a 200 response with the users
 			return apiResponse(
@@ -181,42 +209,66 @@ export class UserController {
 	 */
 	async update(req, res) {
 		try {
-			// Parse the ID and data from the request
 			const parsedId = idSchema.parse(req.params.id);
 			const parsedData = userUpdateSchema.parse(req.body);
 
-			// Update the user
-			const updatedUser = await User.update(parsedId, parsedData);
+			const user = await User.update(parsedId, parsedData);
+
 			return apiResponse(
 				{
+					code: 200,
 					success: true,
 					message: 'User updated successfully',
-					data: updatedUser,
-					code: 200,
+					data: user,
 				},
 				res,
 			);
 		} catch (error) {
-			// If the error is a Zod error, return a 400 response with the validation errors
 			if (error instanceof ZodError) {
 				return apiResponse(
 					{
-						success: false,
-						message: 'Invalid data',
-						errors: zodErrorFormatter(error),
 						code: 400,
+						success: false,
+						message: 'Validation error',
+						errors: zodErrorFormatter(error),
 					},
 					res,
 				);
 			}
 
-			// If the error is a NOT_FOUND error, return a 404 response
 			if (error.message === 'NOT_FOUND') {
 				return apiResponse(
 					{
+						code: 404,
 						success: false,
 						message: 'User not found',
-						code: 404,
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'ROLE_NOT_TECHNICIAN') {
+				return apiResponse(
+					{
+						code: 400,
+						success: false,
+						message:
+							'Categories can only be assigned to technicians',
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'INVALID_CATEGORIES') {
+				return apiResponse(
+					{
+						code: 422,
+						success: false,
+						message: 'Some categories are invalid or inactive',
+						errors: {
+							invalid: error.invalidCategories || [],
+							inactive: error.inactiveCategories || [],
+						},
 					},
 					res,
 				);
@@ -225,21 +277,20 @@ export class UserController {
 			if (error.message === 'EMAIL_ALREADY_EXISTS') {
 				return apiResponse(
 					{
+						code: 409,
 						success: false,
 						message: 'Email already exists',
-						code: 400,
 					},
 					res,
 				);
 			}
 
-			// Otherwise, return a 500 response with the error message
 			return apiResponse(
 				{
+					code: 500,
 					success: false,
 					message: 'An unexpected error occurred',
 					errors: error.message,
-					code: 500,
 				},
 				res,
 			);
