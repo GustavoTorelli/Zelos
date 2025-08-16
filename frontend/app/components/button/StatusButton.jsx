@@ -13,7 +13,6 @@ export default function StatusButton() {
     return (
         
             <div className="relative flex justify-between rounded-lg overflow-hidden w-4/12">
-                {/* Botões gerados via array */}
                 {statuses.map((status, index) => (
                     <button
                         key={index}

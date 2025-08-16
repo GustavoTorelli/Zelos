@@ -4,8 +4,8 @@ import { useState } from "react";
 export default function AtribuirButton() {
     const statuses = [
         { label: "Atribuir", color: "#B91C1C" },   // vermelho
-        { label: "Meus Chamados", color: "#F59E0B" },  // laranja
-        { label: "Concluído", color: "#22C55E" }   // verde
+        { label: "Pendentes", color: "#F59E0B" },  // laranja
+        { label: "Concluídos", color: "#22C55E" }   // verde
     ];
 
     const [active, setActive] = useState(0);
@@ -13,7 +13,6 @@ export default function AtribuirButton() {
     return (
         
             <div className="relative flex justify-between rounded-lg overflow-hidden w-4/12">
-                {/* Botões gerados via array */}
                 {statuses.map((status, index) => (
                     <button
                         key={index}

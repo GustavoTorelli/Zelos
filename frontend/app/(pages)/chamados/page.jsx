@@ -1,7 +1,7 @@
 'use client'
 import { useState } from "react";
 import Sidebar from "@/app/components/Header/Sidebar";
-import Atribuir from "@/app/components/Layout/Atribuir";
+import Atribuir from "@/app/components/Layout/Gestao";
 import Solicitar from "@/app/components/Layout/Solicitar";
 import Status from "@/app/components/Layout/Status";
 import Header from "@/app/components/Header/Header";

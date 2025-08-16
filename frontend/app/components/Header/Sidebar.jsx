@@ -58,7 +58,7 @@ export default function Sidebar({ onSelect }) {
                         <div className="grid mr-4 place-items-center">
                             <Boxes />
                         </div>
-                        Atribuir Chamado
+                        Gestão de Chamados
                     </button>
 
                     <button
