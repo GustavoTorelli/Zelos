@@ -308,11 +308,11 @@ export class TicketController {
 	async assignTechnician(req, res) {
 		try {
 			const parsedId = idSchema.parse(req.params.id);
-			const { technicianId } = assignTechnician.parse(req.body);
+			const { technician_id } = assignTechnician.parse(req.body);
 
 			const ticket = new Ticket({ id: parsedId });
 			const updated = await ticket.assignTechnician({
-				technicianId,
+				technicianId: technician_id,
 				role: req.user.role,
 			});
 
@@ -326,7 +326,7 @@ export class TicketController {
 				res,
 			);
 		} catch (error) {
-			if (error instanceof ZodError)
+			if (error instanceof ZodError) {
 				return apiResponse(
 					{
 						success: false,
@@ -336,7 +336,9 @@ export class TicketController {
 					},
 					res,
 				);
-			if (error.message === 'FORBIDDEN')
+			}
+
+			if (error.message === 'FORBIDDEN') {
 				return apiResponse(
 					{
 						success: false,
@@ -346,6 +348,30 @@ export class TicketController {
 					},
 					res,
 				);
+			}
+
+			if (error.message === 'TICKET_NOT_FOUND') {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Ticket not found',
+						code: 404,
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'TECHNICIAN_NOT_FOUND') {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Technician not found',
+						code: 404,
+					},
+					res,
+				);
+			}
+
 			return apiResponse(
 				{
 					success: false,

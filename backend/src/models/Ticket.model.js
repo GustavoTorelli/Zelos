@@ -182,7 +182,7 @@ export class Ticket {
 
 	/**
 	 * Assigns a technician to a ticket
-	 * @param {{ ticketId: number, technicianId: number, role: string }} data - The data to assign the technician to the ticket with
+	 * @param {{technicianId: number, role: string }} data - The data to assign the technician to the ticket with
 	 * @returns {Promise<Object>} A promise that resolves to the updated ticket object
 	 * @throws {Error} If the user does not have permission to assign a technician to the ticket
 	 */
@@ -190,11 +190,17 @@ export class Ticket {
 		if (role !== 'admin' && role !== 'technician')
 			throw new Error('FORBIDDEN');
 
-		return await prisma.ticket.update({
-			where: { id: this.id },
-			data: { technician_id: technicianId },
-			select: this._baseSelect,
-		});
+		try {
+			return await prisma.ticket.update({
+				where: { id: this.id },
+				data: { technician_id: technicianId },
+				select: this._baseSelect,
+			});
+		} catch (error) {
+			if (error.code === 'P2025') throw new Error('TICKET_NOT_FOUND');
+			if (error.code === 'P2003') throw new Error('TECHNICIAN_NOT_FOUND');
+			throw new Error(`Error assigning technician: ${error}`);
+		}
 	}
 
 	static _baseSelect = {
@@ -205,9 +211,32 @@ export class Ticket {
 		closed_at: true,
 		created_at: true,
 		updated_at: true,
-		user_id: true,
-		technician_id: true,
-		category_id: true,
-		patrimony_id: true,
+		User: {
+			select: {
+				id: true,
+				name: true,
+				email: true,
+			},
+		},
+		Technician: {
+			select: {
+				id: true,
+				name: true,
+				email: true,
+			},
+		},
+		Category: {
+			select: {
+				id: true,
+				title: true,
+			},
+		},
+		Patrimony: {
+			select: {
+				id: true,
+				code: true,
+				description: true,
+			},
+		},
 	};
 }

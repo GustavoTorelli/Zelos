@@ -21,7 +21,7 @@ router.put('/:id', auth(), async (req, res) => {
 	return await ticketController.update(req, res);
 });
 
-router.put('/:id/status', auth(), async (req, res) => {
+router.patch('/:id/status', auth(), async (req, res) => {
 	return await ticketController.updateStatus(req, res);
 });
 
