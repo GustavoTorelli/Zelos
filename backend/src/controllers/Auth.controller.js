@@ -1,5 +1,9 @@
 import { Auth } from '../models/Auth.model.js';
-import { loginSchema } from '../schemas/login.schema.js';
+import {
+	loginSchema,
+	passwordRecoverySchema,
+	resetPasswordSchema,
+} from '../schemas/auth.schema.js';
 import { ZodError } from 'zod';
 import apiResponse from '../utils/api-response.js';
 import zodErrorFormatter from '../utils/zod-error-formatter.js';
@@ -28,15 +32,25 @@ export class AuthController {
 			// Login the user and return a 200 response with the JWT token
 			const token = await Auth.login(parsedData);
 
-			return apiResponse(
-				{
-					success: true,
-					message: 'User logged in successfully',
-					data: { token },
-					code: 200,
-				},
-				res,
-			);
+			// Set the JWT token as a cookie
+			res.cookie('jwt_token', token, {
+				httpOnly: true,
+				maxAge: 24 * 60 * 60 * 1000, // 1 day
+				sameSite: 'lax',
+				secure: process.env.ENVIRONMENT === 'prod',
+			});
+
+			const responseData = {
+				success: true,
+				message: 'Logged in successfully',
+				code: 200,
+			};
+
+			if (process.env.ENVIRONMENT === 'dev') {
+				responseData.data = { token };
+			}
+
+			return apiResponse(responseData, res);
 		} catch (error) {
 			// If the error is a Zod error, return a 400 response with the validation errors
 			if (error instanceof ZodError) {
@@ -88,6 +102,132 @@ export class AuthController {
 			}
 
 			// Otherwise, return a 500 response with the error message
+			return apiResponse(
+				{
+					success: false,
+					message: 'An unexpected error occurred',
+					errors: error.message,
+					code: 500,
+				},
+				res,
+			);
+		}
+	}
+
+	async logout(req, res) {
+		res.clearCookie('jwt_token');
+		return apiResponse(
+			{
+				success: true,
+				message: 'Logged out successfully',
+				code: 200,
+			},
+			res,
+		);
+	}
+
+	async passwordRecovery(req, res) {
+		try {
+			const parsedData = passwordRecoverySchema.parse(req.body);
+
+			await Auth.passwordRecovery(parsedData);
+
+			return apiResponse(
+				{
+					success: true,
+					message: 'Password recovery email sent successfully',
+					code: 200,
+				},
+				res,
+			);
+		} catch (error) {
+			if (error instanceof ZodError) {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Invalid request data',
+						errors: zodErrorFormatter(error),
+						code: 400,
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'NOT_FOUND') {
+				return apiResponse(
+					{
+						success: false,
+						message: 'User does not exist',
+						code: 404,
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'ACCOUNT_INACTIVE') {
+				return apiResponse(
+					{
+						success: false,
+						message: 'User account is inactive',
+						code: 403,
+					},
+					res,
+				);
+			}
+
+			return apiResponse(
+				{
+					success: false,
+					message: 'An unexpected error occurred',
+					errors: error.message,
+					code: 500,
+				},
+				res,
+			);
+		}
+	}
+
+	async resetPassword(req, res) {
+		try {
+			const parsedData = resetPasswordSchema.parse({
+				token: req.query.token,
+				password: req.body.password,
+			});
+
+			await Auth.resetPassword(parsedData);
+
+			return apiResponse(
+				{
+					success: true,
+					message: 'Password reset successfully',
+					code: 200,
+				},
+				res,
+			);
+		} catch (error) {
+			if (error instanceof ZodError) {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Invalid request data',
+						errors: zodErrorFormatter(error),
+						code: 400,
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'INVALID_TOKEN') {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Token is invalid or has expired',
+						code: 401,
+					},
+					res,
+				);
+			}
+
 			return apiResponse(
 				{
 					success: false,

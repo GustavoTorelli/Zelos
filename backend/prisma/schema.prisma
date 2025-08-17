@@ -21,14 +21,16 @@ enum Status {
 }
 
 model User {
-  id              Int      @id @unique @default(autoincrement())
-  name            String
-  email           String   @unique
-  hashed_password String
-  role            Role     @default(user)
-  is_active       Boolean  @default(true)
-  created_at      DateTime @default(now())
-  updated_at      DateTime @default(now()) @updatedAt
+  id                  Int       @id @unique @default(autoincrement())
+  name                String
+  email               String    @unique
+  hashed_password     String
+  role                Role      @default(user)
+  is_active           Boolean   @default(true)
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @default(now()) @updatedAt
+  reset_token         String?
+  reset_token_expires DateTime?
 
   CreatedCategories   Category[]            @relation("CreatedBy")
   UpdatedCategories   Category[]            @relation("UpdatedBy")

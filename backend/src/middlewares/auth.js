@@ -1,16 +1,21 @@
 import jwt from 'jsonwebtoken';
+import apiResponse from '../utils/api-response.js';
 
 export function auth(requiredRole = null) {
 	return (req, res, next) => {
-		const token = req.headers.authorization?.split(' ')[1];
+		const token =
+			req.cookies?.jwt_token || req.headers?.authorization.split(' ')[1];
 
 		if (!token) {
-			res.status(401).json({
-				success: false,
-				message: 'Authentication token not provided.',
-				data: null,
-				error: null,
-			});
+			apiResponse(
+				{
+					success: false,
+					message: 'Authentication token not provided.',
+					code: 401,
+				},
+				res,
+			);
+			return;
 		}
 
 		try {
@@ -18,23 +23,30 @@ export function auth(requiredRole = null) {
 			req.user = decoded;
 
 			if (requiredRole && decoded.role !== requiredRole) {
-				res.status(403).json({
-					success: false,
-					message:
-						'Access denied. You do not have permission to perform this action.',
-					data: null,
-					error: null,
-				});
+				apiResponse(
+					{
+						success: false,
+						message:
+							'Access denied. You do not have permission to perform this action.',
+						code: 403,
+					},
+					res,
+				);
+				return;
 			}
 
 			next();
 		} catch (error) {
-			res.status(401).json({
-				success: false,
-				message: 'Invalid authentication token.',
-				data: null,
-				error: error.message,
-			});
+			apiResponse(
+				{
+					success: false,
+					message: 'Invalid authentication token.',
+					code: 401,
+					errors: error.message,
+				},
+				res,
+			);
+			return;
 		}
 	};
 }
