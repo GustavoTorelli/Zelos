@@ -3,7 +3,7 @@ export default function Solicitar() {
     return (
         <section className=" md:w-screen h-full flex flex-col items-center">
             {/* Titulo*/}
-            <div className="mb-8 w-10/12 flex flex-col items-start pt-20">
+            <div className="mb-8 w-10/12 flex flex-col items-start pt-15">
                 <h1 className="pb-2 text-2xl sm:text-3xl text-white font-semibold">
                     Solicitar chamado
                 </h1>

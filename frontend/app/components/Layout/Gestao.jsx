@@ -7,7 +7,7 @@ import ConcluirChamado from '../cards/ConcluirChamadoPendente';
 import VizualizarChamado from '../cards/VizualizarChamadoConcluido';
 export default function Atribuir() {
     return (
-        <section className="md:w-screen h-full flex flex-col items-center pt-20 ">
+        <section className="md:w-screen h-full flex flex-col items-center pt-15 ">
             {/* Titulo*/}
             <div className="mb-8 flex justify-between w-10/12   ">
                 <div>
