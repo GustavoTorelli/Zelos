@@ -7,6 +7,7 @@ import {
 	updateTicket,
 	updateStatus,
 	assignTechnician,
+	findAllTicket,
 } from '../schemas/ticket.schema.js';
 import { idSchema } from '../schemas/generic.schema.js';
 
@@ -76,7 +77,7 @@ export class TicketController {
 				technicianId,
 				createdAfter,
 				createdBefore,
-			} = req.query;
+			} = findAllTicket.parse(req.query);
 
 			const tickets = await Ticket.findAll(
 				{ userId: id, role },
@@ -100,6 +101,18 @@ export class TicketController {
 				res,
 			);
 		} catch (error) {
+			if (error instanceof ZodError) {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Invalid request data',
+						errors: zodErrorFormatter(error),
+						code: 400,
+					},
+					res,
+				);
+			}
+
 			return apiResponse(
 				{
 					success: false,

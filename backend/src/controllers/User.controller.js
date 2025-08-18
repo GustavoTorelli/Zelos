@@ -1,5 +1,5 @@
 import { User } from '../models/User.model.js';
-import { userCreateSchema, userUpdateSchema } from '../schemas/user.schemas.js';
+import { userCreateSchema, userUpdateSchema } from '../schemas/user.schema.js';
 import { idSchema } from '../schemas/generic.schema.js';
 import apiResponse from '../utils/api-response.js';
 import { ZodError } from 'zod';

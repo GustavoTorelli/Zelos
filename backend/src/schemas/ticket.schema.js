@@ -23,6 +23,20 @@ export const updateStatus = z.object({
 	),
 });
 
+export const findAllTicket = z.object({
+	status: z
+		.enum(
+			['pending', 'in_progress', 'completed'],
+			`Status must be 'pending', 'in_progress' or 'completed'`,
+		)
+		.optional(),
+	technicianId: idSchema.optional(),
+	categoryId: idSchema.optional(),
+	patrimonyId: idSchema.optional(),
+	createdAfter: z.iso.date('Date must be in YYYY-MM-DD format').optional(),
+	createdBefore: z.iso.date('Date must be in YYYY-MM-DD format').optional(),
+});
+
 export const assignTechnician = z
 	.object({
 		technician_id: idSchema,

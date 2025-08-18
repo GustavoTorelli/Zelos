@@ -73,7 +73,18 @@ export class Ticket {
 		},
 	) {
 		let where = {};
-		if (role === 'technician') where.technician_id = userId;
+		if (role === 'technician') {
+			where.OR = [
+				{ technician_id: userId },
+				{
+					Category: {
+						Technician_Category: {
+							some: { technician_id: userId },
+						},
+					},
+				},
+			];
+		}
 		if (role === 'user') where.user_id = userId;
 
 		const filters = {
