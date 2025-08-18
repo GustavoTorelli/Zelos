@@ -16,3 +16,5 @@ router.get('/:id', auth(), async (req, res) => {
 router.post('/', auth(), async (req, res) => {
 	return await worklogController.create(req, res);
 });
+
+export default router;

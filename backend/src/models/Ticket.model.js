@@ -216,6 +216,15 @@ export class Ticket {
 			throw new Error('FORBIDDEN');
 
 		try {
+			const technician = await prisma.user.findUnique({
+				where: { id: technicianId },
+				select: { id: true, role: true },
+			});
+
+			if (!technician || technician.role !== 'technician') {
+				throw new Error('TECHNICIAN_NOT_FOUND');
+			}
+
 			return await prisma.ticket.update({
 				where: { id: this.id },
 				data: { technician_id: technicianId },
@@ -223,7 +232,7 @@ export class Ticket {
 			});
 		} catch (error) {
 			if (error.code === 'P2025') throw new Error('TICKET_NOT_FOUND');
-			if (error.code === 'P2003') throw new Error('TECHNICIAN_NOT_FOUND');
+			if (error.message === 'TECHNICIAN_NOT_FOUND') throw error;
 			throw new Error(`Error assigning technician: ${error}`);
 		}
 	}

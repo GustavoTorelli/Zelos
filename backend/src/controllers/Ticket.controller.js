@@ -321,11 +321,18 @@ export class TicketController {
 	async assignTechnician(req, res) {
 		try {
 			const parsedId = idSchema.parse(req.params.id);
-			const { technician_id } = assignTechnician.parse(req.body);
+			let technicianId;
+
+			if (req.user.role === 'admin') {
+				const { technician_id } = assignTechnician.parse(req.body);
+				technicianId = technician_id;
+			} else if (req.user.role === 'technician') {
+				technicianId = req.user.id;
+			}
 
 			const ticket = new Ticket({ id: parsedId });
 			const updated = await ticket.assignTechnician({
-				technicianId: technician_id,
+				technicianId,
 				role: req.user.role,
 			});
 
@@ -357,6 +364,7 @@ export class TicketController {
 						success: false,
 						message:
 							'You do not have permission to assign technician',
+						errors: error.message,
 						code: 403,
 					},
 					res,
@@ -368,6 +376,7 @@ export class TicketController {
 					{
 						success: false,
 						message: 'Ticket not found',
+						errors: error.message,
 						code: 404,
 					},
 					res,
@@ -379,6 +388,7 @@ export class TicketController {
 					{
 						success: false,
 						message: 'Technician not found',
+						errors: error.message,
 						code: 404,
 					},
 					res,
