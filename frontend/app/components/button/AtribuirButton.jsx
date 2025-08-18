@@ -12,7 +12,7 @@ export default function AtribuirButton() {
 
     return (
         
-            <div className="relative flex justify-between rounded-lg overflow-hidden md:w-4/12 w-12/12  mt-5 md:mt-0 ">
+            <div className="relative flex justify-between rounded-lg overflow-hidden md:w-4/12 w-12/12  mt-5 md:mt-0 bg-zinc-600 md:bg-transparent">
                 {statuses.map((status, index) => (
                     <button
                         key={index}

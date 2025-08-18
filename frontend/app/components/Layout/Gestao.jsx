@@ -21,7 +21,7 @@ export default function Atribuir() {
             </div>
 
             {/* seção dos chamados */}
-            <section className="flex flex-wrap items-center w-10/12 justify-start h-auto">
+            <section className="flex flex-wrap items-center w-12/12 justify-center h-auto">
 
                 {/* quando não houver chamados */}
                 <div className='hidden items-center justify-center w-full h-130 bg-[#1d1e21] rounded-xl gap-5 shadow-[-4px_8px_15px_-9px_rgba(0,_0,_0,_0.7)]'>

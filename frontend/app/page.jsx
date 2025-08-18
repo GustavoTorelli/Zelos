@@ -65,18 +65,26 @@ export default function Home() {
 
           {/* resetar senha */}
           <form className={`flex flex-col ${resetMode ? "flex" : "hidden"}`} id="novaSenha">
-            <input
-              placeholder="Digite seu e-mail"
-              className="bg-gray-600/80 text-white border-0 rounded-md p-2 mb-4 focus:bg-gray-600 focus:outline-none transition ease-in-out duration-150 hover:bg-gray-600/90"
-              type="email"
-            />
+            <div className="flex flex-col">
+              <input
+                placeholder="Digite seu e-mail"
+                className="bg-gray-600/80 text-white border-0 rounded-md p-2 mb-4 focus:bg-gray-600 focus:outline-none transition ease-in-out duration-150 hover:bg-gray-600/90"
+                type="email"
+              />
 
-            <button
-              className="bg-gradient-to-r from-red-800 to-red-700 text-white font-bold py-2 px-4 rounded-md mt-2 hover:from-red-900 hover:to-red-800 transition ease-in-out duration-150 cursor-pointer"
-              type="submit"
-            >
-              Enviar
-            </button>
+              <button
+                className="bg-gradient-to-r from-red-800 to-red-700 text-white font-bold py-2 px-4 rounded-md mt-2 hover:from-red-900 hover:to-red-800 transition ease-in-out duration-150 cursor-pointer"
+                type="submit"
+              >
+                Enviar
+              </button>
+            </div>
+
+            {/* confirmação do email*/}
+
+            <div className="hidden">
+              <h1 className="text-white"><b className="text-red-600 font-semibold">E-mail enviado! </b> Verifique sua caixa de entrada para redefinir sua senha.</h1>
+            </div>
 
             <div className="flex justify-center pt-5">
               <button
@@ -88,6 +96,10 @@ export default function Home() {
               </button>
             </div>
           </form>
+
+          <div>
+
+          </div>
         </div>
       </div>
     </section>
