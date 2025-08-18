@@ -19,7 +19,7 @@ export default function Sidebar({ onSelect, isOpen }) {
            
             <div className="flex flex-col items-center w-full h-full">
                  {/* Logo */}
-                <div className="flex items-center justify-center w-full h-2/12">
+                <div className="hidden md:flex items-center justify-center w-full h-2/12">
                     <img src="/img/global/logo_branco.svg" className="h-11" alt="Logo" />
                 </div>
 
@@ -28,7 +28,8 @@ export default function Sidebar({ onSelect, isOpen }) {
                     flex min-w-[240px] flex-col gap-1 p-2
                     font-sans text-base font-normal
                     justify-center items-center
-                    h-8/12
+                    h-12/12
+                    md:h-8/12
                 ">
                     <button
                         type="button"
