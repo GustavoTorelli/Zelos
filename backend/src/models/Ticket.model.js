@@ -173,9 +173,23 @@ export class Ticket {
 		if (status === 'completed' && ticket.status !== 'in_progress')
 			throw new Error('FORBIDDEN');
 
+		let dataToUpdate = {};
+		if (status === 'in_progress') dataToUpdate = { started_at: new Date() };
+		if (status === 'completed') {
+			const start = new Date(ticket.started_at);
+			const end = new Date();
+			dataToUpdate = {
+				closed_at: end,
+				duration_seconds: (end.getTime() - start.getTime()) / 1000,
+			};
+		}
+
 		return await prisma.ticket.update({
 			where: { id: this.id },
-			data: { status },
+			data: {
+				status,
+				...dataToUpdate,
+			},
 			select: this._baseSelect,
 		});
 	}
@@ -208,9 +222,13 @@ export class Ticket {
 		title: true,
 		description: true,
 		status: true,
+		started_at: true,
 		closed_at: true,
+		duration_seconds: true,
 		created_at: true,
 		updated_at: true,
+		technician_id: true,
+		user_id: true,
 		User: {
 			select: {
 				id: true,
