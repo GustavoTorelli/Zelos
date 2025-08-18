@@ -1,18 +1,20 @@
-// Sidebar.jsx
 'use client'
 import { Boxes, ChartPie, Headset, Power } from "lucide-react"
 
-export default function Sidebar({ onSelect }) {
+export default function Sidebar({ onSelect, isOpen }) {
     return (
         <aside
-            className="
-                fixed top-16 left-0
+            className={`
+                fixed top-16 left-0 z-40
                 bg-zinc-900
                 w-60
                 h-[calc(100vh-4rem)]
                 flex flex-col items-center justify-between
                 text-white
-            "
+                transition-transform duration-300 ease-in-out
+                md:translate-x-0
+                ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+            `}
         >
            
             <div className="flex flex-col items-center w-full h-full">

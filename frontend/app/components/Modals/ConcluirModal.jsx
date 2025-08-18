@@ -7,7 +7,6 @@ export default function ConcluirModal({ isOpen, onClose }) {
 
     const [tecnico, setTecnico] = useState("");
     const [apontamentos, setApontamentos] = useState("");
-   
 
     return (
         <div
@@ -16,19 +15,27 @@ export default function ConcluirModal({ isOpen, onClose }) {
             tabIndex={-1}
             className="fixed inset-0 z-50 flex justify-center items-center bg-zinc-950/70 bg-opacity-50"
         >
-            <div className="relative w-full flex flex-col max-w-3xl h-auto p-6 bg-[#1d1e21] border border-zinc-600/95 rounded-lg space-y-4 shadow-lg">
+            <div className="
+                relative w-full max-w-lg sm:max-w-2xl md:max-w-3xl
+                mx-4
+                flex flex-col
+                max-h-[90vh] overflow-y-auto
+                p-4 sm:p-6
+                bg-[#1d1e21] border border-zinc-600/95 
+                rounded-lg space-y-4 shadow-lg
+            ">
 
                 {/* Header */}
-                <div className="pb-2 border-b border-zinc-600/95 rounded-t text-xl font-semibold text-white flex justify-between gap-2 mt-2 w-full">
-                    <div className="flex gap-2">
+                <div className="pb-2 border-b border-zinc-600/95 rounded-t text-lg sm:text-xl font-semibold text-white flex flex-col sm:flex-row justify-between gap-2 sm:items-center">
+                    <div className="flex gap-2 justify-center items-center">
                         <h3>Apontamentos Técnicos -</h3>
                         <span>#ID</span>
                     </div>
-                    <div className="flex justify-center items-center text-center gap-2">
+                    <div className="flex flex-wrap justify-center items-center gap-2">
                         <CirclePlay color="#ed8936" />
-                        <span className="text-xl font-semibold text-gray-100">dd/mm/aaaa</span>
+                        <span className="text-sm sm:text-lg font-semibold text-gray-100">dd/mm/aaaa</span>
                         <Goal color="#22c55e" />
-                        <span className="text-xl font-semibold text-gray-100">dd/mm/aaaa</span>
+                        <span className="text-sm sm:text-lg font-semibold text-gray-100">dd/mm/aaaa</span>
                     </div>
                 </div>
 
@@ -47,7 +54,7 @@ export default function ConcluirModal({ isOpen, onClose }) {
                     <select
                         value={tecnico}
                         onChange={(e) => setTecnico(e.target.value)}
-                        className="bg-gray-600/80 w-full text-white border-0 rounded-md p-2 focus:bg-gray-600 focus:outline-none transition ease-in-out duration-150 hover:bg-gray-600/90"
+                        className="bg-gray-600/80 w-full text-white border-0 rounded-md p-2 focus:bg-gray-600 focus:outline-none transition hover:bg-gray-600/90"
                     >
                         <option value="">Nome do técnico</option>
                         <option value="tecnico1">Técnico 1</option>
@@ -59,35 +66,32 @@ export default function ConcluirModal({ isOpen, onClose }) {
                     <textarea
                         value={apontamentos}
                         onChange={(e) => setApontamentos(e.target.value)}
-                        className="bg-gray-600/80 w-full h-40 resize-none text-white border-0 rounded-md p-2 focus:bg-gray-600 focus:outline-none transition ease-in-out duration-150 hover:bg-gray-600/90"
+                        className="bg-gray-600/80 w-full h-40 resize-none text-white border-0 rounded-md p-2 focus:bg-gray-600 focus:outline-none transition hover:bg-gray-600/90"
                         placeholder="Escreva os apontamentos técnicos aqui..."
                         maxLength={300}
                     ></textarea>
 
                     {/* Botões */}
-                    <div className="w-full flex gap-3 mt-4">
-                        {/* Concluir */}
+                    <div className="w-full flex flex-col sm:flex-row gap-3 mt-4">
                         <button
                             type="submit"
-                            className="bg-gradient-to-r from-green-700 to-green-600 text-white font-bold py-2 px-4 rounded-md hover:from-green-800 hover:to-green-800 transition ease-in-out duration-150 cursor-pointer w-full"
+                            className=" cursor-pointer bg-gradient-to-r from-green-700 to-green-600 text-white font-bold py-2 px-4 rounded-md hover:from-green-800 hover:to-green-800 transition w-full"
                         >
                             Concluir
                         </button>
 
-                        {/* Atualizar */}
                         <button
                             type="button"
                             onClick={() => alert("Chamado atualizado (teste)")}
-                            className="bg-gradient-to-r from-blue-700 to-blue-600 text-white font-bold py-2 px-4 rounded-md hover:from-blue-800 hover:to-blue-700 transition ease-in-out duration-150 cursor-pointer w-full"
+                            className="cursor-pointer bg-gradient-to-r from-blue-700 to-blue-600 text-white font-bold py-2 px-4 rounded-md hover:from-blue-800 hover:to-blue-700 transition w-full"
                         >
                             Atualizar
                         </button>
 
-                        {/* Excluir */}
                         <button
                             type="button"
                             onClick={() => alert("Chamado excluído (teste)")}
-                            className="bg-gradient-to-r from-red-700 to-red-600 text-white font-bold py-2 px-4 rounded-md hover:from-red-800 hover:to-red-700 transition ease-in-out duration-150 cursor-pointer w-full"
+                            className="cursor-pointer bg-gradient-to-r from-red-700 to-red-600 text-white font-bold py-2 px-4 rounded-md hover:from-red-800 hover:to-red-700 transition w-full"
                         >
                             Excluir
                         </button>

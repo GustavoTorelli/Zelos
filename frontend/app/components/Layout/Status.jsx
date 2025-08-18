@@ -4,9 +4,9 @@ import StatusButton from '../button/StatusButton';
 import StatusCard from '../cards/StatusCard';
 export default function Status() {
     return (
-        <section className="md:w-screen h-full flex flex-col items-center pt-15 ">
+        <section className="md:w-screen h-full flex flex-col items-center md:pt-15 py-5 md:py-0">
             {/* Titulo*/}
-            <div className="mb-8 flex justify-between w-10/12   ">
+            <div className="mb-8 flex flex-col md:flex-row justify-between w-10/12 gap-4 md:gap-0">
                 <div>
                     <h1 className="pb-2 text-2xl sm:text-3xl text-white font-semibold">
                         Status do Chamado
@@ -18,7 +18,7 @@ export default function Status() {
             </div>
 
             {/* seção dos chamados */}
-            <section className="flex flex-col  w-10/12  items-start justify-center h-auto ">
+            <section className="flex flex-col w-10/12 items-start justify-center h-auto">
 
                 {/* quando não houver chamados */}
                 <div className="hidden flex-col items-center justify-center w-full h-[400px] bg-[#1d1e21] rounded-xl gap-6 shadow-lg p-6">

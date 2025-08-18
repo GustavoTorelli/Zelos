@@ -8,20 +8,24 @@ import Header from "@/app/components/Header/Header";
 
 export default function Chamados() {
     const [activeComponent, setActiveComponent] = useState(1);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    const toggleSidebar = () => {
+        setSidebarOpen(!sidebarOpen);
+    };
 
     return (
         <div className="flex flex-col h-screen">
-            {/* Header */}
-            <Header />
+            {/* header */}
+            <Header toggleSidebar={toggleSidebar} />
 
             {/* Conteúdo com Sidebar */}
             <div className="flex flex-1 pt-16">
                 {/* Sidebar */}
-                <Sidebar onSelect={setActiveComponent} />
+                <Sidebar onSelect={setActiveComponent} isOpen={sidebarOpen} />
 
-                {/* Área principal */}
-                <section className="
-                    flex ml-60 overflow-y-auto p-6 bg-zinc-100 dark:bg-zinc-800 justify-center items-center ">
+                <section className="flex w-full overflow-y-auto p-6  bg-zinc-100 dark:bg-zinc-800 justify-center items-center md:ml-60
+                ">
                     {activeComponent === 1 && <Solicitar />}
                     {activeComponent === 2 && <Status />}
                     {activeComponent === 3 && <Atribuir />}

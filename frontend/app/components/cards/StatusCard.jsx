@@ -7,7 +7,7 @@ export default function StatusCard() {
     const [isExpanded, setIsExpanded] = useState(false);
     return (
         <motion.div
-            className="flex flex-col w-full bg-[#1d1e21] rounded-xl shadow-[-4px_8px_15px_-9px_rgba(0,_0,_0,_0.7)] m-2 overflow-hidden"
+            className="flex flex-col w-full bg-[#1d1e21] rounded-xl shadow-[-4px_8px_15px_-9px_rgba(0,_0,_0,_0.7)] md:m-2 overflow-hidden"
         >
 
             <div className="flex items-center justify-between w-full h-20 px-4">
