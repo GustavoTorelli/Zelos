@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import VizualizarModal from '../Modals/VizualizarModal';
+import { ChevronsRight } from 'lucide-react';
+
 export default function VizualizarChamado() {
     const [isOpen, setIsOpen] = useState(false);
     return (
@@ -32,12 +34,17 @@ export default function VizualizarChamado() {
             </div>
 
             {/* Botão */}
-            <button
-                onClick={() => setIsOpen(true)}
-                className="mt-3 bg-gradient-to-r from-green-700 to-green-600 text-white font-bold py-2 px-4 rounded-md hover:from-green-800 hover:to-green-800 transition ease-in-out duration-150 cursor-pointer w-full"
-            >
-                Vizualizar
-            </button>
+            <div className="flex justify-end mt-3">
+                <button
+                    onClick={() => setIsOpen(true)}
+                    className="bg-gradient-to-r from-red-700 to-red-600 text-white py-2 px-4 rounded-md hover:from-red-800 hover:to-red-700 transition duration-150 flex justify-center items-center gap-1 cursor-pointer"
+
+                >
+                    Vizualizar
+                    
+                    <ChevronsRight />
+                </button>
+            </div>
         </div>
     )
 }

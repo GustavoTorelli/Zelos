@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ConcluirModal from "../Modals/ConcluirModal"
+import { ChevronsRight } from 'lucide-react';
 export default function ConcluirChamado() {
     const [isOpen, setIsOpen] = useState(false);
     return (
@@ -32,12 +33,17 @@ export default function ConcluirChamado() {
             </div>
 
             {/* Botão */}
-            <button
-                onClick={() => setIsOpen(true)}
-                className="mt-3 bg-gradient-to-r from-orange-600 to-orange-500 text-white font-bold py-2 px-4 rounded-md hover:from-orange-700 hover:to-orange-600 transition ease-in-out duration-150 cursor-pointer w-full"
-            >
-                Concluir
-            </button>
+            <div className="flex justify-end mt-3">
+                <button
+                    onClick={() => setIsOpen(true)}
+                    className="bg-gradient-to-r from-red-700 to-red-600 text-white py-2 px-4 rounded-md hover:from-red-800 hover:to-red-700 transition duration-150 flex justify-center items-center gap-1 cursor-pointer"
+
+                >
+                    Concluir
+
+                    <ChevronsRight />
+                </button>
+            </div>
         </div>
     )
 }

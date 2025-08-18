@@ -1,87 +1,50 @@
-'use client'
 import { useState } from 'react';
-import { ChevronsRight, Goal, CirclePlay, BadgeCheck, MonitorDot, Wrench } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion";
+import VizualizarModal from '../Modals/VizualizarModal';
+import { ChevronsRight } from 'lucide-react';
 
 export default function StatusCard() {
-    const [isExpanded, setIsExpanded] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
     return (
-        <motion.div
-            className="flex flex-col w-full bg-[#1d1e21] rounded-xl shadow-[-4px_8px_15px_-9px_rgba(0,_0,_0,_0.7)] md:m-2 overflow-hidden"
-        >
+        <div className="w-72 h-48 flex flex-col justify-between bg-[#1d1e21] rounded-xl shadow-[-4px_8px_15px_-9px_rgba(0,0,0,0.7)] p-5 m-2">
+            {/* modal */}
+            <VizualizarModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
 
-            <div className="flex items-center justify-between w-full h-20 px-4">
-                {/* Dados  */}
-                <div className="flex items-center w-[90%] gap-4 overflow-hidden">
-                    {/* id e status */}
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                        <h1 className="text-2xs font-medium text-gray-200 flex">
-                            #<span>55</span>
-                        </h1>
-                        {/* Status */}
-                        <div className="w-0.5 h-[50px] bg-green-500"></div>
-                    </div>
-
-                    {/* nome e id patrimônio */}
-                    <div className="flex items-center gap-4 min-w-0">
-                        <span className="text-2xs font-medium text-gray-200 truncate uppercase">
-                            Nome do patrimônio
-                        </span>
-                        <h1 className="text-2xs font-medium text-gray-200 flex gap-1 flex-shrink-0 uppercase">
-                            ID: <span>2</span>
-                        </h1>
-                    </div>
+            {/* Conteúdo principal */}
+            <div className="flex flex-col h-full gap-2">
+                {/* chamado id*/}
+                <div className="flex flex-col gap-2">
+                    <div className="w-full h-1 bg-[#22C55E] rounded-full"></div>
+                    <h1 className="text-sm font-semibold text-gray-100 tracking-wide">
+                        Chamado <span className="text-[#22C55E]">#1234567</span>
+                    </h1>
                 </div>
 
-                {/* Botão expandir */}
-                <div className="flex justify-center items-center w-[10%] flex-shrink-0">
-                    <button
-                        onClick={() => setIsExpanded(!isExpanded)}
-                        type="button"
-                        aria-label="Ver detalhes"
-                        className={`cursor-pointer bg-gray-300 dark:bg-gray-200 w-10 h-10 rounded-full flex justify-center items-center hover:ring-4 ring-gray-200 dark:ring-gray-600 transition duration-300 ease-in-out
-                        ${isExpanded ? "rotate-90" : ""}`}
-                    >
-                        <ChevronsRight />
-                    </button>
+                {/* Informações */}
+                <div className="flex flex-col gap-1 min-w-0">
+                    <span className="text-xs font-semibold text-gray-400 uppercase">
+                        Patrimônio
+                    </span>
+                    <span className="text-sm font-medium text-gray-200 truncate">
+                        Nome do patrimônio
+                    </span>
+                    <span className="text-xs text-gray-300">
+                        ID: <span className="font-medium">1234567</span>
+                    </span>
                 </div>
             </div>
 
-            {/* apontamentos */}
-            <AnimatePresence initial={false}>
-                {isExpanded && (
-                    <motion.div
-                        layout
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.1, ease: "easeInOut" }}
+            {/* Botão */}
+            <div className="flex justify-end mt-3">
+                <button
+                    onClick={() => setIsOpen(true)}
+                    className="bg-gradient-to-r from-red-700 to-red-600 text-white py-2 px-4 rounded-md hover:from-red-800 hover:to-red-700 transition duration-150 flex justify-center items-center gap-1 cursor-pointer"
 
-                    >
+                >
+                    Vizualizar
 
-                        <div className="flex flex-col gap-4 px-6 pb-6 border-t border-red-800">
-                            {/* detalhes*/}
-                            <div className="flex justify-between items-center pt-4">
-                                <div className="flex gap-2 text-white text-lg uppercase font-semibold">
-                                    <h3>Apontamentos Técnicos</h3>
-                                </div>
-                                <div className="flex items-center gap-4 text-white">
-                                    <CirclePlay color="#ed8936" />
-                                    <span>dd/mm/aaaa</span>
-                                    <Goal color="#22c55e" />
-                                    <span>dd/mm/aaaa</span>
-                                </div>
-                            </div>
-
-                            {/* Apontamentos */}
-                            <span className="text-gray-200 text-lg h-auto text-justify">
-                                Texto
-                            </span>
-                        </div>
-
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </motion.div>
+                    <ChevronsRight />
+                </button>
+            </div>
+        </div>
     )
 }
