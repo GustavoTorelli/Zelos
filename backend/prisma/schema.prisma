@@ -36,7 +36,7 @@ model User {
   UpdatedCategories   Category[]            @relation("UpdatedBy")
   TechnicianTickets   Ticket[]              @relation("TechnicianTicket")
   UserTickets         Ticket[]              @relation("UserTicket")
-  Report              Report[]
+  Worklog             Worklog[]
   Technician_Category Technician_Category[]
 
   @@map("user")
@@ -72,13 +72,15 @@ model Technician_Category {
 }
 
 model Ticket {
-  id          Int       @id @unique @default(autoincrement())
-  title       String
-  description String    @db.Text
-  status      Status    @default(pending)
-  created_at  DateTime  @default(now())
-  updated_at  DateTime  @default(now()) @updatedAt
-  closed_at   DateTime?
+  id               Int       @id @unique @default(autoincrement())
+  title            String
+  description      String    @db.Text
+  status           Status    @default(pending)
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+  started_at       DateTime?
+  closed_at        DateTime?
+  duration_seconds Int?
 
   category_id   Int
   technician_id Int?
@@ -88,7 +90,7 @@ model Ticket {
   Category   Category   @relation(fields: [category_id], references: [id])
   Technician User?      @relation(name: "TechnicianTicket", fields: [technician_id], references: [id])
   User       User       @relation(name: "UserTicket", fields: [user_id], references: [id])
-  Report     Report[]
+  Worklog    Worklog[]
   Patrimony  Patrimony? @relation(fields: [patrimony_id], references: [id])
 
   @@map("ticket")
@@ -106,13 +108,10 @@ model Patrimony {
   @@map("patrimony")
 }
 
-model Report {
-  id               Int       @id @unique @default(autoincrement())
-  description      String    @db.Text
-  started_at       DateTime
-  ended_at         DateTime?
-  duration_seconds Int?
-  created_at       DateTime  @default(now())
+model Worklog {
+  id          Int      @id @unique @default(autoincrement())
+  description String   @db.Text
+  created_at  DateTime @default(now())
 
   technician_id Int
   ticket_id     Int
@@ -120,5 +119,5 @@ model Report {
   Technician User   @relation(fields: [technician_id], references: [id])
   Ticket     Ticket @relation(fields: [ticket_id], references: [id])
 
-  @@map("report")
+  @@map("worklog")
 }
