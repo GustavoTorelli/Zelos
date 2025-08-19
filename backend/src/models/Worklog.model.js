@@ -33,9 +33,13 @@ export class Worklog {
 				select: this._baseSelect,
 			});
 		} catch (error) {
-			if (error.message === 'NOT_FOUND') throw error;
-			if (error.message === 'FORBIDDEN_STATUS') throw error;
-			if (error.message === 'FORBIDDEN') throw error;
+			if (
+				['NOT_FOUND', 'FORBIDDEN_STATUS', 'FORBIDDEN'].includes(
+					error.message,
+				)
+			) {
+				throw error;
+			}
 			throw new Error(`Error creating worklog: ${error}`);
 		}
 	}
@@ -53,13 +57,17 @@ export class Worklog {
 		});
 	}
 
-	static async findById({ worklogId, userId, role }) {
+	static async findById({ worklogId, ticketId, userId, role }) {
 		const wl = await prisma.worklog.findUnique({
 			where: { id: worklogId },
 			select: this._baseSelect,
 		});
 
 		if (!wl) throw new Error('NOT_FOUND');
+
+		if (ticketId && wl.ticket_id !== Number(ticketId)) {
+			throw new Error('INVALID_TICKET');
+		}
 
 		if (role !== 'admin' && wl.technician_id !== userId) {
 			throw new Error('FORBIDDEN');

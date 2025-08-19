@@ -205,34 +205,70 @@ export class Ticket {
 		});
 	}
 
-	/**
-	 * Assigns a technician to a ticket
-	 * @param {{technicianId: number, role: string }} data - The data to assign the technician to the ticket with
-	 * @returns {Promise<Object>} A promise that resolves to the updated ticket object
-	 * @throws {Error} If the user does not have permission to assign a technician to the ticket
-	 */
-	async assignTechnician({ technicianId, role }) {
+	async assignTechnician({ technicianId, role, userId }) {
 		if (role !== 'admin' && role !== 'technician')
 			throw new Error('FORBIDDEN');
 
 		try {
+			// find ticket
+			const ticket = await prisma.ticket.findUnique({
+				where: { id: this.id },
+				select: {
+					id: true,
+					status: true,
+					technician_id: true,
+					category_id: true,
+				},
+			});
+
+			if (!ticket) throw new Error('TICKET_NOT_FOUND');
+
+			// find technician and categories
 			const technician = await prisma.user.findUnique({
 				where: { id: technicianId },
-				select: { id: true, role: true },
+				select: {
+					id: true,
+					role: true,
+					Technician_Category: { select: { category_id: true } },
+				},
 			});
 
 			if (!technician || technician.role !== 'technician') {
 				throw new Error('TECHNICIAN_NOT_FOUND');
 			}
 
+			// Check if technician can handle category
+			const canHandleCategory = technician.Technician_Category.some(
+				(c) => c.category_id === ticket.category_id,
+			);
+			if (!canHandleCategory) {
+				throw new Error('FORBIDDEN_CATEGORY');
+			}
+
+			// if technician is assigned to ticket, change status
+			let dataToUpdate = { technician_id: technicianId };
+			if (
+				role === 'technician' &&
+				technicianId === userId &&
+				ticket.status === 'pending'
+			) {
+				dataToUpdate = {
+					...dataToUpdate,
+					status: 'in_progress',
+					started_at: new Date(),
+				};
+			}
+
 			return await prisma.ticket.update({
 				where: { id: this.id },
-				data: { technician_id: technicianId },
+				data: dataToUpdate,
 				select: this._baseSelect,
 			});
 		} catch (error) {
-			if (error.code === 'P2025') throw new Error('TICKET_NOT_FOUND');
+			if (error.message === 'TICKET_NOT_FOUND')
+				throw new Error('TICKET_NOT_FOUND');
 			if (error.message === 'TECHNICIAN_NOT_FOUND') throw error;
+			if (error.message === 'FORBIDDEN_CATEGORY') throw error;
 			throw new Error(`Error assigning technician: ${error}`);
 		}
 	}

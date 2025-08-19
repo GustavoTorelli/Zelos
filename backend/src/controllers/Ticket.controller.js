@@ -334,6 +334,7 @@ export class TicketController {
 			const updated = await ticket.assignTechnician({
 				technicianId,
 				role: req.user.role,
+				userId: req.user.id,
 			});
 
 			return apiResponse(
@@ -390,6 +391,19 @@ export class TicketController {
 						message: 'Technician not found',
 						errors: error.message,
 						code: 404,
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'FORBIDDEN_CATEGORY') {
+				return apiResponse(
+					{
+						success: false,
+						message:
+							'Technician is not allowed to handle this ticket category',
+						errors: error.message,
+						code: 403,
 					},
 					res,
 				);

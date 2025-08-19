@@ -14,7 +14,7 @@ export class WorklogController {
 	async create(req, res) {
 		try {
 			const parsedData = createWorklogSchema.parse({
-				ticket_id: req.params.ticket_id,
+				ticketId: req.params.ticket_id,
 				...req.body,
 			});
 
@@ -23,6 +23,7 @@ export class WorklogController {
 				technicianId: req.user.id,
 				role: req.user.role,
 			});
+
 			return apiResponse(
 				{
 					success: true,
@@ -50,7 +51,6 @@ export class WorklogController {
 					{
 						success: false,
 						message: 'Ticket not found',
-						errors: error.message,
 						code: 404,
 					},
 					res,
@@ -62,7 +62,6 @@ export class WorklogController {
 					{
 						success: false,
 						message: 'Ticket is not in progress',
-						errors: error.message,
 						code: 403,
 					},
 					res,
@@ -74,7 +73,6 @@ export class WorklogController {
 					{
 						success: false,
 						message: 'You are not the technician of this ticket',
-						errors: error.message,
 						code: 403,
 					},
 					res,
@@ -96,18 +94,21 @@ export class WorklogController {
 	async findAll(req, res) {
 		try {
 			const parsedData = findAllWorklogSchema.parse({
-				ticket_id: req.query.ticket_id,
-				technician_id: req.query.technician_id,
+				ticketId: req.params.ticket_id,
+				technicianId: req.query.technician_id,
 			});
 
 			const worklogs = await Worklog.findAll(parsedData);
 
-			return apiResponse({
-				success: true,
-				message: 'Worklogs found successfully',
-				data: worklogs,
-				code: 200,
-			});
+			return apiResponse(
+				{
+					success: true,
+					message: 'Worklogs found successfully',
+					data: worklogs,
+					code: 200,
+				},
+				res,
+			);
 		} catch (error) {
 			if (error instanceof ZodError) {
 				return apiResponse(
@@ -143,12 +144,15 @@ export class WorklogController {
 				role: req.user.role,
 			});
 
-			return apiResponse({
-				success: true,
-				message: 'Worklog found successfully',
-				data: worklog,
-				code: 200,
-			});
+			return apiResponse(
+				{
+					success: true,
+					message: 'Worklog found successfully',
+					data: worklog,
+					code: 200,
+				},
+				res,
+			);
 		} catch (error) {
 			if (error instanceof ZodError) {
 				return apiResponse(
@@ -167,8 +171,18 @@ export class WorklogController {
 					{
 						success: false,
 						message: 'Worklog not found',
-						errors: error.message,
 						code: 404,
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'INVALID_TICKET') {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Worklog does not belong to this ticket',
+						code: 403,
 					},
 					res,
 				);
@@ -179,14 +193,13 @@ export class WorklogController {
 					{
 						success: false,
 						message: 'You are not the technician of this worklog',
-						errors: error.message,
 						code: 403,
 					},
 					res,
 				);
 			}
 
-			apiResponse(
+			return apiResponse(
 				{
 					success: false,
 					message: 'An unexpected error occurred',
