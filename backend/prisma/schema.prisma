@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  user
+  admin
+  technician
+}
+
+enum Status {
+  pending
+  in_progress
+  completed
+}
+
+model User {
+  id                  Int       @id @unique @default(autoincrement())
+  name                String
+  email               String    @unique
+  hashed_password     String
+  role                Role      @default(user)
+  is_active           Boolean   @default(true)
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @default(now()) @updatedAt
+  reset_token         String?
+  reset_token_expires DateTime?
+
+  CreatedCategories   Category[]            @relation("CreatedBy")
+  UpdatedCategories   Category[]            @relation("UpdatedBy")
+  TechnicianTickets   Ticket[]              @relation("TechnicianTicket")
+  UserTickets         Ticket[]              @relation("UserTicket")
+  Worklog             Worklog[]
+  Technician_Category Technician_Category[]
+
+  @@map("user")
+}
+
+model Category {
+  id          Int      @id @unique @default(autoincrement())
+  title       String   @unique
+  description String   @db.Text
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now()) @updatedAt
+  created_by  Int
+  updated_by  Int
+
+  CreatedBy           User                  @relation(name: "CreatedBy", fields: [created_by], references: [id])
+  UpdatedBy           User                  @relation(name: "UpdatedBy", fields: [updated_by], references: [id])
+  Ticket              Ticket[]
+  Technician_Category Technician_Category[]
+
+  @@map("category")
+}
+
+model Technician_Category {
+  id            Int @id @unique @default(autoincrement())
+  technician_id Int
+  category_id   Int
+
+  Technician User     @relation(fields: [technician_id], references: [id])
+  Category   Category @relation(fields: [category_id], references: [id])
+
+  @@map("technician_category")
+}
+
+model Ticket {
+  id               Int       @id @unique @default(autoincrement())
+  title            String
+  description      String    @db.Text
+  status           Status    @default(pending)
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+  started_at       DateTime?
+  closed_at        DateTime?
+  duration_seconds Int?
+
+  category_id   Int
+  technician_id Int?
+  user_id       Int
+  patrimony_id  Int?
+
+  Category   Category   @relation(fields: [category_id], references: [id])
+  Technician User?      @relation(name: "TechnicianTicket", fields: [technician_id], references: [id])
+  User       User       @relation(name: "UserTicket", fields: [user_id], references: [id])
+  Worklog    Worklog[]
+  Patrimony  Patrimony? @relation(fields: [patrimony_id], references: [id])
+
+  @@map("ticket")
+}
+
+model Patrimony {
+  id          Int      @id @unique @default(autoincrement())
+  code        String   @unique
+  description String   @db.Text
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now()) @updatedAt
+
+  Tickets Ticket[]
+
+  @@map("patrimony")
+}
+
+model Worklog {
+  id          Int      @id @unique @default(autoincrement())
+  description String   @db.Text
+  created_at  DateTime @default(now())
+
+  technician_id Int
+  ticket_id     Int
+
+  Technician User   @relation(fields: [technician_id], references: [id])
+  Ticket     Ticket @relation(fields: [ticket_id], references: [id])
+
+  @@map("worklog")
+}
