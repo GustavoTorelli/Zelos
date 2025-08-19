@@ -24,11 +24,12 @@ export default function Atribuir() {
             <section className="flex flex-wrap items-center w-12/12 justify-center h-auto">
 
                 {/* quando não houver chamados */}
-                <div className='hidden items-center justify-center w-full h-130 bg-[#1d1e21] rounded-xl gap-5 shadow-[-4px_8px_15px_-9px_rgba(0,_0,_0,_0.7)]'>
+                <div className='hidden  lg:flex-row flex-col items-center p-10 justify-center w-full h-60 bg-[#1d1e21] rounded-xl gap-5 shadow-[-4px_8px_15px_-9px_rgba(0,_0,_0,_0.7)]'>
                     <BadgeCheck size={180} color='#B91C1C' />
-                    <h1 className='text-3xl text-white font-semibold h-1'>Você não solicitou nenhum chamado.</h1>
+                    <h1 className='w-full text-center text-2xl md:text-3xl p-5 text-white font-semibold'>
+                        Você não solicitou nenhum chamado.
+                    </h1>
                 </div>
-
                 {/* card de atribuir chamado */}
                 <AtribuirChamado />
                 {/* card concluir chamado */}

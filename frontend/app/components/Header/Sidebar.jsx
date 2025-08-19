@@ -1,5 +1,5 @@
 'use client'
-import { Boxes, ChartPie, Headset, Power } from "lucide-react"
+import { Boxes, ChartNoAxesCombined, ChartPie, Headset, Power } from "lucide-react"
 
 export default function Sidebar({ onSelect, isOpen }) {
     return (
@@ -62,6 +62,17 @@ export default function Sidebar({ onSelect, isOpen }) {
                             <Boxes />
                         </div>
                         Gestão de Chamados
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => onSelect(4)}
+                        className="cursor-pointer flex items-center w-full p-3 rounded-lg hover:bg-zinc-800 transition"
+                    >
+                        <div className="grid mr-4 place-items-center">
+                           <ChartNoAxesCombined/>
+                        </div>
+                        Gerar Relatório
                     </button>
 
                     <button

@@ -22,6 +22,7 @@ export default function Home() {
         </div>
       </header>
 
+
       {/* formularios */}
       <div className="flex flex-col md:items-center md:justify-center h-screen dark md:w-200 w-80 items-center justify-evenly">
 
@@ -96,9 +97,7 @@ export default function Home() {
               </button>
             </div>
           </form>
-
           <div>
-
           </div>
         </div>
       </div>

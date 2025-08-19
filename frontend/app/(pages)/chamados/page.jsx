@@ -4,6 +4,7 @@ import Sidebar from "@/app/components/Header/Sidebar";
 import Atribuir from "@/app/components/Layout/Gestao";
 import Solicitar from "@/app/components/Layout/Solicitar";
 import Status from "@/app/components/Layout/Status";
+import Relatorio from "@/app/components/Layout/Relatorio";
 import Header from "@/app/components/Header/Header";
 
 export default function Chamados() {
@@ -29,6 +30,7 @@ export default function Chamados() {
                     {activeComponent === 1 && <Solicitar />}
                     {activeComponent === 2 && <Status />}
                     {activeComponent === 3 && <Atribuir />}
+                    {activeComponent === 4 && <Relatorio />}
                 </section>
             </div>
         </div>
