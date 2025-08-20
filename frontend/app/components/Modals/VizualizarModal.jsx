@@ -1,13 +1,47 @@
 'use client';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CirclePlay, Goal } from "lucide-react";
 
-export default function VizualizarModal({ isOpen, onClose }) {
+export default function VizualizarModal({ isOpen, onClose, ticketId }) {
+    const [ticket, setTicket] = useState(null);
+    const [worklogs, setWorklogs] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (!isOpen || !ticketId) return;
+        let active = true;
+        async function load() {
+            setLoading(true);
+            try {
+                const headers = {};
+                const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+                if (token && token.includes('.')) headers['Authorization'] = `Bearer ${token}`;
+                const [tRes, wRes] = await Promise.all([
+                    fetch(`/api/tickets/${ticketId}`, { headers, credentials: 'include' }),
+                    fetch(`/api/tickets/${ticketId}/worklogs`, { headers, credentials: 'include' }),
+                ]);
+                if (tRes.ok) {
+                    const t = await tRes.json();
+                    if (active) setTicket(t?.data || null);
+                }
+                if (wRes.ok) {
+                    const w = await wRes.json();
+                    if (active) setWorklogs(w?.data || []);
+                }
+            } finally {
+                if (active) setLoading(false);
+            }
+        }
+        load();
+        return () => {
+            active = false;
+        }
+    }, [isOpen, ticketId]);
+
     if (!isOpen) return null;
 
-    const [tecnico, setTecnico] = useState("Técnico 1");
-    const [apontamentos, setApontamentos] = useState("Exemplo de apontamento técnico...");
-
+    const tecnico = ticket?.Technician?.name || 'Não atribuído';
+    
     return (
         <div
             role="dialog"
@@ -27,24 +61,51 @@ export default function VizualizarModal({ isOpen, onClose }) {
                 {/* Header */}
                 <div className="pb-2 border-b border-zinc-600/95 rounded-t text-lg sm:text-xl font-semibold text-white flex flex-col sm:flex-row justify-between gap-2 sm:items-center">
                     <div className="flex gap-2 justify-center items-center">
-                        <h3>Apontamentos Técnicos -</h3>
-                        <span>#ID</span>
+                        <h3>Chamado</h3>
+                        <span>#{ticketId}</span>
                     </div>
                     <div className="flex flex-wrap justify-center items-center gap-2">
                         <CirclePlay color="#ed8936" />
-                        <span className="text-sm sm:text-lg font-semibold text-gray-100">dd/mm/aaaa</span>
+                        <span className="text-sm sm:text-lg font-semibold text-gray-100">{ticket?.started_at ? new Date(ticket.started_at).toLocaleString() : '—'}</span>
                         <Goal color="#22c55e" />
-                        <span className="text-sm sm:text-lg font-semibold text-gray-100">dd/mm/aaaa</span>
+                        <span className="text-sm sm:text-lg font-semibold text-gray-100">{ticket?.closed_at ? new Date(ticket.closed_at).toLocaleString() : '—'}</span>
                     </div>
                 </div>
 
-                {/* Apontamento final */}
-                <div className="text-gray-200 text-justify p-2">
-                    <h1 className="gap-2 font-semibold">
-                        Técnico: <span>{tecnico}</span>
-                    </h1>
-                    {apontamentos}
-                </div>
+                {/* Dados */}
+                {loading ? (
+                    <div className="text-gray-200 p-2">Carregando...</div>
+                ) : (
+                    <div className="text-gray-200 text-justify p-2">
+                        <div className="mb-2">
+                            <span className="font-semibold">Título: </span>{ticket?.title}
+                        </div>
+                        <div className="mb-2">
+                            <span className="font-semibold">Técnico: </span>{tecnico}
+                        </div>
+                        <div className="mb-2">
+                            <span className="font-semibold">Categoria: </span>{ticket?.Category?.title || '—'}
+                        </div>
+                        <div className="mb-2">
+                            <span className="font-semibold">Status: </span>{ticket?.status}
+                        </div>
+                        <div className="mt-4">
+                            <h4 className="font-semibold mb-1">Apontamentos</h4>
+                            {worklogs.length === 0 ? (
+                                <div className="text-gray-400">Nenhum apontamento.</div>
+                            ) : (
+                                <ul className="list-disc pl-5 space-y-1">
+                                    {worklogs.map(w => (
+                                        <li key={w.id}>
+                                            <span className="text-gray-300">{new Date(w.created_at).toLocaleString()} - </span>
+                                            <span>{w.description}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* Botão de Ok */}
                 <div className="flex justify-end mt-4">

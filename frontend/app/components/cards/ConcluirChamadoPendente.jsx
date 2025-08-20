@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import ConcluirModal from "../Modals/ConcluirModal"
 import { ChevronsRight } from 'lucide-react';
-export default function ConcluirChamado() {
+export default function ConcluirChamado({ ticketId }) {
     const [isOpen, setIsOpen] = useState(false);
     return (
         <div className="w-72 h-48 flex flex-col justify-between bg-[#1d1e21] rounded-xl shadow-[-4px_8px_15px_-9px_rgba(0,0,0,0.7)] p-5 m-2">
             {/* modal */}
-            <ConcluirModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+            <ConcluirModal isOpen={isOpen} onClose={() => setIsOpen(false)} ticketId={ticketId} />
 
             {/* Conteúdo principal */}
             <div className="flex flex-col h-full gap-2">

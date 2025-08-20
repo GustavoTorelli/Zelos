@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { CirclePlay, Goal } from "lucide-react";
 
-export default function ConcluirModal({ isOpen, onClose }) {
+export default function ConcluirModal({ isOpen, onClose, ticketId }) {
     if (!isOpen) return null;
 
     const [tecnico, setTecnico] = useState("");
@@ -42,12 +42,31 @@ export default function ConcluirModal({ isOpen, onClose }) {
                 {/* Formulário */}
                 <form
                     className="flex flex-col w-full items-center justify-center gap-3"
-                    onSubmit={(e) => {
+                    onSubmit={async (e) => {
                         e.preventDefault();
-                        alert(
-                            `Dados preenchidos (teste):\nTécnico: ${tecnico}\nApontamentos: ${apontamentos}`
-                        );
-                        onClose();
+                        try {
+                            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+                            const headers = token && token.includes('.') ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+                            // cria worklog
+                            const wl = await fetch(`/api/tickets/${ticketId}/worklogs`, {
+                                method: 'POST',
+                                headers,
+                                credentials: 'include',
+                                body: JSON.stringify({ description: apontamentos }),
+                            });
+                            if (!wl.ok) throw new Error('Falha ao criar apontamento');
+                            // conclui ticket
+                            const st = await fetch(`/api/tickets/${ticketId}/status`, {
+                                method: 'PATCH',
+                                headers,
+                                credentials: 'include',
+                                body: JSON.stringify({ status: 'completed' }),
+                            });
+                            if (!st.ok) throw new Error('Falha ao concluir ticket');
+                            onClose();
+                        } catch (err) {
+                            alert(err.message);
+                        }
                     }}
                 >
                     {/* Nome do Técnico */}

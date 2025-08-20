@@ -1,4 +1,4 @@
-'use client'
+'use client' // este é  o login
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
@@ -27,11 +27,12 @@ export default function Home() {
     e.preventDefault(); 
 
     try {
-      const res = await fetch("http://localhost:3333/auth/login", {
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           email: username,
           password: password,
@@ -42,15 +43,28 @@ export default function Home() {
         throw new Error("Login falhou");
       }
 
-      const data = await res.json();
-      localStorage.setItem("token", data.token);
+      const payload = await res.json();
+      // Backend returns { success, message, code, data?: { token } } in dev
+      const token = payload?.data?.token;
+      if (token) {
+        localStorage.setItem("token", token);
+      }
 
       // redireciona para /chamados, seu loading.jsx será exibido automaticamente pelo Next.js
+      try {
+        const meRes = await fetch('/api/auth/me', { credentials: 'include' });
+        if (meRes.ok) {
+          const me = await meRes.json();
+          const role = me?.data?.role;
+          if (role) localStorage.setItem('role', role);
+        }
+      } catch (_) { /* ignore */ }
+
       router.push("/chamados");
 
     } catch (err) {
       console.error(err);
-      setError();
+      setError("Credenciais inválidas");
     }
   };
 

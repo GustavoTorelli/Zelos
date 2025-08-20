@@ -1,5 +1,6 @@
-'use client'
-import { useState } from "react";
+'use client' //está é minha página main 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Sidebar from "@/app/components/Header/Sidebar";
 import Atribuir from "@/app/components/Layout/Gestao";
 import Solicitar from "@/app/components/Layout/Solicitar";
@@ -8,12 +9,21 @@ import Relatorio from "@/app/components/Layout/Relatorio";
 import Header from "@/app/components/Header/Header";
 
 export default function Chamados() {
+    const router = useRouter();
     const [activeComponent, setActiveComponent] = useState(1);
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const toggleSidebar = () => {
         setSidebarOpen(!sidebarOpen);
     };
+
+    useEffect(() => {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        if (!token) {
+            router.push('/');
+            return;
+        }
+    }, [router]);
 
     return (
         <div className="flex flex-col h-screen">

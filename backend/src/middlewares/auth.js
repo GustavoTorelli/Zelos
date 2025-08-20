@@ -3,8 +3,11 @@ import apiResponse from '../utils/api-response.js';
 
 export function auth(requiredRole = null) {
 	return (req, res, next) => {
-		const token =
-			req.cookies?.jwt_token || req.headers?.authorization.split(' ')[1];
+		const authHeader = (req.headers && req.headers.authorization) || '';
+		const tokenFromHeader = authHeader.startsWith('Bearer ')
+			? authHeader.split(' ')[1]
+			: null;
+		const token = (req.cookies && req.cookies.jwt_token) || tokenFromHeader;
 
 		if (!token) {
 			apiResponse(

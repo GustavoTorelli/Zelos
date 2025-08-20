@@ -126,6 +126,34 @@ export class AuthController {
 		);
 	}
 
+	/**
+	 * Returns current authenticated user's basic info
+	 */
+	async me(req, res) {
+		try {
+			const { id, role } = req.user || {};
+			return apiResponse(
+				{
+					success: true,
+					message: 'Authenticated user',
+					code: 200,
+					data: { id, role },
+				},
+				res,
+			);
+		} catch (error) {
+			return apiResponse(
+				{
+					success: false,
+					message: 'Unexpected error',
+					errors: error.message,
+					code: 500,
+				},
+				res,
+			);
+		}
+	}
+
 	async passwordRecovery(req, res) {
 		try {
 			const parsedData = passwordRecoverySchema.parse(req.body);

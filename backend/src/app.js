@@ -1,4 +1,5 @@
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import apiResponse from './utils/api-response.js';
 import seedAdmin from './config/seed-admin.js';
 import userRoutes from './routes/User.route.js';
@@ -11,6 +12,7 @@ const app = express();
 const port = 3333;
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.get('/health', (req, res) => {
 	return apiResponse(

@@ -9,6 +9,8 @@ export default function StatusModal({ isOpen, onClose }) {
     const [patrimonioId, setPatrimonioId] = useState("");
     const [tipo, setTipo] = useState("");
     const [descricao, setDescricao] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
     return (
         <div
@@ -44,13 +46,33 @@ export default function StatusModal({ isOpen, onClose }) {
                 {/* Formulário */}
                 <form
                     className="flex flex-col w-full items-center justify-center gap-3"
-                    onSubmit={(e) => {
+                    onSubmit={async (e) => {
                         e.preventDefault();
-                        alert(
-                            "Dados preenchidos (alert de teste):\n" +
-                            `Nome: ${nome}\nID: ${patrimonioId}\nTipo: ${tipo}\nDescrição: ${descricao}`
-                        );
-                        onClose();
+                        setError("");
+                        setLoading(true);
+                        try {
+                            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+                            const headers = token && token.includes('.') ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+                            const res = await fetch('/api/tickets', {
+                                method: 'POST',
+                                headers,
+                                body: JSON.stringify({
+                                    title: nome || 'Chamado',
+                                    description: descricao || 'Sem descrição',
+                                    category_id: 1,
+                                    patrimony_id: patrimonioId ? Number(patrimonioId) : undefined,
+                                }),
+                            });
+                            if (!res.ok) {
+                                const payload = await res.json().catch(() => ({}));
+                                throw new Error(payload?.message || 'Falha ao criar chamado');
+                            }
+                            onClose();
+                        } catch (err) {
+                            setError(err.message);
+                        } finally {
+                            setLoading(false);
+                        }
                     }}
                 >
                     {/* Nome e ID */}
@@ -109,9 +131,10 @@ export default function StatusModal({ isOpen, onClose }) {
                     <div className="w-full flex flex-col sm:flex-row gap-3 mt-4">
                         <button
                             type="submit"
-                            className="cursor-pointer bg-gradient-to-r from-green-700 to-green-600 text-white font-bold py-2 px-4 rounded-md hover:from-green-800 hover:to-green-800 transition w-full"
+                            disabled={loading}
+                            className="cursor-pointer bg-gradient-to-r from-green-700 to-green-600 text-white font-bold py-2 px-4 rounded-md hover:from-green-800 hover:to-green-800 transition w-full disabled:opacity-60"
                         >
-                            Atribuir
+                            {loading ? 'Enviando...' : 'Atribuir'}
                         </button>
 
                         <button
@@ -130,6 +153,7 @@ export default function StatusModal({ isOpen, onClose }) {
                             Excluir
                         </button>
                     </div>
+                    {error && <p className="text-red-500 w-full">{error}</p>}
                 </form>
             </div>
         </div>

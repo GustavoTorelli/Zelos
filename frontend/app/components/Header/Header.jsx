@@ -28,6 +28,21 @@ export default function Header({ toggleSidebar }) {
             <div className="md:hidden absolute left-1/2 transform -translate-x-1/2 md:static md:ml-0 flex items-center justify-center w-auto h-full">
                 <img src="/img/global/logo_branco.svg" className="h-9" alt="Logo" />
             </div>
+
+            {/* Logout */}
+            <button
+                onClick={async () => {
+                    try {
+                        await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+                    } catch (_) {}
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('role');
+                    window.location.href = '/';
+                }}
+                className="hidden md:inline-flex text-white cursor-pointer rounded-md hover:bg-zinc-500/20 px-3 py-2 transition-colors"
+            >
+                Sair
+            </button>
         </header>
     )
 }

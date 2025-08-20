@@ -1,4 +1,4 @@
-'use client'
+'use client' //ignore está página
 import { useState } from "react";
 import LoginIncorreto from "@/app/components/notifications/loginPage/LoginIncorreto";
 import DadosIncorretos from "@/app/components/notifications/solicitarChamado/DadosIncorretos";
