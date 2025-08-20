@@ -5,6 +5,7 @@ import userRoutes from './routes/User.route.js';
 import authRoutes from './routes/Auth.route.js';
 import categoryRoutes from './routes/Category.route.js';
 import ticketRoutes from './routes/Ticket.route.js';
+import reportRoutes from './routes/Reports.route.js';
 
 const app = express();
 const port = 3333;
@@ -27,6 +28,7 @@ app.use('/users', userRoutes);
 app.use('/auth', authRoutes);
 app.use('/categories', categoryRoutes);
 app.use('/tickets', ticketRoutes);
+app.use('/reports', reportRoutes);
 
 async function start() {
 	await seedAdmin();
