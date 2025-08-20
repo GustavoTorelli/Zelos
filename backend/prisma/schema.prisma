@@ -98,6 +98,8 @@ model Ticket {
 
 model Patrimony {
   id          Int      @id @unique @default(autoincrement())
+  name        String
+  location    String
   code        String   @unique
   description String   @db.Text
   created_at  DateTime @default(now())

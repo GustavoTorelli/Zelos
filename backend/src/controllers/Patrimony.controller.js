@@ -1,0 +1,402 @@
+import { ZodError } from 'zod';
+import { Patrimony } from '../models/Patrimony.model.js';
+import apiResponse from '../utils/api-response.js';
+import zodErrorFormatter from '../utils/zod-error-formatter.js';
+import {
+	createPatrimonySchema,
+	createManyPatrimoniesSchema,
+	updatePatrimonySchema,
+	findAllPatrimoniesSchema,
+	idSchema,
+	codeSchema,
+} from '../schemas/patrimony.schema.js';
+
+export class PatrimonyController {
+	constructor() {}
+
+	async create(req, res) {
+		try {
+			const parsedData = createPatrimonySchema.parse(req.body);
+
+			const patrimony = await Patrimony.create(parsedData);
+
+			return apiResponse(
+				{
+					success: true,
+					message: 'Patrimony created successfully',
+					data: patrimony,
+					code: 201,
+				},
+				res,
+			);
+		} catch (error) {
+			if (error instanceof ZodError) {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Invalid request data',
+						errors: zodErrorFormatter(error),
+						code: 400,
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'CODE_ALREADY_EXISTS') {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Patrimony code already exists',
+						code: 409,
+					},
+					res,
+				);
+			}
+
+			return apiResponse(
+				{
+					success: false,
+					message: 'An unexpected error occurred',
+					errors: error.message,
+					code: 500,
+				},
+				res,
+			);
+		}
+	}
+
+	async createMany(req, res) {
+		try {
+			const parsedData = createManyPatrimoniesSchema.parse(req.body);
+
+			const patrimonies = await Patrimony.createMany(
+				parsedData.patrimonies,
+			);
+
+			return apiResponse(
+				{
+					success: true,
+					message: `${patrimonies.length} patrimonies created successfully`,
+					data: patrimonies,
+					code: 201,
+				},
+				res,
+			);
+		} catch (error) {
+			if (error instanceof ZodError) {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Invalid request data',
+						errors: zodErrorFormatter(error),
+						code: 400,
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'DUPLICATE_CODES_IN_REQUEST') {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Duplicate codes found in request',
+						code: 400,
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'CODES_ALREADY_EXIST') {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Some patrimony codes already exist',
+						errors: {
+							existingCodes: error.existingCodes,
+						},
+						code: 409,
+					},
+					res,
+				);
+			}
+
+			return apiResponse(
+				{
+					success: false,
+					message: 'An unexpected error occurred',
+					errors: error.message,
+					code: 500,
+				},
+				res,
+			);
+		}
+	}
+
+	async findAll(req, res) {
+		try {
+			const parsedData = findAllPatrimoniesSchema.parse(req.query);
+
+			const patrimonies = await Patrimony.findAll(parsedData);
+
+			return apiResponse(
+				{
+					success: true,
+					message: 'Patrimonies found successfully',
+					data: patrimonies,
+					code: 200,
+				},
+				res,
+			);
+		} catch (error) {
+			if (error instanceof ZodError) {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Invalid request data',
+						errors: zodErrorFormatter(error),
+						code: 400,
+					},
+					res,
+				);
+			}
+
+			return apiResponse(
+				{
+					success: false,
+					message: 'An unexpected error occurred',
+					errors: error.message,
+					code: 500,
+				},
+				res,
+			);
+		}
+	}
+
+	async findById(req, res) {
+		try {
+			const parsedId = idSchema.parse(req.params.id);
+
+			const patrimony = await Patrimony.find(parsedId);
+
+			return apiResponse(
+				{
+					success: true,
+					message: 'Patrimony found successfully',
+					data: patrimony,
+					code: 200,
+				},
+				res,
+			);
+		} catch (error) {
+			if (error instanceof ZodError) {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Invalid request data',
+						errors: zodErrorFormatter(error),
+						code: 400,
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'NOT_FOUND') {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Patrimony not found',
+						code: 404,
+					},
+					res,
+				);
+			}
+
+			return apiResponse(
+				{
+					success: false,
+					message: 'An unexpected error occurred',
+					errors: error.message,
+					code: 500,
+				},
+				res,
+			);
+		}
+	}
+
+	async findByCode(req, res) {
+		try {
+			const parsedCode = codeSchema.parse(req.params.code);
+
+			const patrimony = await Patrimony.findByCode(parsedCode);
+
+			return apiResponse(
+				{
+					success: true,
+					message: 'Patrimony found successfully',
+					data: patrimony,
+					code: 200,
+				},
+				res,
+			);
+		} catch (error) {
+			if (error instanceof ZodError) {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Invalid request data',
+						errors: zodErrorFormatter(error),
+						code: 400,
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'NOT_FOUND') {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Patrimony not found',
+						code: 404,
+					},
+					res,
+				);
+			}
+
+			return apiResponse(
+				{
+					success: false,
+					message: 'An unexpected error occurred',
+					errors: error.message,
+					code: 500,
+				},
+				res,
+			);
+		}
+	}
+
+	async update(req, res) {
+		try {
+			const parsedId = idSchema.parse(req.params.id);
+			const parsedData = updatePatrimonySchema.parse(req.body);
+
+			const patrimony = await Patrimony.update(parsedId, parsedData);
+
+			return apiResponse(
+				{
+					success: true,
+					message: 'Patrimony updated successfully',
+					data: patrimony,
+					code: 200,
+				},
+				res,
+			);
+		} catch (error) {
+			if (error instanceof ZodError) {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Invalid request data',
+						errors: zodErrorFormatter(error),
+						code: 400,
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'NOT_FOUND') {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Patrimony not found',
+						code: 404,
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'CODE_ALREADY_EXISTS') {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Patrimony code already exists',
+						code: 409,
+					},
+					res,
+				);
+			}
+
+			return apiResponse(
+				{
+					success: false,
+					message: 'An unexpected error occurred',
+					errors: error.message,
+					code: 500,
+				},
+				res,
+			);
+		}
+	}
+
+	async delete(req, res) {
+		try {
+			const parsedId = idSchema.parse(req.params.id);
+
+			const patrimony = await Patrimony.delete(parsedId);
+
+			return apiResponse(
+				{
+					success: true,
+					message: 'Patrimony deleted successfully',
+					data: patrimony,
+					code: 200,
+				},
+				res,
+			);
+		} catch (error) {
+			if (error instanceof ZodError) {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Invalid request data',
+						errors: zodErrorFormatter(error),
+						code: 400,
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'NOT_FOUND') {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Patrimony not found',
+						code: 404,
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'PATRIMONY_HAS_TICKETS') {
+				return apiResponse(
+					{
+						success: false,
+						message:
+							'Cannot delete patrimony with associated tickets',
+						code: 409,
+					},
+					res,
+				);
+			}
+
+			return apiResponse(
+				{
+					success: false,
+					message: 'An unexpected error occurred',
+					errors: error.message,
+					code: 500,
+				},
+				res,
+			);
+		}
+	}
+}
