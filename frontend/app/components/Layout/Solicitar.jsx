@@ -17,7 +17,7 @@ export default function Solicitar() {
 		async function loadCategories() {
 			try {
 				// Usando a rota correta da API
-				const res = await fetch('/api/categories', {
+				const res = await fetch(`api/categories`, {
 					credentials: 'include',
 					headers: {
 						'Content-Type': 'application/json',
@@ -82,7 +82,7 @@ export default function Solicitar() {
 				payload.patrimony_id = parseInt(form.patrimony_id.trim(), 10);
 			}
 
-			const res = await fetch('/api/tickets', {
+			const res = await fetch(`${process.env.BACKEND_BASE_URL}/tickets`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',

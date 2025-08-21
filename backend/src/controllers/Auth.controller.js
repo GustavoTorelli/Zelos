@@ -37,7 +37,6 @@ export class AuthController {
 				httpOnly: true,
 				maxAge: 24 * 60 * 60 * 1000, // 1 day
 				sameSite: 'lax',
-				secure: process.env.ENVIRONMENT === 'prod',
 			});
 
 			const responseData = {
@@ -131,7 +130,7 @@ export class AuthController {
 	 */
 	async me(req, res) {
 		try {
-			const { id, role } = req.user || {};
+			const { id, role } = req.user;
 			return apiResponse(
 				{
 					success: true,

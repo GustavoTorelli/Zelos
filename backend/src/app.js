@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import apiResponse from './utils/api-response.js';
 import seedAdmin from './config/seed-admin.js';
@@ -12,8 +13,9 @@ import patrimonyRoutes from './routes/Patrimony.route.js';
 const app = express();
 const port = 3333;
 
-app.use(express.json());
+app.use(cors({ origin: process.env.FRONTEND_BASE_URL, credentials: true }));
 app.use(cookieParser());
+app.use(express.json());
 
 app.get('/health', (req, res) => {
 	return apiResponse(

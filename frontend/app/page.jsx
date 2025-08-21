@@ -1,4 +1,4 @@
-'use client'; // este é  o login
+'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -8,95 +8,146 @@ export default function Home() {
 	const [username, setUsername] = useState('');
 	const [password, setPassword] = useState('');
 	const [error, setError] = useState('');
+	const [isLoading, setIsLoading] = useState(true);
 
-	// Impede que usuário não logado acesse outras páginas
+	// Verificar se já está autenticado
 	useEffect(() => {
 		async function checkAuth() {
-			try {
-				const res = await fetch(
-					`${process.env.BACKEND_BASE_URL}/auth/me`,
-					{
-						credentials: 'include',
-					}
-				);
-				if (res.ok) {
-					const me = await res.json();
-					localStorage.setItem('user_id', me.data.id);
-					localStorage.setItem('user_role', me.data.role);
-				}
+			console.log('🔍 [LOGIN] Verificando se já está autenticado...');
 
-				router.push('/chamados');
-				return;
+			try {
+				// Usar a mesma URL base em todos os lugares
+				const res = await fetch(`api/auth/me`, {
+					credentials: 'include',
+				});
+
+				console.log('📡 [LOGIN] Resposta do /auth/me:', res.status);
+
+				if (res.ok) {
+					const response = await res.json();
+					console.log(
+						'✅ [LOGIN] Usuário já autenticado:',
+						response.data
+					);
+
+					// Salvar dados no localStorage
+					localStorage.setItem('user_id', response.data.id);
+					localStorage.setItem('user_role', response.data.role);
+
+					// Redirecionar para chamados
+					router.push('/chamados');
+				} else {
+					console.log(
+						'❌ [LOGIN] Usuário não autenticado, permanecendo na tela de login'
+					);
+
+					// Limpar qualquer dado antigo
+					localStorage.removeItem('user_id');
+					localStorage.removeItem('user_role');
+				}
 			} catch (error) {
-				console.error('Erro ao verificar autenticação:', error);
+				console.error(
+					'💥 [LOGIN] Erro ao verificar autenticação:',
+					error
+				);
+
+				// Em caso de erro, limpar localStorage
+				localStorage.removeItem('user_id');
+				localStorage.removeItem('user_role');
+			} finally {
+				setIsLoading(false);
 			}
 		}
 
 		checkAuth();
-	}, []);
+	}, []); // ⚠️ Array vazio - executa apenas uma vez
 
 	const handleLogin = async (e) => {
 		e.preventDefault();
+		setError('');
+
+		console.log('🚀 [LOGIN] Tentando fazer login...');
 
 		try {
-			const res = await fetch(
-				`${process.env.BACKEND_BASE_URL}/auth/login`,
-				{
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					credentials: 'include',
-					body: JSON.stringify({
-						email: username,
-						password: password,
-					}),
-				}
-			);
+			const res = await fetch(`api/auth/login`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				credentials: 'include',
+				body: JSON.stringify({
+					email: username,
+					password: password,
+				}),
+			});
+
+			console.log('📡 [LOGIN] Resposta do login:', res.status);
 
 			if (!res.ok) {
-				console.error('Login falhou');
-			}
-
-			// redireciona para /chamados, seu loading.jsx será exibido automaticamente pelo Next.js
-			try {
-				const res = await fetch(
-					`${process.env.BACKEND_BASE_URL}/auth/me`,
-					{
-						credentials: 'include',
-					}
-				);
-				if (res.ok) {
-					const me = await res.json();
-					localStorage.setItem('user_id', me.data.id);
-					localStorage.setItem('user_role', me.data.role);
-				}
-
-				router.push('/chamados');
+				console.log('❌ [LOGIN] Login falhou');
+				setError('Credenciais inválidas');
 				return;
-			} catch (error) {
-				console.error('Erro ao verificar autenticação:', error);
 			}
 
-			router.push('/chamados');
+			console.log(
+				'✅ [LOGIN] Login bem-sucedido, verificando dados do usuário...'
+			);
+
+			// Agora buscar os dados do usuário
+			try {
+				const meRes = await fetch(`api/auth/me`, {
+					credentials: 'include',
+				});
+
+				console.log(
+					'📡 [LOGIN] Resposta do /auth/me após login:',
+					meRes.status
+				);
+
+				if (meRes.ok) {
+					const meData = await meRes.json();
+					console.log('👤 [LOGIN] Dados do usuário:', meData.data);
+
+					// Salvar no localStorage
+					localStorage.setItem('user_id', meData.data.id);
+					localStorage.setItem('user_role', meData.data.role);
+
+					console.log('🎯 [LOGIN] Redirecionando para /chamados');
+					router.push('/chamados');
+				} else {
+					console.log(
+						'❌ [LOGIN] Falha ao buscar dados do usuário após login'
+					);
+					setError('Erro ao obter dados do usuário');
+				}
+			} catch (meError) {
+				console.error(
+					'💥 [LOGIN] Erro ao buscar dados do usuário:',
+					meError
+				);
+				setError('Erro ao verificar autenticação');
+			}
 		} catch (error) {
-			console.error(error);
-			setError('Credenciais inválidas');
+			console.error('💥 [LOGIN] Erro no login:', error);
+			setError('Erro de conexão. Tente novamente.');
 		}
 	};
 
+	// Loading enquanto verifica autenticação inicial
+	if (isLoading) {
+		return (
+			<section className="w-screen h-screen flex items-center justify-center bg-black">
+				<div className="text-center">
+					<div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-700 mx-auto mb-4"></div>
+					<p className="text-white">Verificando autenticação...</p>
+				</div>
+			</section>
+		);
+	}
+
 	return (
 		<section className="w-screen h-screen flex flex-col items-center md:justify-center md:bg-[url('/img/global/senai.png')] md:bg-cover bg-black ">
-			<header
-				className="
-        fixed top-0 left-0 z-50
-        w-full h-16
-        bg-zinc-900
-        flex items-center justify-between
-        px-6
-        md:hidden
-      "
-			>
+			<header className="fixed top-0 left-0 z-50 w-full h-16 bg-zinc-900 flex items-center justify-between px-6 md:hidden">
 				<div className="absolute left-1/2 transform -translate-x-1/2 md:static md:ml-0 flex items-center justify-center w-auto h-full">
 					<img
 						src="/img/global/logo_branco.svg"
@@ -122,13 +173,17 @@ export default function Home() {
 							placeholder="Usuário"
 							className="bg-gray-600/80 text-white border-0 rounded-md p-2 mb-4 focus:bg-gray-600 focus:outline-none transition ease-in-out duration-150 hover:bg-gray-600/90"
 							type="email"
+							value={username}
 							onChange={(e) => setUsername(e.target.value)}
+							required
 						/>
 						<input
 							placeholder="Senha"
 							className="bg-gray-600/80 text-white border-0 rounded-md p-2 mb-2 focus:bg-gray-600 focus:outline-none transition ease-in-out duration-150 hover:bg-gray-600/90"
 							type="password"
+							value={password}
 							onChange={(e) => setPassword(e.target.value)}
+							required
 						/>
 
 						<div className="flex justify-start p-1 ">
@@ -142,12 +197,18 @@ export default function Home() {
 						</div>
 
 						<button
-							className="bg-gradient-to-r from-red-800 to-red-700 text-white font-bold py-2 px-4 rounded-md mt-2 hover:from-red-900 hover:to-red-800 transition ease-in-out duration-150 cursor-pointer"
+							className="bg-gradient-to-r from-red-800 to-red-700 text-white font-bold py-2 px-4 rounded-md mt-2 hover:from-red-900 hover:to-red-800 transition ease-in-out duration-150 cursor-pointer disabled:opacity-50"
 							type="submit"
+							disabled={!username || !password}
 						>
 							Entrar
 						</button>
-						{error && <p className="text-red-500 mt-2">{error}</p>}
+
+						{error && (
+							<p className="text-red-500 mt-2 text-sm text-center">
+								{error}
+							</p>
+						)}
 					</form>
 
 					<form
@@ -173,7 +234,7 @@ export default function Home() {
 							<h1 className="text-white">
 								<b className="text-red-600 font-semibold">
 									E-mail enviado!{' '}
-								</b>{' '}
+								</b>
 								Verifique sua caixa de entrada para redefinir
 								sua senha.
 							</h1>
