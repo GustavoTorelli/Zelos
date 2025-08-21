@@ -5,25 +5,26 @@ export class Ticket {
 		this.id = id;
 	}
 
-	/**
-	 * Creates a new ticket
-	 * @param {{ title: string, description: string, category_id: number, patrimony_id?: number, user_id: number }} data - The data of the ticket to be created
-	 * @returns {Promise<Object>} A promise that resolves to the newly created ticket object
-	 * @throws {Error} If a ticket with the same patrimony already exists and is not completed
-	 * @throws {Error} If there is an error creating the ticket
-	 */
 	static async create({
 		title,
 		description,
 		category_id,
-		patrimony_id,
+		patrimony_code,
 		user_id,
 	}) {
 		try {
-			if (patrimony_id) {
+			let patrimony = null;
+			if (patrimony_code) {
+				patrimony = await prisma.patrimony.findUnique({
+					where: { code: patrimony_code },
+					select: { id: true },
+				});
+
+				if (!patrimony) throw new Error('NOT_FOUND');
+
 				const existing = await prisma.ticket.findFirst({
 					where: {
-						patrimony_id,
+						patrimony_id: patrimony.id,
 						category_id,
 						status: { not: 'completed' },
 					},
@@ -37,35 +38,23 @@ export class Ticket {
 					title,
 					description,
 					category_id,
-					patrimony_id,
+					patrimony_id: patrimony?.id,
 					user_id,
 				},
 				select: this._baseSelect,
 			});
 		} catch (error) {
+			if (error.message === 'NOT_FOUND') throw error;
 			if (error.message === 'DUPLICATED_TICKET') throw error;
 			throw new Error(`Error creating ticket: ${error}`);
 		}
 	}
 
-	/**
-	 * Finds all tickets that match the given criteria
-	 * @param {Object} data - The data to filter the tickets by
-	 * @param {number} data.userId - The ID of the user
-	 * @param {string} data.role - The role of the user
-	 * @param {number} data.categoryId - The ID of the category to filter by
-	 * @param {number} data.patrimonyId - The ID of the patrimony to filter by
-	 * @param {string} data.status - The status of the ticket to filter by
-	 * @param {number} data.technicianId - The ID of the technician to filter by
-	 * @param {Date} data.createdAfter - The date to filter tickets created after
-	 * @param {Date} data.createdBefore - The date to filter tickets created before
-	 * @returns {Promise<Object[]>} A promise that resolves to an array of tickets
-	 */
 	static async findAll(
 		{ userId, role },
 		{
 			categoryId,
-			patrimonyId,
+			patrimonyCode,
 			status,
 			technicianId,
 			createdAfter,
@@ -87,17 +76,29 @@ export class Ticket {
 		}
 		if (role === 'user') where.user_id = userId;
 
+		let patrimony = null;
+		if (patrimonyCode) {
+			patrimony = await prisma.patrimony.findUnique({
+				where: { code: patrimonyCode },
+				select: { id: true },
+			});
+
+			if (!patrimony) throw new Error('NOT_FOUND');
+
+			where.patrimony_id = patrimony.id;
+		}
+
 		const filters = {
 			...(categoryId && { category_id: categoryId }),
-			...(patrimonyId && { patrimony_id: patrimonyId }),
 			...(status && { status: status }),
 			...(technicianId && { technician_id: technicianId }),
 		};
 
 		if (createdBefore || createdAfter) {
-			filters.created_at = {};
-			if (createdAfter) filters.created_at.gte = new Date(createdAfter);
-			if (createdBefore) filters.created_at.lte = new Date(createdBefore);
+			filters.created_at = {
+				...(createdBefore && { lte: new Date(createdBefore) }),
+				...(createdAfter && { gte: new Date(createdAfter) }),
+			};
 		}
 
 		where = { ...where, ...filters };

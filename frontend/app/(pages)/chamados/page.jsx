@@ -18,27 +18,6 @@ export default function Chamados() {
 		setSidebarOpen(!sidebarOpen);
 	};
 
-	// Função separada para logout (apenas quando necessário)
-	const handleLogout = async () => {
-		try {
-			console.log('🚪 Fazendo logout...');
-
-			// Fazer logout no backend
-			await fetch(`api/auth/logout`, {
-				method: 'POST',
-				credentials: 'include',
-			});
-		} catch (error) {
-			console.error('Erro no logout:', error);
-		} finally {
-			// Sempre limpar localStorage e redirecionar
-			localStorage.removeItem('user_id');
-			localStorage.removeItem('user_role');
-			localStorage.removeItem('token'); // caso também use token
-			router.push('/');
-		}
-	};
-
 	useEffect(() => {
 		const checkAuth = async () => {
 			console.log('🔍 Verificando autenticação...');
