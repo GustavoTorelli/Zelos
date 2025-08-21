@@ -7,7 +7,7 @@ export const createTicket = z.object({
 		.string('Description is required')
 		.min(1, 'Description cannot be empty'),
 	category_id: idSchema,
-	patrimony_id: idSchema.optional(),
+	patrimony_code: z.string().optional(),
 });
 
 export const updateTicket = z.object({
@@ -32,7 +32,7 @@ export const findAllTicket = z.object({
 		.optional(),
 	technicianId: idSchema.optional(),
 	categoryId: idSchema.optional(),
-	patrimonyId: idSchema.optional(),
+	patrimonyCode: z.string().optional(),
 	createdAfter: z.iso.date('Date must be in YYYY-MM-DD format').optional(),
 	createdBefore: z.iso.date('Date must be in YYYY-MM-DD format').optional(),
 });

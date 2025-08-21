@@ -43,6 +43,17 @@ export class TicketController {
 				);
 			}
 
+			if (error.message === 'NOT_FOUND') {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Patrimony not found',
+						code: 404,
+					},
+					res,
+				);
+			}
+
 			if (error.message === 'DUPLICATED_TICKET') {
 				return apiResponse(
 					{
@@ -72,7 +83,7 @@ export class TicketController {
 			const { id, role } = req.user;
 			const {
 				categoryId,
-				patrimonyId,
+				patrimonyCode,
 				status,
 				technicianId,
 				createdAfter,
@@ -83,7 +94,7 @@ export class TicketController {
 				{ userId: id, role },
 				{
 					categoryId,
-					patrimonyId,
+					patrimonyCode,
 					status,
 					technicianId,
 					createdAfter,
@@ -108,6 +119,17 @@ export class TicketController {
 						message: 'Invalid request data',
 						errors: zodErrorFormatter(error),
 						code: 400,
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'NOT_FOUND') {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Patrimony not found',
+						code: 404,
 					},
 					res,
 				);
