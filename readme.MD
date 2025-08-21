@@ -47,7 +47,7 @@ npm run dev
 ---
 
 ### 🐱‍👤 Colaboradores
-| <img src="https://github.com/gustavotorelli.png" width="100" height="100" alt="Gustavo Torelli" /> | <img src="https://github.com/Matheusrike.png" width="100" height="100" alt="Matheus Ramos" /> |<img src="https://github.com/Besto-afk.png" width="100" height="100" alt="Gianlucca D Estefani"
+| <img src="https://github.com/gustavotorelli.png" width="100" height="100" alt="Gustavo Torelli" /> | <img src="https://github.com/Matheusrike.png" width="100" height="100" alt="Matheus Ramos" /> |<img src="https://github.com/Bestofef-afk.png" width="100" height="100" alt="Gianlucca D Estefani"
 |:------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------------:|
 |        [Gustavo Torelli](https://github.com/gustavotorelli)        |        [Matheus Ramos](https://github.com/Matheusrike)          |
 
