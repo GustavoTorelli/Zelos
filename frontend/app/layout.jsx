@@ -8,10 +8,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
 	return (
-		<html
-			lang="pt-br"
-			data-lt-installed='suppresshydrationwarning="true" - data-lt-installed="true"'
-		>
+		<html lang="pt-br" suppressHydrationWarning>
 			<body cz-shortcut-listen="true" className="bg-zinc-800 font-inter">
 				{children}
 			</body>
