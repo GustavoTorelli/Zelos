@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@nextui-org/react": "^2.6.11",
     "dotenv": "^17.2.1",
     "framer-motion": "^12.23.12",
     "lucide-react": "^0.535.0",

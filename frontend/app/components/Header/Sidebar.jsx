@@ -66,16 +66,6 @@ export default function Sidebar({ onSelect, isOpen }) {
 						Solicitar Chamado
 					</button>
 
-					<button
-						type="button"
-						onClick={() => onSelect(2)}
-						className="cursor-pointer flex items-center w-full p-3 rounded-lg hover:bg-zinc-800 transition"
-					>
-						<div className="grid mr-4 place-items-center">
-							<ChartPie />
-						</div>
-						Status do Chamado
-					</button>
 
 					<button
 						type="button"

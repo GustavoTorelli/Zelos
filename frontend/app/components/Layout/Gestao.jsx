@@ -1,8 +1,8 @@
 'use client' // status admin e tecnichan tem acesso
 import { useEffect, useMemo, useState } from "react";
-import { BadgeCheck } from "lucide-react";
-import StatusCard from '../cards/StatusCard';
 import AtribuirButton from '../button/AtribuirButton';
+import TabelaDeTickets from "../Tables/TabelaDeTickets";
+
 
 export default function Atribuir() {
     const [tickets, setTickets] = useState([]);
@@ -23,7 +23,7 @@ export default function Atribuir() {
                 const res = await fetch('/api/auth/me', { credentials: 'include' });
                 const payload = await res.json();
                 if (res.ok) setRole(payload?.data?.role || '');
-            } catch (_) {}
+            } catch (_) { }
         }
         loadRole();
         async function load() {
@@ -48,7 +48,7 @@ export default function Atribuir() {
 
     return (
         <section className="md:w-screen h-full flex flex-col items-center md:pt-15 py-5 md:py-0">
-            <div className="mb-8 flex flex-col md:flex-row justify-between w-10/12 gap-4 md:gap-0">
+            <div className="mb-8 flex flex-col md:flex-row justify-between w-12/12 gap-4 md:gap-0 p-4">
                 <div>
                     <h1 className="pb-2 text-2xl sm:text-3xl text-white font-semibold">
                         Gestão de Chamados
@@ -63,7 +63,7 @@ export default function Atribuir() {
             </div>
 
             <section className="flex flex-wrap items-center w-12/12 justify-center h-auto">
-                {loading && (
+                {/* {loading && (
                     <div className='flex flex-col items-center p-10 justify-center w-full h-60 bg-[#1d1e21] rounded-xl gap-5 shadow-[-4px_8px_15px_-9px_rgba(0,_0,_0,_0.7)]'>
                         <h1 className='w-full text-center text-2xl md:text-3xl p-5 text-white font-semibold'>Carregando...</h1>
                     </div>
@@ -81,8 +81,13 @@ export default function Atribuir() {
                 )}
                 {tickets.map((t) => (
                     <StatusCard key={t.id} ticket={t} canAssign={role === 'admin' || role === 'technician'} />
-                ))}
+
+                ))} */}
+                <TabelaDeTickets/>
+
+
             </section>
+            
         </section>
     )
 }

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 
 export default function AtribuirButton({
     statuses = [
-        { label: "Pendentes", color: "#F59E0B", value: "pending" },
+        { label: "Pendentes", color: "#B91C1C", value: "pending" },
         { label: "Em Andamento", color: "#F59E0B", value: "in_progress" },
         { label: "Concluídos", color: "#22C55E", value: "completed" },
     ],
