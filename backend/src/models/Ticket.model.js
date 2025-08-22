@@ -17,14 +17,13 @@ export class Ticket {
 			if (patrimony_code) {
 				patrimony = await prisma.patrimony.findUnique({
 					where: { code: patrimony_code },
-					select: { id: true },
 				});
 
-				if (!patrimony) throw new Error('NOT_FOUND');
+				if (!patrimony) throw new Error('PATRIMONY_NOT_FOUND');
 
 				const existing = await prisma.ticket.findFirst({
 					where: {
-						patrimony_id: patrimony.id,
+						patrimony_code: patrimony.code,
 						category_id,
 						status: { not: 'completed' },
 					},
@@ -38,13 +37,14 @@ export class Ticket {
 					title,
 					description,
 					category_id,
-					patrimony_id: patrimony?.id,
+					patrimony_code: patrimony?.code,
 					user_id,
 				},
 				select: this._baseSelect,
 			});
 		} catch (error) {
-			if (error.message === 'NOT_FOUND') throw error;
+			if (error.code === 'P2003') throw new Error('CATEGORY_NOT_FOUND');
+			if (error.message === 'PATRIMONY_NOT_FOUND') throw error;
 			if (error.message === 'DUPLICATED_TICKET') throw error;
 			throw new Error(`Error creating ticket: ${error}`);
 		}
@@ -80,12 +80,11 @@ export class Ticket {
 		if (patrimonyCode) {
 			patrimony = await prisma.patrimony.findUnique({
 				where: { code: patrimonyCode },
-				select: { id: true },
 			});
 
 			if (!patrimony) throw new Error('NOT_FOUND');
 
-			where.patrimony_id = patrimony.id;
+			where.patrimony_code = patrimony.code;
 		}
 
 		const filters = {
@@ -109,12 +108,6 @@ export class Ticket {
 		});
 	}
 
-	/**
-	 * Finds a ticket by its ID
-	 * @param {{ ticketId: number, userId: number, role: string }} data - The data to find the ticket by
-	 * @returns {Promise<Object>} A promise that resolves to the ticket object
-	 * @throws {Error} If the ticket is not found or the user does not have permission to view the ticket
-	 */
 	static async findById({ ticketId, userId, role }) {
 		const ticket = await prisma.ticket.findUnique({
 			where: { id: ticketId },
@@ -133,14 +126,9 @@ export class Ticket {
 		return ticket;
 	}
 
-	/**
-	 * Updates a ticket by ID
-	 * @param {{ ticketId: number, data: Object, role: string }} data - The data to update the ticket with
-	 * @returns {Promise<Object>} A promise that resolves to the updated ticket object
-	 * @throws {Error} If the ticket is not found or the user does not have permission to update the ticket
-	 */
 	static async update({ ticketId, data, role }) {
-		if (role !== 'admin' && data.patrimony_id) throw new Error('FORBIDDEN');
+		if (role !== 'admin' && data.patrimony_code)
+			throw new Error('FORBIDDEN');
 
 		try {
 			return await prisma.ticket.update({
@@ -154,12 +142,6 @@ export class Ticket {
 		}
 	}
 
-	/**
-	 * Updates the status of a ticket
-	 * @param {{ status: string, userId: number, role: string }} data - The data to update the ticket with
-	 * @returns {Promise<Object>} A promise that resolves to the updated ticket object
-	 * @throws {Error} If the ticket is not found or the user does not have permission to update the ticket
-	 */
 	async updateStatus({ status, userId, role }) {
 		const ticket = await prisma.ticket.findUnique({
 			where: { id: this.id },

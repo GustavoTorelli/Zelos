@@ -7,7 +7,6 @@ import {
 	createManyPatrimoniesSchema,
 	updatePatrimonySchema,
 	findAllPatrimoniesSchema,
-	idSchema,
 	codeSchema,
 } from '../schemas/patrimony.schema.js';
 
@@ -172,57 +171,6 @@ export class PatrimonyController {
 		}
 	}
 
-	async findById(req, res) {
-		try {
-			const parsedId = idSchema.parse(req.params.id);
-
-			const patrimony = await Patrimony.find(parsedId);
-
-			return apiResponse(
-				{
-					success: true,
-					message: 'Patrimony found successfully',
-					data: patrimony,
-					code: 200,
-				},
-				res,
-			);
-		} catch (error) {
-			if (error instanceof ZodError) {
-				return apiResponse(
-					{
-						success: false,
-						message: 'Invalid request data',
-						errors: zodErrorFormatter(error),
-						code: 400,
-					},
-					res,
-				);
-			}
-
-			if (error.message === 'NOT_FOUND') {
-				return apiResponse(
-					{
-						success: false,
-						message: 'Patrimony not found',
-						code: 404,
-					},
-					res,
-				);
-			}
-
-			return apiResponse(
-				{
-					success: false,
-					message: 'An unexpected error occurred',
-					errors: error.message,
-					code: 500,
-				},
-				res,
-			);
-		}
-	}
-
 	async findByCode(req, res) {
 		try {
 			const parsedCode = codeSchema.parse(req.params.code);
@@ -276,10 +224,10 @@ export class PatrimonyController {
 
 	async update(req, res) {
 		try {
-			const parsedId = idSchema.parse(req.params.id);
+			const parsedCode = codeSchema.parse(req.params.code);
 			const parsedData = updatePatrimonySchema.parse(req.body);
 
-			const patrimony = await Patrimony.update(parsedId, parsedData);
+			const patrimony = await Patrimony.update(parsedCode, parsedData);
 
 			return apiResponse(
 				{
@@ -339,9 +287,11 @@ export class PatrimonyController {
 
 	async delete(req, res) {
 		try {
-			const parsedId = idSchema.parse(req.params.id);
+			const parsedCode = codeSchema.parse(req.params.code);
 
-			const patrimony = await Patrimony.delete(parsedId);
+			console.log(parsedCode);
+
+			const patrimony = await Patrimony.delete(parsedCode);
 
 			return apiResponse(
 				{
