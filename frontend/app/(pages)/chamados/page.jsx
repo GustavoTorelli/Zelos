@@ -2,10 +2,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/app/components/Header/Sidebar';
-import Atribuir from '@/app/components/Layout/Gestao';
-import Solicitar from '@/app/components/Layout/Solicitar';
-import Relatorio from '@/app/components/Layout/Relatorio';
+import Relatorio from '@/app/components/Layout/Report';
+import TicketsPage from '@/app/components/Layout/Tickets';
 import Header from '@/app/components/Header/Header';
+import UsersPage from '@/app/components/Layout/Users';
 
 export default function Chamados() {
 	const router = useRouter();
@@ -32,7 +32,7 @@ export default function Chamados() {
 				const id = localStorage.getItem('user_id');
 				const role = localStorage.getItem('user_role');
 
-				console.log('📊 Dados de autenticação:', {
+				console.log(' Dados de autenticação:', {
 					id: !!id,
 					role: role,
 					hasId: !!id,
@@ -47,8 +47,8 @@ export default function Chamados() {
 					console.log(
 						'❌ Dados de autenticação inválidos ou ausentes'
 					);
-					console.log('📝 ID:', id);
-					console.log('📝 Role:', role);
+					console.log(' ID:', id);
+					console.log(' Role:', role);
 
 					// Apenas redirecionar, SEM fazer logout no backend
 					// (o usuário pode não estar logado mesmo)
@@ -58,7 +58,7 @@ export default function Chamados() {
 					return;
 				}
 			} catch (error) {
-				console.error('❌ Erro na verificação de autenticação:', error);
+				console.error(' Erro na verificação de autenticação:', error);
 				router.push('/');
 			} finally {
 				setIsLoading(false);
@@ -99,15 +99,15 @@ export default function Chamados() {
 	return (
 		<div className="flex flex-col h-screen">
 			{/* Header com função de logout disponível */}
-			<Header toggleSidebar={toggleSidebar} onLogout={handleLogout} />
+			<Header toggleSidebar={toggleSidebar}  />
 
 			{/* Conteúdo com Sidebar */}
 			<div className="flex flex-1 pt-16">
 				<Sidebar onSelect={setActiveComponent} isOpen={sidebarOpen} />
 				<section className="flex w-full overflow-y-auto p-6 bg-zinc-100 dark:bg-zinc-800 justify-center items-center md:ml-60">
-					{activeComponent === 1 && <Solicitar />}
-					{activeComponent === 3 && <Atribuir />}
-					{activeComponent === 4 && <Relatorio />}
+					{activeComponent === 1 && <TicketsPage/> }
+					{activeComponent === 2 && <UsersPage/>}
+					{activeComponent === 3 && <Relatorio />}
 				</section>
 			</div>
 		</div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import StatusModal from "../Modals/AtribuirModal"
+import StatusModal from "../Modals/NewTicketModal"
 import { ChevronsRight } from 'lucide-react';
 export default function AtribuirChamado() {
     const [isOpen, setIsOpen] = useState(false);
