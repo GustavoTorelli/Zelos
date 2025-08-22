@@ -48,7 +48,8 @@ npm run dev
 
 ### 🐱‍👤 Colaboradores
 | <img src="https://github.com/gustavotorelli.png" width="100" height="100" alt="Gustavo Torelli" /> | <img src="https://github.com/Matheusrike.png" width="100" height="100" alt="Matheus Ramos" /> |
-|:------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------------:|
-|        [Gustavo Torelli](https://github.com/gustavotorelli)        |        [Matheus Ramos](https://github.com/Matheusrike)          |
+|:------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------:|
+| [Gustavo Torelli](https://github.com/gustavotorelli) | [Matheus Ramos](https://github.com/Matheusrike) |
 
-© 2025 JobIn. Todos os direitos reservados.
+
+© 2025 Zelos. Todos os direitos reservados.

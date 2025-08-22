@@ -54,20 +54,7 @@ export default function TabelaDeUsuarios({ loading, error }) {
 
     return (
         <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl min-h-[400px] p-4">
-            {loading && (
-                <div className='flex flex-col items-center justify-center p-12 min-h-[400px]'>
-                    <div className="relative">
-                        <div className="w-16 h-16 border-4 border-gray-600 border-t-red-500 rounded-full animate-spin"></div>
-                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                            <div className="w-8 h-8 border-2 border-gray-700 border-t-red-400 rounded-full animate-spin animate-reverse"></div>
-                        </div>
-                    </div>
-                    <h2 className='text-2xl text-white font-semibold mt-6'>Carregando dados...</h2>
-                    <p className='text-gray-400 text-sm mt-2 '>Aguarde enquanto buscamos as informações</p>
-                </div>
-            )}
-
-            {!loading && !error && (
+            {!error && (
                 <Table
                     isVirtualized
                     aria-label="Tabela de tickets/chamados"
@@ -75,12 +62,12 @@ export default function TabelaDeUsuarios({ loading, error }) {
                     className="w-full h-full bg-transparent"
                     classNames={{
                         base: "w-auto  bg-transparent",
-                        table: "min-h-[400px] bg-transparent",
+                        table: "bg-transparent",
                         thead: "sticky top-0 z-10 bg-transparent",
-                        th: "bg-transparent text-zinc-700 dark:text-zinc-300 font-semibold text-sm border-b border-zinc-200 dark:border-zinc-700  overflow-hidden",
-                        td: " text-sm border-b border-zinc-100 dark:border-zinc-800 overflow-hidden",
+                        th: "bg-transparent text-zinc-700 dark:text-zinc-300 font-semibold text-sm border-b border-zinc-200 dark:border-zinc-700  overflow-hidden ",
+                        td: " text-sm border-b border-zinc-100 dark:border-zinc-800 overflow-hidden  ",
                         tbody: "bg-transparent",
-                       tr: "bg-transparent hover:bg-zinc-50/30 dark:hover:bg-zinc-700/30 transition-colors duration-300"
+                       tr: "bg-transparent hover:bg-zinc-50/30 dark:hover:bg-zinc-700/30 transition-colors duration-300 "
                     }}
                 >
                     <TableHeader columns={columns}>
@@ -98,7 +85,7 @@ export default function TabelaDeUsuarios({ loading, error }) {
                         {(item) => (
                             <TableRow key={item.key} className="h-10 max-h-10 bg-transparent">
                                 {(columnKey) => (
-                                    <TableCell className="py-2 px-4 h-10 min-h-5 overflow-hidden bg-transparent">{renderCell(item, columnKey)}</TableCell>
+                                    <TableCell className="py-2 px-4 h-15 gap-1 overflow-hidden bg-transparent">{renderCell(item, columnKey)}</TableCell>
                                 )}
                             </TableRow>
                         )}
