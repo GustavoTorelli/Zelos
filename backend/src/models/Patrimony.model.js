@@ -1,11 +1,6 @@
 import prisma from '../config/prisma-client.js';
 
 export class Patrimony {
-	/**
-	 * Creates an instance of Patrimony.
-	 * @param {Object} data - Data for the patrimony instance.
-	 * @param {number} data.id - The patrimony's ID.
-	 */
 	constructor({ id }) {
 		this.id = id;
 	}
@@ -74,7 +69,7 @@ export class Patrimony {
 		}
 	}
 
-	static async findAll({ includeInactive = true, search = null } = {}) {
+	static async findAll({ search = null } = {}) {
 		try {
 			const where = {};
 
@@ -99,35 +94,6 @@ export class Patrimony {
 		}
 	}
 
-	static async find(id) {
-		try {
-			const patrimony = await prisma.patrimony.findUnique({
-				where: { id },
-				select: {
-					...this._baseSelect,
-					Tickets: {
-						select: {
-							id: true,
-							title: true,
-							status: true,
-							created_at: true,
-						},
-						orderBy: { created_at: 'desc' },
-					},
-				},
-			});
-
-			if (!patrimony) throw new Error('NOT_FOUND');
-
-			return patrimony;
-		} catch (error) {
-			if (error.message === 'NOT_FOUND') {
-				throw error;
-			}
-			throw new Error(`Error finding patrimony: ${error}`);
-		}
-	}
-
 	static async findByCode(code) {
 		try {
 			const patrimony = await prisma.patrimony.findUnique({
@@ -146,14 +112,13 @@ export class Patrimony {
 		}
 	}
 
-	static async update(id, { name, location, code, description }) {
+	static async update(code, { name, location, description }) {
 		try {
 			const patrimony = await prisma.patrimony.update({
-				where: { id },
+				where: { code },
 				data: {
 					...(name && { name }),
 					...(location && { location }),
-					...(code && { code }),
 					...(description && { description }),
 				},
 				select: this._baseSelect,
@@ -171,11 +136,11 @@ export class Patrimony {
 		}
 	}
 
-	static async delete(id) {
+	static async delete(code) {
 		try {
 			// Verificar se há tickets associados
 			const ticketsCount = await prisma.ticket.count({
-				where: { patrimony_id: id },
+				where: { patrimony_code: code },
 			});
 
 			if (ticketsCount > 0) {
@@ -183,7 +148,7 @@ export class Patrimony {
 			}
 
 			return await prisma.patrimony.delete({
-				where: { id },
+				where: { code },
 				select: this._baseSelect,
 			});
 		} catch (error) {

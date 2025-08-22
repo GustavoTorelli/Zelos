@@ -28,7 +28,7 @@ router.patch('/:id/status', auth(), async (req, res) => {
 	return await ticketController.updateStatus(req, res);
 });
 
-router.post('/:id/assign', auth(), async (req, res) => {
+router.patch('/:id/assign', auth(), async (req, res) => {
 	return await ticketController.assignTechnician(req, res);
 });
 
