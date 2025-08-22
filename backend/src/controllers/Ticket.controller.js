@@ -43,11 +43,22 @@ export class TicketController {
 				);
 			}
 
-			if (error.message === 'NOT_FOUND') {
+			if (error.message === 'PATRIMONY_NOT_FOUND') {
 				return apiResponse(
 					{
 						success: false,
 						message: 'Patrimony not found',
+						code: 404,
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'CATEGORY_NOT_FOUND') {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Category not found',
 						code: 404,
 					},
 					res,
