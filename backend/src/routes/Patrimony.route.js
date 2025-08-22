@@ -10,14 +10,9 @@ router.get('/', auth(), async (req, res) => {
 	return await patrimonyController.findAll(req, res);
 });
 
-// Buscar patrimônio por código
-router.get('/code/:code', auth(), async (req, res) => {
-	return await patrimonyController.findByCode(req, res);
-});
-
 // Buscar patrimônio por ID
-router.get('/:id', auth(), async (req, res) => {
-	return await patrimonyController.findById(req, res);
+router.get('/:code', auth(), async (req, res) => {
+	return await patrimonyController.findByCode(req, res);
 });
 
 // Criar um patrimônio (apenas admins)
@@ -31,12 +26,12 @@ router.post('/batch', auth('admin'), async (req, res) => {
 });
 
 // Atualizar patrimônio (apenas admins)
-router.put('/:id', auth('admin'), async (req, res) => {
+router.put('/:code', auth('admin'), async (req, res) => {
 	return await patrimonyController.update(req, res);
 });
 
 // Deletar patrimônio (apenas admins)
-router.delete('/:id', auth('admin'), async (req, res) => {
+router.delete('/:code', auth('admin'), async (req, res) => {
 	return await patrimonyController.delete(req, res);
 });
 

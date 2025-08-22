@@ -1,23 +1,11 @@
 import { z } from 'zod';
 
-// Schema para validar ID
-export const idSchema = z
-	.string()
-	.min(1, 'ID is required')
-	.transform((val) => parseInt(val))
-	.refine((val) => !isNaN(val) && val > 0, {
-		message: 'ID must be a positive number',
-	});
-
 // Schema para validar código de patrimônio
 export const codeSchema = z
 	.string()
 	.min(1, 'Code is required')
 	.max(50, 'Code must be less than 50 characters')
-	.regex(/^[A-Za-z0-9\-_]+$/, {
-		message:
-			'Code can only contain letters, numbers, hyphens, and underscores',
-	});
+	.trim();
 
 // Schema para criar um patrimônio
 export const createPatrimonySchema = z.object({
@@ -31,7 +19,6 @@ export const createPatrimonySchema = z.object({
 		.min(1, 'Location is required')
 		.max(255, 'Location must be less than 255 characters')
 		.trim(),
-	code: codeSchema,
 	description: z
 		.string()
 		.min(1, 'Description is required')
@@ -88,11 +75,6 @@ export const findAllPatrimoniesSchema = z.object({
 		.optional()
 		.nullable()
 		.transform((val) => val || null),
-});
-
-// Schema para validação de parâmetros de rota
-export const patrimonyRouteParamsSchema = z.object({
-	id: idSchema,
 });
 
 export const patrimonyCodeParamsSchema = z.object({

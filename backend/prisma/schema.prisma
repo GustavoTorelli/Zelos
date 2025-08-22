@@ -82,16 +82,16 @@ model Ticket {
   closed_at        DateTime?
   duration_seconds Int?
 
-  category_id   Int
-  technician_id Int?
-  user_id       Int
-  patrimony_id  Int?
+  category_id    Int
+  technician_id  Int?
+  user_id        Int
+  patrimony_code String?
 
   Category   Category   @relation(fields: [category_id], references: [id])
   Technician User?      @relation(name: "TechnicianTicket", fields: [technician_id], references: [id])
   User       User       @relation(name: "UserTicket", fields: [user_id], references: [id])
   Worklog    Worklog[]
-  Patrimony  Patrimony? @relation(fields: [patrimony_id], references: [id])
+  Patrimony  Patrimony? @relation(fields: [patrimony_code], references: [code])
 
   @@map("ticket")
 }
