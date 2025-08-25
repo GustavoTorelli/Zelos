@@ -1,7 +1,8 @@
 'use client';
 import { useState } from "react";
+import { Headset } from "lucide-react";
 
-export default function StatusModal({ isOpen, onClose, ticketId = 0 }) {
+export default function NewticketModal({ isOpen, onClose, ticketId = 0 }) {
     if (!isOpen) return null;
 
     const [nome, setNome] = useState("");
@@ -33,7 +34,7 @@ export default function StatusModal({ isOpen, onClose, ticketId = 0 }) {
                 headers,
                 body: JSON.stringify({
                     title: nome,
-                    patrimony_id: patrimonioId == Number(patrimonioId) ,
+                    patrimony_id: patrimonioId == Number(patrimonioId),
                     category_id: 1,
                     description: descricao,
                     type: tipo
@@ -70,8 +71,9 @@ export default function StatusModal({ isOpen, onClose, ticketId = 0 }) {
                 className="relative w-full max-w-lg mx-4 bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl p-6"
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Header */}
-                <div className="pb-4 border-b border-gray-700/50 mb-6">
+                {/* titulo*/}
+                <div className="flex gap-2 pb-4 border-b border-gray-700/50 text-white mb-6">
+                    <Headset size={25} />
                     <h3 className="text-xl font-semibold text-white text-center">
                         Solicitar Chamado
                     </h3>

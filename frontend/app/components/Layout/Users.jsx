@@ -1,7 +1,10 @@
 'use client' // status admin e tecnichan tem acesso
 import { useEffect, useMemo, useState } from "react";
+import { Funnel, Plus, Search } from "lucide-react";
 import TabelaDeUsuarios from "../Tables/UsersTable";
-import { CircleCheck, Funnel, Plus, Search } from "lucide-react";
+import NewUserModal from "../Modals/Users/NewUserModal";
+import SeeUsersModal from "../Modals/Users/SeeUsersModal";
+
 
 export default function UsersPage() {
     const [tickets, setTickets] = useState([]);
@@ -12,6 +15,8 @@ export default function UsersPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('');
     const [statusUserFilter, setStatusUserFilter] = useState('all');
+    const [isOpenNewUser, setIsOpenNewUser] = useState(false);
+    const [isOpenSeeUsers, setIsOpenSeeUsers] = useState(false);
 
 
     const authHeaders = useMemo(() => {
@@ -59,8 +64,14 @@ export default function UsersPage() {
     const hasActiveFilters = searchTerm || roleFilter || statusUserFilter !== 'all' || statusFilter;
 
     return (
-
         <div className="w-full px-4 py-8">
+            {/* Modals */}
+            <NewUserModal isOpen={isOpenNewUser} onClose={() => setIsOpenNewUser(false)} />
+            <SeeUsersModal
+                isOpen={isOpenSeeUsers}
+                onClose={() => setIsOpenSeeUsers(false)}
+
+            />
             <div className="mb-8">
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                     {/* titulo e descrição */}
@@ -81,24 +92,19 @@ export default function UsersPage() {
                     {/* Botão criar usuario */}
                     <div className="flex flex-col sm:flex-row gap-3">
                         <button
-                            className="relative w-50 h-12 cursor-pointer flex items-center 
-               border border-red-700 bg-red-700 group 
-               rounded-lg overflow-hidden"
+                            onClick={() => setIsOpenNewUser(true)}
+                            className="relative w-50 h-12 cursor-pointer flex items-center border border-red-700 bg-red-700 group rounded-lg overflow-hidden"
                         >
                             {/* Texto */}
                             <span
-                                className="text-white font-semibold ml-8 transform 
-                 group-hover:translate-x-20 transition-all duration-300"
+                                className="text-white font-semibold ml-8 transform group-hover:translate-x-20 transition-all duration-300"
                             >
                                 Novo Usuário
                             </span>
 
                             {/* icon*/}
                             <span
-                                className="absolute right-0 h-full w-12 rounded-lg 
-                 bg-red-700 flex items-center justify-center 
-                 transform group-hover:translate-x-0 
-                 group-hover:w-full transition-all duration-300"
+                                className="absolute right-0 h-full w-12 rounded-lg  bg-red-700 flex items-center justify-center transform group-hover:translate-x-0 group-hover:w-full transition-all duration-300"
                             >
                                 <Plus size={20} color="white" />
                             </span>
@@ -181,10 +187,13 @@ export default function UsersPage() {
             {/* tabela*/}
             <TabelaDeUsuarios
                 loading={loading}
-                tickets={tickets || []} // garante que tickets nunca seja undefined
+                users={tickets || []}
                 error={error}
                 hasActiveFilters={hasActiveFilters}
                 clearFilters={clearFilters}
+                onViewUser={(user) => {
+                    setIsOpenSeeUsers(true);
+                }}
             />
 
         </div>
