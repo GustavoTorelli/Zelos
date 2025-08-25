@@ -11,10 +11,9 @@ import { useRouter } from 'next/navigation';
 export default function Sidebar({ onSelect, isOpen }) {
 	const router = useRouter();
 
-	// Make it async
-	function handleLogout() {
+	async function handleLogout() {
 		try {
-			const res = fetch('/api/auth/logout', {
+			const res = await fetch('/api/auth/logout', {
 				method: 'POST',
 				credentials: 'include',
 			});
@@ -67,7 +66,7 @@ export default function Sidebar({ onSelect, isOpen }) {
 						className="cursor-pointer flex items-center w-full p-3 rounded-lg hover:bg-zinc-800 transition"
 					>
 						<div className="grid mr-4 place-items-center">
-							<Users/>
+							<Users />
 						</div>
 						Gestão de Usuários
 					</button>

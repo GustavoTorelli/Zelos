@@ -1,8 +1,7 @@
 'use client'
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react";
 
-
-export default function TabelaDeTickets({ loading, error }) {
+export default function TabelaDeTickets({ loading, error,onViewTicket }) {
    
     // testes
     const rowsToRender = [
@@ -82,7 +81,7 @@ export default function TabelaDeTickets({ loading, error }) {
             case "category":
                 return <div className="flex justify-center"><span className="inline-flex items-center w-20 justify-center px-3 py-1 rounded-full text-xs font-medium bg-zinc-100 text-zinc-800 dark:bg-zinc-700 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-600">{item.category}</span></div>;
             case "actions":
-                return <div className="flex justify-center"><button className="cursor-pointer bg-red-700 hover:bg-red-800 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200">Visualizar</button></div>;
+                return <div className="flex justify-center"><button onClick={() => onViewTicket(item)} className="cursor-pointer bg-red-700 hover:bg-red-800 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200">Visualizar</button></div>;
             default:
                 return item[columnKey];
         }
@@ -92,7 +91,6 @@ export default function TabelaDeTickets({ loading, error }) {
 
     return (
         <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl min-h-[400px] p-4">
-           
 
             { !error && (
                 <Table

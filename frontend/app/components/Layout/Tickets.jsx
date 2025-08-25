@@ -1,8 +1,9 @@
-'use client' // status admin e tecnichan tem acesso
+'use client'
 import { useEffect, useMemo, useState } from "react";
+import { Funnel, Plus, Search } from "lucide-react";
 import TabelaDeTickets from "../Tables/TicketsTable";
-import StatusModal from "../Modals/NewTicketModal"
-import { CircleCheck, Funnel, Plus, Search } from "lucide-react";
+import NewticketModal from "../Modals/Tickets/NewTicketModal";
+import SeeTicketsModal from "../Modals/Tickets/SeeTicketsModal";
 
 export default function TicketsPage() {
     const [tickets, setTickets] = useState([]);
@@ -14,6 +15,7 @@ export default function TicketsPage() {
     const [roleFilter, setRoleFilter] = useState('');
     const [statusUserFilter, setStatusUserFilter] = useState('all');
     const [isOpen, setIsOpen] = useState(false);
+    const [isOpenSee, setIsOpenSee] = useState(false);
 
 
     const authHeaders = useMemo(() => {
@@ -64,7 +66,13 @@ export default function TicketsPage() {
 
         <div className="w-full px-4 py-8">
             {/* modal */}
-            <StatusModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+            <NewticketModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+            <SeeTicketsModal
+                isOpen={isOpenSee}
+                onClose={() => setIsOpenSee(false)}
+
+            />
+
             <div className="mb-8">
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                     {/* titulo e descrição */}
@@ -184,6 +192,9 @@ export default function TicketsPage() {
                 error={error}
                 hasActiveFilters={hasActiveFilters}
                 clearFilters={clearFilters}
+                onViewTicket={(ticket) => {
+                    setIsOpenSee(true);
+                }}
             />
 
         </div>
