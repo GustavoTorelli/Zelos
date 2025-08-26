@@ -1,54 +1,57 @@
-# Sistema de Chamados
-
-Zelos é um sistema de chamados...
+# 🖥️ Zelos – Sistema de Chamados 
+Zelos é um sistema de gerenciamento de chamados desenvolvido com foco para o SENAI, criado como um RACATOM, que permite controlar solicitações de forma eficiente, integrando um frontend moderno, backend robusto e um banco de dados relacional.
 
 ---
 
-### ⚙️ Implementação (Desenvolvimento Local)
+### 📁 Estrutura do Projeto
+```bash
+Zelos/
+├─ backend/    # API em Node.js e Express
+├─ frontend/   # Aplicação web em Next.js
+└─ database/   # Banco de dados MySQL
+```
 
-- Clonar o projeto
+### 🛠️ Tecnologias Utilizadas
+```bash
+Frontend ─ Next.js ─ React | Estilização ─ Tailwind CSS | Backend ─ Node.js ─ Express | Banco de Dados ─ MySQL | ORM ─ Prisma
+```
+
+### 🌐 Instalação
+
+### 1. Clonar o projeto
 
 ```bash
 git clone https://github.com/GustavoTorelli/Zelos.git
 cd Zelos
 ```
+### 2. Configurar o Banco de Dados
 
-- Configurar o Backend
+```bash
+CREATE DATABASE zelos3TD;
+```
+
+### 3. Configurar o Backend
 
 ```bash
 cd backend
 npm i
-node --watch app.js
+npx prisma migrate deploy
+npx prisma generate
+npm run dev
 ```
 
-- Configurar o Frontend
+### 4. Configurar o Frontend
 
 ```bash
 cd frontend
 npm i
 npm run dev
 ```
-
-### 📋 Estrutura do Projeto
-
-- **Backend** – API desenvolvida com **Node.js** e **Express**  
-- **Frontend** – Aplicação web construída com **Next.js**  
-- **Database** – Banco de dados relacional utilizando **MySQL**
-
 ---
-
-### 🛠️ Tecnologias Utilizadas
-
-- **Next.js** – Framework React usado para o desenvolvimento do frontend  
-- **Tailwind CSS** – Framework utilitário para estilização rápida e responsiva  
-- **Node.js** – Ambiente de execução JavaScript no backend  
-- **MySQL** – Sistema de gerenciamento de banco de dados relacional  
-
----
-
 ### 🐱‍👤 Colaboradores
 | <img src="https://github.com/gustavotorelli.png" width="100" height="100" alt="Gustavo Torelli" /> | <img src="https://github.com/Matheusrike.png" width="100" height="100" alt="Matheus Ramos" /> |
-|:------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------------:|
-|        [Gustavo Torelli](https://github.com/gustavotorelli)        |        [Matheus Ramos](https://github.com/Matheusrike)          |
+|:------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------:|
+| [Gustavo Torelli](https://github.com/gustavotorelli) | [Matheus Ramos](https://github.com/Matheusrike) |
 
-© 2025 JobIn. Todos os direitos reservados.
+
+© 2025 Zelos. Todos os direitos reservados.
