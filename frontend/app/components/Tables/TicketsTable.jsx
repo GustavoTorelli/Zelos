@@ -81,7 +81,12 @@ export default function TabelaDeTickets({ loading, error,onViewTicket }) {
             case "category":
                 return <div className="flex justify-center"><span className="inline-flex items-center w-20 justify-center px-3 py-1 rounded-full text-xs font-medium bg-zinc-100 text-zinc-800 dark:bg-zinc-700 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-600">{item.category}</span></div>;
             case "actions":
-                return <div className="flex justify-center"><button onClick={() => onViewTicket(item)} className="cursor-pointer bg-red-700 hover:bg-red-800 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200">Visualizar</button></div>;
+                return <div className="flex justify-center gap-2"><button onClick={() => onViewTicket(item)} className="cursor-pointer bg-red-700 hover:bg-red-800 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200">Visualizar</button> <button
+
+                className="cursor-pointer bg-zinc-700/50 hover:bg-zinc-600/50 text-white  px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
+            >
+                Excluir
+            </button></div>;
             default:
                 return item[columnKey];
         }

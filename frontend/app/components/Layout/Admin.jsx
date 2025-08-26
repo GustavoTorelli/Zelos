@@ -8,15 +8,16 @@ import TabelaDePatrimonios from "../Tables/PatrimonyTable";
 import TabelaDeCategorias from "../Tables/CategoryTable";
 
 // modais usuarios
-import NewUserModal from "../Modals/Admin/NewUserModal";
-import SeeUsersModal from "../Modals/Admin/SeeUsersModal";
+import NewUserModal from "../Modals/Admin/Users/NewUserModal";
+import SeeUsersModal from "../Modals/Admin/Users/SeeUsersModal";
 
 // modais patrimonio
-import NewPatrimonyModal from "../Modals/Admin/NewPatrimonyModal";
+import NewPatrimonyModal from "../Modals/Admin/Patrimony/NewPatrimonyModal";
+import EditPatrimonyModal from "../Modals/Admin/Patrimony/EditPatrimonyModal";
 
 // modais categorias
-import NewCategoryModal from "../Modals/Admin/NewCategoryModal";
-import EditCategoryModal from "../Modals/Admin/EditCategoryModal";
+import NewCategoryModal from "../Modals/Admin/Category/NewCategoryModal";
+import EditCategoryModal from "../Modals/Admin/Category/EditCategoryModal";
 
 export default function AdminPage() {
     // modais usuarios
@@ -25,6 +26,7 @@ export default function AdminPage() {
 
     // modais patrimonio
     const [isOpenNewPatrimony, setIsOpenNewPatrimony] = useState(false);
+    const [isOpenEditPatrimony, setIsOpenEditPatrimony] = useState(false);
 
 
     // modais categorias
@@ -36,6 +38,8 @@ export default function AdminPage() {
     const [selectedUser, setSelectedUser] = useState(null);
     const [selectedPatrimony, setSelectedPatrimony] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState(null);
+
+
 
     // Handlers para os modais
 
@@ -65,6 +69,17 @@ export default function AdminPage() {
         setIsOpenNewPatrimony(false);
     };
 
+
+    const handleEditPatrimony = (patrimony) => {
+        setSelectedPatrimony(patrimony);
+        setIsOpenEditPatrimony(true);
+    };
+
+    const handleCloseEditPatrimony = () => {
+        setIsOpenEditPatrimony(false);
+        setSelectedPatrimony(null);
+    };
+
     //category
     const handleViewCategory = (category) => {
         setSelectedCategory(category);
@@ -86,11 +101,11 @@ export default function AdminPage() {
             <div className="mb-8">
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                     {/* titulo e descrição */}
-                    <div className="space-y-3">
+                    <div className="space-y-3 flex-1">
                         <div className="flex items-center gap-3">
                             <div className="w-1 h-12 bg-gradient-to-b from-red-600 to-red-800 rounded-full"></div>
                             <div>
-                                <h1 className="text-3xl lg:text-4xl font-bold text-white">
+                                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
                                     Gestão de Dados
                                 </h1>
                                 <p className="text-gray-400 text-sm mt-1">
@@ -101,14 +116,14 @@ export default function AdminPage() {
                     </div>
 
                     {/* lista de botoes de ativar os modais de post*/}
-                    <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                         {/* Usuários */}
                         <button
                             onClick={() => setIsOpenNewUser(true)}
-                            className="relative w-50 h-12 cursor-pointer flex items-center border border-red-700 bg-red-700 group rounded-lg overflow-hidden"
+                            className="relative min-w-0 sm:min-w-[220px] h-12 cursor-pointer flex items-center border border-red-700 bg-red-700 group rounded-lg overflow-hidden"
                         >
                             {/* Texto */}
-                            <span className="text-white font-semibold ml-8 transform group-hover:translate-x-20 transition-all duration-300">
+                            <span className="text-white font-semibold ml-8 transform group-hover:translate-x-20 transition-all duration-300 whitespace-nowrap">
                                 Novo Usuário
                             </span>
 
@@ -121,10 +136,10 @@ export default function AdminPage() {
                         {/* Patrimônio */}
                         <button
                             onClick={() => setIsOpenNewPatrimony(true)}
-                            className="relative w-53 h-12 cursor-pointer flex items-center border border-red-700 bg-red-700 group rounded-lg overflow-hidden"
+                            className="relative min-w-0 sm:min-w-[220px] h-12 cursor-pointer flex items-center border border-red-700 bg-red-700 group rounded-lg overflow-hidden"
                         >
                             {/* Texto */}
-                            <span className="text-white font-semibold ml-8 transform group-hover:translate-x-20 transition-all duration-300">
+                            <span className="text-white font-semibold ml-8 transform group-hover:translate-x-20 transition-all duration-300 whitespace-nowrap">
                                 Novo Patrimônio
                             </span>
 
@@ -137,10 +152,10 @@ export default function AdminPage() {
                         {/* Categorias */}
                         <button
                             onClick={() => setIsOpenNewCategory(true)}
-                            className="relative w-50 h-12 cursor-pointer flex items-center border border-red-700 bg-red-700 group rounded-lg overflow-hidden"
+                            className="relative min-w-0 sm:min-w-[220px] h-12 cursor-pointer flex items-center border border-red-700 bg-red-700 group rounded-lg overflow-hidden"
                         >
                             {/* Texto */}
-                            <span className="text-white font-semibold ml-8 transform group-hover:translate-x-20 transition-all duration-300">
+                            <span className="text-white font-semibold ml-8 transform group-hover:translate-x-20 transition-all duration-300 whitespace-nowrap">
                                 Nova Categoria
                             </span>
 
@@ -150,7 +165,6 @@ export default function AdminPage() {
                             </span>
                         </button>
                     </div>
-
                 </div>
             </div>
 
@@ -174,11 +188,20 @@ export default function AdminPage() {
             />
 
             {/* componentes patrimonios */}
-            <TabelaDePatrimonios />
+
+            <TabelaDePatrimonios
+                onEditPatrimonio={handleEditPatrimony}
+            />
 
             <NewPatrimonyModal
                 isOpen={isOpenNewPatrimony}
                 onClose={handleCloseNewPatimony}
+            />
+
+            <EditPatrimonyModal
+                isOpen={isOpenEditPatrimony}
+                onClose={handleCloseEditPatrimony}
+                assetData={selectedPatrimony}
             />
 
             {/* componentes categorias */}
@@ -195,7 +218,7 @@ export default function AdminPage() {
             <EditCategoryModal
                 isOpen={isOpenEditCategory}
                 onClose={handleCloseEditCategory}
-                categoryData={selectedCategory}  
+                categoryData={selectedCategory}
             />
 
         </div>

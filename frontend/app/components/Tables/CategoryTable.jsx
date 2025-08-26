@@ -92,6 +92,13 @@ export default function TabelaDeCategorias({ loading, error, categorias = [], on
                         >
                             Editar
                         </button>
+
+                        <button
+
+                            className="cursor-pointer bg-zinc-700/50 hover:bg-zinc-600/50 text-white  px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
+                        >
+                            Excluir
+                        </button>
                     </div>
                 );
             default:

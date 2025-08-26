@@ -2,8 +2,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Funnel, Plus, Search } from "lucide-react";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react";
-import NewUserModal from "../Modals/Admin/NewUserModal";
-import SeeUsersModal from "../Modals/Admin/SeeUsersModal";
+import NewUserModal from "../Modals/Admin/Users/NewUserModal";
+import SeeUsersModal from "../Modals/Admin/Users/SeeUsersModal";
 
 export default function TabelaDeUsuarios({ loading, error, users = [], onEditUser, onViewUser }) {
     // filtros
@@ -175,6 +175,13 @@ export default function TabelaDeUsuarios({ loading, error, users = [], onEditUse
                             className="cursor-pointer bg-red-700 hover:bg-red-800 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
                         >
                             Editar
+                        </button>
+
+                        <button
+
+                            className="cursor-pointer bg-zinc-700/50 hover:bg-zinc-600/50 text-white  px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
+                        >
+                            Excluir
                         </button>
                     </div>
                 );
