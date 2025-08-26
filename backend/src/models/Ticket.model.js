@@ -142,6 +142,21 @@ export class Ticket {
 		}
 	}
 
+	static async delete({ ticket_id, role }) {
+		try {
+			if (role !== 'admin') throw new Error('FORBIDDEN');
+
+			await prisma.ticket.delete({
+				where: { id: ticket_id },
+			});
+			return;
+		} catch (error) {
+			if (error.message === 'FORBIDDEN') throw error;
+			if (error.code === 'P2025') throw new Error('NOT_FOUND');
+			throw new Error(`Error deleting ticket: ${error}`);
+		}
+	}
+
 	async updateStatus({ status, user_id, role }) {
 		const ticket = await prisma.ticket.findUnique({
 			where: { id: this.id },

@@ -24,6 +24,10 @@ router.put('/:id', auth(), async (req, res) => {
 	return await ticketController.update(req, res);
 });
 
+router.delete('/:id', auth('admin'), async (req, res) => {
+	return await ticketController.delete(req, res);
+});
+
 router.patch('/:id/status', auth(), async (req, res) => {
 	return await ticketController.updateStatus(req, res);
 });

@@ -234,6 +234,54 @@ export class CategoryController {
 		}
 	}
 
+	async delete(req, res) {
+		try {
+			const parsed_id = idSchema.parse(req.params.id);
+			const category_title = await Category.delete({
+				category_id: parsed_id,
+				role: req.user.role,
+			});
+			return apiResponse(
+				{
+					code: 200,
+					success: true,
+					message: `Category '${category_title}' deleted successfully`,
+				},
+				res,
+			);
+		} catch (error) {
+			if (error.message === 'NOT_FOUND') {
+				return apiResponse(
+					{
+						code: 404,
+						success: false,
+						message: 'Category not found',
+					},
+					res,
+				);
+			}
+			if (error.message === 'FORBIDDEN') {
+				return apiResponse(
+					{
+						code: 403,
+						success: false,
+						message: 'You are not allowed to perform this action',
+					},
+					res,
+				);
+			}
+			return apiResponse(
+				{
+					code: 500,
+					success: false,
+					message: 'An unexpected error occurred',
+					errors: error.message,
+				},
+				res,
+			);
+		}
+	}
+
 	async activate(req, res) {
 		try {
 			const parsed_id = idSchema.parse(req.params.id);

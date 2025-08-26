@@ -14,23 +14,22 @@ export function streamCsv(res, rows, filename = 'report.csv') {
 		const parser = new Parser({
 			fields,
 			header: true,
-			delimiter: ';', // Mudança para ponto e vírgula (padrão brasileiro)
+			delimiter: ';',
 			quote: '"',
 			escapedQuote: '""',
-			withBOM: true, // BOM para UTF-8
-			eol: '\r\n', // Line ending Windows
+			withBOM: true,
+			eol: '\r\n',
 		});
 
 		const csv = parser.parse(rows);
 
-		// Headers específicos para Excel brasileiro
 		res.setHeader('Content-Type', 'text/csv; charset=utf-8');
 		res.setHeader(
 			'Content-Disposition',
 			`attachment; filename="${filename}"`,
 		);
 		res.setHeader('Cache-Control', 'no-cache');
-		res.status(200).send('\uFEFF' + csv); // BOM explícito no início
+		res.status(200).send('\uFEFF' + csv);
 	} catch (error) {
 		console.error('Erro ao gerar CSV:', error);
 		res.status(500).send('Erro ao gerar relatório CSV');
@@ -39,191 +38,144 @@ export function streamCsv(res, rows, filename = 'report.csv') {
 
 export function streamPdf(res, { title, subtitle, filters, rows, type }) {
 	try {
-		// Create a new PDF document with better configuration
 		const doc = new PDFDocument({
 			size: 'A4',
 			margin: 40,
+			layout: 'portrait',
 			bufferPages: true,
 		});
 
-		// Set the response headers
 		res.setHeader('Content-Type', 'application/pdf');
 		res.setHeader(
 			'Content-Disposition',
 			`attachment; filename="relatorio_${type}_${Date.now()}.pdf"`,
 		);
 
-		// Pipe to response
 		doc.pipe(res);
 
-		// Header with styling
-		doc.fontSize(20)
-			.fillColor('#2c3e50')
-			.font('Helvetica-Bold')
-			.text(title, { align: 'center' });
+		// Constantes para layout
+		const PAGE_MARGIN = 40;
+		const HEADER_HEIGHT = 100; // Altura do header
+		const ITEM_HEIGHT = 75; // Altura fixa de cada item
+		const FOOTER_HEIGHT = 30; // Margem inferior
+		const USABLE_HEIGHT =
+			doc.page.height - PAGE_MARGIN - HEADER_HEIGHT - FOOTER_HEIGHT;
 
-		doc.moveDown(0.5);
+		let isFirstPage = true;
 
-		doc.fontSize(12)
-			.fillColor('#7f8c8d')
-			.font('Helvetica')
-			.text(subtitle, { align: 'center' });
+		// Função para desenhar header da página
+		function drawPageHeader() {
+			const startY = PAGE_MARGIN;
+			doc.y = startY;
 
-		doc.moveDown(0.3);
-
-		// Filters information
-		if (filters && Object.keys(filters).length > 0) {
-			const filterText = Object.entries(filters)
-				.filter(([key, value]) => value !== undefined && value !== null)
-				.map(([key, value]) => {
-					if (key.includes('Date')) {
-						return `${key}: ${dayjs(value).format('DD/MM/YYYY')}`;
-					}
-					return `${key}: ${value}`;
-				})
-				.join(' | ');
-
-			if (filterText) {
+			// Quantidade de registros (apenas na primeira página)
+			if (isFirstPage) {
 				doc.fontSize(10)
-					.fillColor('#95a5a6')
-					.text(`Filtros aplicados: ${filterText}`, {
+					.fillColor('#6c757d')
+					.font('Helvetica-Bold')
+					.text(`${rows.length} registros`, PAGE_MARGIN, doc.y);
+			}
+
+			// Título principal
+			doc.fontSize(16)
+				.fillColor('#2c3e50')
+				.font('Helvetica-Bold')
+				.text(
+					title || 'Relatório de Tickets',
+					PAGE_MARGIN,
+					doc.y + 15,
+					{
 						align: 'center',
+						width: doc.page.width - PAGE_MARGIN * 2,
+					},
+				);
+
+			// Subtítulo
+			if (subtitle) {
+				doc.fontSize(10)
+					.fillColor('#6c757d')
+					.font('Helvetica')
+					.text(subtitle, PAGE_MARGIN, doc.y + 5, {
+						align: 'center',
+						width: doc.page.width - PAGE_MARGIN * 2,
 					});
 			}
+
+			// Data de geração no canto direito
+			doc.fontSize(8)
+				.fillColor('#adb5bd')
+				.text(
+					`Gerado em: ${dayjs().format('DD/MM/YYYY HH:mm')}`,
+					doc.page.width - 150,
+					startY,
+					{ width: 100, align: 'right' },
+				);
+
+			// Filtros (apenas na primeira página)
+			if (filters && Object.keys(filters).length > 0 && isFirstPage) {
+				const filterText = Object.entries(filters)
+					.filter(
+						([key, value]) =>
+							value !== undefined &&
+							value !== null &&
+							value !== '',
+					)
+					.map(([key, value]) => {
+						if (key.includes('Date') || key.includes('data')) {
+							return `${formatHeaderName(key)}: ${dayjs(value).format('DD/MM/YYYY')}`;
+						}
+						return `${formatHeaderName(key)}: ${value}`;
+					})
+					.join(' | ');
+
+				if (filterText) {
+					doc.fontSize(8)
+						.fillColor('#495057')
+						.font('Helvetica-Oblique')
+						.text(
+							`Filtros: ${filterText}`,
+							PAGE_MARGIN,
+							doc.y + 10,
+							{
+								align: 'center',
+								width: doc.page.width - PAGE_MARGIN * 2,
+							},
+						);
+				}
+			}
+
+			// Posicionar y no final do header
+			doc.y = startY + HEADER_HEIGHT;
+			return doc.y;
 		}
 
-		doc.moveDown(1);
-
-		// Add generation date
-		doc.fontSize(10)
-			.fillColor('#bdc3c7')
-			.text(`Gerado em: ${dayjs().format('DD/MM/YYYY HH:mm:ss')}`, {
-				align: 'right',
-			});
-
-		doc.moveDown(1);
-
-		// Check if there is data
+		// Verificar se há dados
 		if (!rows || !rows.length) {
+			drawPageHeader();
 			doc.fontSize(14)
-				.fillColor('#e74c3c')
-				.text('Nenhum dado disponível para os filtros selecionados.', {
+				.fillColor('#dc3545')
+				.font('Helvetica-Bold')
+				.text('Nenhum registro encontrado para os filtros aplicados.', {
 					align: 'center',
 				});
 			doc.end();
 			return;
 		}
 
-		const headers = Object.keys(rows[0]);
-		const pageWidth = doc.page.width - 80; // Subtract margins
+		// Desenhar header inicial
+		let currentY = drawPageHeader();
+		isFirstPage = false;
 
-		// Calcular larguras dinâmicas baseadas no conteúdo
-		const headerWidths = calculateColumnWidths(headers, rows, pageWidth);
-
-		// Table header with background
-		const headerY = doc.y;
-		doc.rect(40, headerY - 5, pageWidth, 25)
-			.fillColor('#ecf0f1')
-			.fill();
-
-		// Header text
-		doc.fillColor('#2c3e50').fontSize(9).font('Helvetica-Bold');
-
-		let currentX = 50;
-		headers.forEach((header, index) => {
-			const displayHeader = formatHeaderName(header);
-			doc.text(displayHeader, currentX, headerY, {
-				width: headerWidths[index] - 10,
-				align: 'left',
-				ellipsis: true,
-			});
-			currentX += headerWidths[index];
-		});
-
-		doc.moveDown(1);
-
-		// Table rows
-		let isAlternate = false;
-		rows.forEach((row, rowIndex) => {
-			const rowY = doc.y;
-
-			// Check if we need a new page
-			if (rowY > doc.page.height - 100) {
+		// Processar itens
+		rows.forEach((row, index) => {
+			// Verificar se há espaço suficiente para o próximo item
+			if (currentY + ITEM_HEIGHT > doc.page.height - FOOTER_HEIGHT) {
 				doc.addPage();
-
-				// Repeat header on new page
-				const newHeaderY = doc.y;
-				doc.rect(40, newHeaderY - 5, pageWidth, 25)
-					.fillColor('#ecf0f1')
-					.fill();
-
-				doc.fillColor('#2c3e50').fontSize(9).font('Helvetica-Bold');
-
-				let headerX = 50;
-				headers.forEach((header, index) => {
-					const displayHeader = formatHeaderName(header);
-					doc.text(displayHeader, headerX, newHeaderY, {
-						width: headerWidths[index] - 10,
-						align: 'left',
-						ellipsis: true,
-					});
-					headerX += headerWidths[index];
-				});
-				doc.moveDown(1);
+				currentY = drawPageHeader();
 			}
 
-			// Alternate row background
-			if (isAlternate) {
-				doc.rect(40, doc.y - 2, pageWidth, 20)
-					.fillColor('#f8f9fa')
-					.fill();
-			}
-
-			// Row data
-			doc.fillColor('#2c3e50').fontSize(8).font('Helvetica');
-
-			let cellX = 50;
-			const currentRowY = doc.y; // Fixar Y para todas as células da linha
-
-			headers.forEach((header, index) => {
-				let value = row[header];
-
-				// Format different data types
-				if (value instanceof Date) {
-					value = dayjs(value).format('DD/MM/YY HH:mm');
-				} else if (value === null || value === undefined) {
-					value = '-';
-				} else if (
-					typeof value === 'number' &&
-					header.includes('duration')
-				) {
-					value = formatDuration(value);
-				} else {
-					value = String(value);
-				}
-
-				doc.text(value, cellX, currentRowY, {
-					width: headerWidths[index] - 10,
-					height: 15, // Altura fixa para cada célula
-					align: 'left',
-					ellipsis: true,
-				});
-
-				cellX += headerWidths[index];
-			});
-
-			doc.y = currentRowY + 15; // Mover Y manualmente para próxima linha
-			isAlternate = !isAlternate;
+			currentY = drawListItem(doc, row, index + 1, currentY);
 		});
-
-		// Footer
-		doc.fontSize(8)
-			.fillColor('#bdc3c7')
-			.text(
-				`Total de registros: ${rows.length}`,
-				40,
-				doc.page.height - 50,
-			);
 
 		doc.end();
 	} catch (error) {
@@ -232,91 +184,185 @@ export function streamPdf(res, { title, subtitle, filters, rows, type }) {
 	}
 }
 
-// Helper function to calculate optimal column widths
-function calculateColumnWidths(headers, rows, totalWidth) {
-	const minWidth = 60; // Largura mínima para cada coluna
-	const maxWidth = 150; // Largura máxima para cada coluna
-	const padding = 10; // Espaçamento entre colunas
+function drawListItem(doc, item, itemNumber, startY) {
+	const ITEM_HEIGHT = 75;
+	const MARGIN = 40;
 
-	// Definir larguras específicas para campos conhecidos
-	const predefinedWidths = {
-		id: 40,
-		tecnico_id: 50,
-		ticket_id: 50,
-		categoria_id: 50,
-		status: 70,
-		count: 50,
-		total_tickets: 60,
-		duracao_media: 80,
-		duracao_formatada: 80,
-		duracao_ticket: 80,
-		data_criacao: 90,
-		data_atualizacao: 90,
-		data_fechamento: 90,
-		tecnico_nome: 120,
-		usuario_criador: 120,
-		tecnico_email: 140,
-		usuario_email: 140,
-		ticket_titulo: 150,
-		categoria: 100,
-		categoria_nome: 100,
-	};
-
-	const widths = headers.map((header) => {
-		// Se temos largura predefinida, usar ela
-		if (predefinedWidths[header]) {
-			return predefinedWidths[header];
-		}
-
-		// Calcular baseado no comprimento do cabeçalho
-		const headerLength = formatHeaderName(header).length * 8;
-
-		// Verificar o conteúdo das primeiras linhas para estimar largura
-		let maxContentLength = 0;
-		for (let i = 0; i < Math.min(5, rows.length); i++) {
-			const value = String(rows[i][header] || '');
-			maxContentLength = Math.max(maxContentLength, value.length * 6);
-		}
-
-		const estimatedWidth =
-			Math.max(headerLength, maxContentLength) + padding;
-		return Math.min(Math.max(estimatedWidth, minWidth), maxWidth);
-	});
-
-	// Ajustar proporcionalmente se exceder a largura total
-	const totalCalculatedWidth = widths.reduce((sum, width) => sum + width, 0);
-
-	if (totalCalculatedWidth > totalWidth) {
-		const ratio = totalWidth / totalCalculatedWidth;
-		return widths.map((width) => Math.max(width * ratio, minWidth));
+	// Background alternado mais sutil
+	if (itemNumber % 2 === 0) {
+		doc.rect(
+			MARGIN - 5,
+			startY,
+			doc.page.width - MARGIN * 2 + 10,
+			ITEM_HEIGHT,
+		)
+			.fillColor('#f8f9fa')
+			.fill();
 	}
 
-	return widths;
+	// Linha de separação superior
+	doc.strokeColor('#e9ecef')
+		.lineWidth(0.5)
+		.moveTo(MARGIN, startY + 5)
+		.lineTo(doc.page.width - MARGIN, startY + 5)
+		.stroke();
+
+	let currentY = startY + 15;
+
+	// Primeira linha - Número do item e ID
+	doc.fontSize(12)
+		.fillColor('#2c3e50')
+		.font('Helvetica-Bold')
+		.text(`#${itemNumber}`, MARGIN + 5, currentY);
+
+	if (item.id) {
+		doc.fontSize(10)
+			.fillColor('#6c757d')
+			.font('Helvetica')
+			.text(`ID: ${item.id}`, MARGIN + 35, currentY + 1);
+	}
+
+	// Status badge no canto direito
+	if (item.status) {
+		const statusColor = getStatusColor(item.status);
+		const statusX = doc.page.width - 120;
+
+		doc.rect(statusX, currentY - 2, 70, 16)
+			.fillColor(statusColor)
+			.fill();
+
+		doc.fontSize(8)
+			.fillColor('#ffffff')
+			.font('Helvetica-Bold')
+			.text(
+				String(item.status).toUpperCase(),
+				statusX + 2,
+				currentY + 2,
+				{
+					width: 66,
+					align: 'center',
+				},
+			);
+	}
+
+	currentY += 20;
+
+	// Segunda linha - Título
+	if (item.titulo) {
+		doc.fontSize(11)
+			.fillColor('#2c3e50')
+			.font('Helvetica-Bold')
+			.text('Título: ', MARGIN + 5, currentY, { continued: true });
+
+		doc.fontSize(10)
+			.fillColor('#495057')
+			.font('Helvetica')
+			.text(limitText(item.titulo, 65));
+	}
+
+	currentY += 15;
+
+	// Terceira linha - Categoria e Solicitante
+	doc.fontSize(9).fillColor('#495057').font('Helvetica');
+
+	if (item.categoria || item.categoria_nome) {
+		doc.text(
+			`Categoria: ${item.categoria || item.categoria_nome}`,
+			MARGIN + 5,
+			currentY,
+		);
+	}
+
+	if (item.usuario_criador || item.criado_por) {
+		const solicitante = item.usuario_criador || item.criado_por;
+		doc.text(
+			`Solicitante: ${limitText(solicitante, 20)}`,
+			MARGIN + 5,
+			currentY + 10,
+		);
+	}
+
+	// Lado direito - Técnico e Data
+	if (item.tecnico_nome || item.tecnico_responsavel) {
+		const tecnico =
+			item.tecnico_nome || item.tecnico_responsavel || 'Não atribuído';
+		doc.text(
+			`Técnico: ${limitText(tecnico, 20)}`,
+			doc.page.width - 180,
+			currentY,
+		);
+	}
+
+	if (item.data_criacao || item.criado_em) {
+		doc.text(
+			`Criado: ${formatDate(item.data_criacao || item.criado_em)}`,
+			doc.page.width - 180,
+			currentY + 10,
+		);
+	}
+
+	return startY + ITEM_HEIGHT + 5; // Retorna próxima posição Y
 }
 
-// Helper function to format header names
+function getStatusColor(status) {
+	const statusColors = {
+		pendente: '#ffc107',
+		pending: '#ffc107',
+		em_andamento: '#17a2b8',
+		'em andamento': '#17a2b8',
+		in_progress: '#17a2b8',
+		concluido: '#28a745',
+		concluído: '#28a745',
+		completed: '#28a745',
+		fechado: '#28a745',
+		closed: '#28a745',
+		cancelado: '#dc3545',
+		cancelled: '#dc3545',
+		aberto: '#fd7e14',
+		open: '#fd7e14',
+	};
+
+	const key = String(status).toLowerCase().replace(/\s+/g, '_');
+	return (
+		statusColors[key] ||
+		statusColors[String(status).toLowerCase()] ||
+		'#6c757d'
+	);
+}
+
+function formatDate(date) {
+	if (!date) return 'N/A';
+
+	try {
+		if (date instanceof Date) {
+			return dayjs(date).format('DD/MM/YY HH:mm');
+		}
+
+		const parsedDate = dayjs(date);
+		if (parsedDate.isValid()) {
+			return parsedDate.format('DD/MM/YY HH:mm');
+		}
+
+		return String(date);
+	} catch (error) {
+		return String(date);
+	}
+}
+
+function limitText(text, maxLength) {
+	if (!text) return 'N/A';
+	const str = String(text);
+	return str.length > maxLength ? str.substring(0, maxLength) + '...' : str;
+}
+
 function formatHeaderName(header) {
 	const headerMap = {
-		id: 'ID',
-		titulo: 'Título',
 		status: 'Status',
+		data_inicio: 'Data Início',
+		data_fim: 'Data Fim',
 		categoria: 'Categoria',
-		categoria_nome: 'Categoria',
-		tecnico_responsavel: 'Técnico',
-		tecnico_nome: 'Técnico',
-		tecnico_email: 'Email Técnico',
-		usuario_criador: 'Criado por',
-		usuario_email: 'Email Usuário',
-		data_criacao: 'Criado em',
-		data_atualizacao: 'Atualizado em',
-		data_fechamento: 'Fechado em',
-		duracao_formatada: 'Duração',
-		duracao_media: 'Duração Média',
-		total_tickets: 'Total Tickets',
-		count: 'Quantidade',
-		patrimonio: 'Patrimônio',
-		ticket_count: 'Qtd Tickets',
-		avg_duration_formatted: 'Duração Média',
+		tecnico: 'Técnico',
+		usuario: 'Usuário',
 	};
 
 	return (
@@ -324,9 +370,8 @@ function formatHeaderName(header) {
 	);
 }
 
-// Helper function to format duration
 function formatDuration(seconds) {
-	if (!seconds) return '-';
+	if (!seconds || seconds === 0) return '-';
 
 	const hours = Math.floor(seconds / 3600);
 	const minutes = Math.floor((seconds % 3600) / 60);

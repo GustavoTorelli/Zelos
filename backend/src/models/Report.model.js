@@ -36,7 +36,7 @@ export class Report {
 			category_id: true,
 			technician_id: true,
 			user_id: true,
-			patrimony_id: true,
+			patrimony_code: true,
 			Category: {
 				select: {
 					id: true,

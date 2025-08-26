@@ -292,6 +292,67 @@ export class TicketController {
 		}
 	}
 
+	async delete(req, res) {
+		try {
+			const parsed_id = idSchema.parse(req.params.id);
+			await Ticket.delete({ ticket_id: parsed_id, role: req.user.role });
+
+			return apiResponse(
+				{
+					success: true,
+					message: 'Ticket deleted successfully',
+					code: 200,
+				},
+				res,
+			);
+		} catch (error) {
+			if (error instanceof ZodError) {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Invalid request data',
+						errors: zodErrorFormatter(error),
+						code: 400,
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'FORBIDDEN') {
+				return apiResponse(
+					{
+						success: false,
+						message:
+							'You do not have permission to delete this ticket',
+						code: 403,
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'NOT_FOUND') {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Ticket not found',
+						code: 404,
+					},
+					res,
+				);
+			}
+
+			return apiResponse(
+				{
+					code: 500,
+					success: false,
+					message: 'An unexpected error occurred',
+					errors: error.message,
+				},
+				res,
+			);
+		}
+	}
+
 	async updateStatus(req, res) {
 		try {
 			const parsed_id = idSchema.parse(req.params.id);

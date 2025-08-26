@@ -68,9 +68,7 @@ export class PatrimonyController {
 		try {
 			const parsed_data = createManyPatrimoniesSchema.parse(req.body);
 
-			const patrimonies = await Patrimony.createMany(
-				parsed_data.patrimonies,
-			);
+			const patrimonies = await Patrimony.createMany(parsed_data);
 
 			return apiResponse(
 				{

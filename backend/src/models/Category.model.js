@@ -53,6 +53,20 @@ export class Category {
 		}
 	}
 
+	static async delete({ category_id, role }) {
+		if (role !== 'admin') throw new Error('FORBIDDEN');
+
+		try {
+			const category = await prisma.category.delete({
+				where: { id: category_id },
+			});
+			return category.title;
+		} catch (error) {
+			if (error.code === 'P2025') throw new Error('NOT_FOUND');
+			throw new Error(`Error fetching category name: ${error}`);
+		}
+	}
+
 	static async activate({ category_id, user_id, role }) {
 		if (role !== 'admin') throw new Error('FORBIDDEN');
 

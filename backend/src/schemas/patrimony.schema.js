@@ -22,6 +22,7 @@ export const createPatrimonySchema = z.object({
 		.min(1, 'Description is required')
 		.max(5000, 'Description must be less than 5000 characters')
 		.trim(),
+	code: codeSchema,
 });
 
 export const updatePatrimonySchema = z
