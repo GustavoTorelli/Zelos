@@ -5,7 +5,7 @@ import Sidebar from '@/app/components/Header/Sidebar';
 import Relatorio from '@/app/components/Layout/Report';
 import TicketsPage from '@/app/components/Layout/Tickets';
 import Header from '@/app/components/Header/Header';
-import UsersPage from '@/app/components/Layout/Users';
+import AdminPage from '@/app/components/Layout/Admin';
 
 export default function Chamados() {
 	const router = useRouter();
@@ -106,7 +106,7 @@ export default function Chamados() {
 				<Sidebar onSelect={setActiveComponent} isOpen={sidebarOpen} />
 				<section className="flex w-full overflow-y-auto p-6 bg-zinc-100 dark:bg-zinc-800 justify-center items-center md:ml-60">
 					{activeComponent === 1 && <TicketsPage/> }
-					{activeComponent === 2 && <UsersPage/>}
+					{activeComponent === 2 && <AdminPage/>}
 					{activeComponent === 3 && <Relatorio />}
 				</section>
 			</div>

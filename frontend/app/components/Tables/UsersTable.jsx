@@ -1,8 +1,56 @@
 'use client'
-
+import { useEffect, useMemo, useState } from "react";
+import { Funnel, Plus, Search } from "lucide-react";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react";
+import NewUserModal from "../Modals/Admin/NewUserModal";
+import SeeUsersModal from "../Modals/Admin/SeeUsersModal";
 
-export default function TabelaDeUsuarios({ loading, error, users = [], onEditUser, onViewUser }){
+export default function TabelaDeUsuarios({ loading, error, users = [], onEditUser, onViewUser }) {
+    // filtros
+    const [searchTerm, setSearchTerm] = useState('');
+    const [roleFilter, setRoleFilter] = useState('');
+    const [statusUserFilter, setStatusUserFilter] = useState('all');
+
+
+    //  modais
+    const [isOpenNewUser, setIsOpenNewUser] = useState(false);
+    const [isOpenSeeUsers, setIsOpenSeeUsers] = useState(false);
+
+
+    // role do usuário 
+    const [currentUserRole, setCurrentUserRole] = useState('');
+
+    // Headers de autenticação
+    const authHeaders = useMemo(() => {
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        const isJwt = token && token.includes('.')
+        return isJwt ? { Authorization: `Bearer ${token}` } : {};
+    }, []);
+
+    // role do usuário atual
+    useEffect(() => {
+        async function loadRole() {
+            try {
+                const res = await fetch('/api/auth/me', { credentials: 'include' });
+                const payload = await res.json();
+                if (res.ok) setCurrentUserRole(payload?.data?.role || '');
+            } catch (_) {
+                console.error('Erro ao carregar role do usuário');
+            }
+        }
+        loadRole();
+    }, []);
+
+    // Função para limpar filtros
+    const clearFilters = () => {
+        setSearchTerm('');
+        setRoleFilter('');
+        setStatusUserFilter('all');
+    };
+
+    //  filtros ativos
+    const hasActiveFilters = searchTerm || roleFilter || statusUserFilter !== 'all';
+
     // Dados de exemplo caso não sejam fornecidos
     const defaultUsers = [
         {
@@ -31,8 +79,28 @@ export default function TabelaDeUsuarios({ loading, error, users = [], onEditUse
         }
     ];
 
-    const rowsToRender = users.length > 0 ? users : defaultUsers;
+    // Usa os dados fornecidos ou os dados de exemplo
+    const allUsers = users.length > 0 ? users : defaultUsers;
 
+    // Aplica os filtros
+    const filteredUsers = useMemo(() => {
+        return allUsers.filter(user => {
+            const matchesSearch = searchTerm === '' ||
+                user.id.toString().includes(searchTerm) ||
+                user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                user.email.toLowerCase().includes(searchTerm.toLowerCase());
+
+            const matchesRole = roleFilter === '' || user.role === roleFilter;
+
+            const matchesStatus = statusUserFilter === 'all' ||
+                (statusUserFilter === 'active' && user.status === 'Ativo') ||
+                (statusUserFilter === 'inactive' && user.status === 'Inativo');
+
+            return matchesSearch && matchesRole && matchesStatus;
+        });
+    }, [allUsers, searchTerm, roleFilter, statusUserFilter]);
+
+    // Colunas da tabela
     const columns = [
         { key: "id", label: "ID" },
         { key: "name", label: "Nome" },
@@ -42,6 +110,7 @@ export default function TabelaDeUsuarios({ loading, error, users = [], onEditUse
         { key: "actions", label: "Ações" },
     ];
 
+    //celulas do heri ui
     const renderCell = (item, columnKey) => {
         switch (columnKey) {
             case "id":
@@ -102,7 +171,7 @@ export default function TabelaDeUsuarios({ loading, error, users = [], onEditUse
                 return (
                     <div className="flex justify-center gap-2">
                         <button
-                            onClick={() => onViewUser(item)}
+                            onClick={() => onEditUser && onEditUser(item)}
                             className="cursor-pointer bg-red-700 hover:bg-red-800 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
                         >
                             Editar
@@ -114,7 +183,11 @@ export default function TabelaDeUsuarios({ loading, error, users = [], onEditUse
         }
     };
 
-    if (loading) {
+
+    const isLoading = loading;
+    const hasError = error;
+
+    if (isLoading) {
         return (
             <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl min-h-[400px] p-4 flex items-center justify-center">
                 <div className="text-zinc-400">Carregando usuários...</div>
@@ -122,54 +195,157 @@ export default function TabelaDeUsuarios({ loading, error, users = [], onEditUse
         );
     }
 
-    if (error) {
+    if (hasError) {
         return (
             <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl min-h-[400px] p-4 flex items-center justify-center">
-                <div className="text-red-400">Erro ao carregar usuários: {error}</div>
+                <div className="text-red-400">Erro ao carregar usuários: {hasError}</div>
             </div>
         );
     }
 
     return (
-        <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl min-h-[400px] p-4">
-            <Table
-                isVirtualized
-                aria-label="Tabela de usuários"
-                removeWrapper
-                className="w-full h-full bg-transparent"
-                classNames={{
-                    base: "w-auto  bg-transparent",
-                    table: " bg-transparent",
-                    thead: "sticky top-0 z-10 bg-transparent",
-                    th: "bg-transparent text-zinc-700 dark:text-zinc-300 font-semibold text-sm border-b border-zinc-200 dark:border-zinc-700  overflow-hidden",
-                    td: " text-sm border-b border-zinc-100 dark:border-zinc-800 overflow-hidden",
-                    tbody: "bg-transparent",
-                    tr: "bg-transparent hover:bg-zinc-50/30 dark:hover:bg-zinc-700/30 transition-colors duration-300"
-                }}
-            >
-                <TableHeader columns={columns}>
-                    {(column) => (
-                        <TableColumn
-                            key={column.key}
-                            className="text-center font-semibold text-zinc-700 dark:text-zinc-300 py-3 h-10 max-h-10 overflow-hidden bg-transparent"
-                            minWidth={column.key === "actions" ? 180 : 120}
-                        >
-                            {column.label}
-                        </TableColumn>
-                    )}
-                </TableHeader>
-                <TableBody items={rowsToRender}>
-                    {(item) => (
-                        <TableRow key={item.key || item.id} className="h-10 max-h-10 bg-transparent">
-                            {(columnKey) => (
-                                <TableCell className="py-2 px-4 h-15 gap-1 overflow-hidden bg-transparent">
-                                    {renderCell(item, columnKey)}
-                                </TableCell>
+        <section>
+            {/* Modals */}
+            <NewUserModal isOpen={isOpenNewUser} onClose={() => setIsOpenNewUser(false)} />
+            <SeeUsersModal
+                isOpen={isOpenSeeUsers}
+                onClose={() => ne(false)}
+            />
+
+            {/* Filtros */}
+            <div className="mb-8">
+                <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 shadow-xl">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                            <div className="w-5 h-5 text-red-500">
+                                <Funnel size={20} />
+                            </div>
+                            Filtros De Usuário
+                        </h3>
+                        {hasActiveFilters && (
+                            <button
+                                onClick={clearFilters}
+                                className="text-sm text-red-400 hover:text-red-300 transition-colors duration-200"
+                            >
+                                Limpar filtros
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {/* Busca geral */}
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <div className="h-5 w-5 text-gray-400">
+                                    <Search size={20} />
+                                </div>
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Buscar usuário (ID, nome, email)"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full bg-gray-700/50 border border-gray-600/50 text-white placeholder-gray-400 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all duration-200"
+                            />
+                        </div>
+
+                        {/* Filtro por perfil */}
+                        <div className="relative">
+                            <select
+                                value={roleFilter}
+                                onChange={(e) => setRoleFilter(e.target.value)}
+                                className="w-full appearance-none bg-gray-700/50 border border-gray-600/50 text-white rounded-xl py-3 px-4 pr-10 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all duration-200"
+                            >
+                                <option value="">Todos os perfis</option>
+                                <option value="admin">Administrador</option>
+                                <option value="user">Usuário</option>
+                                <option value="technician">Técnico</option>
+                            </select>
+                            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        {/* Filtro por status */}
+                        <div className="relative">
+                            <select
+                                value={statusUserFilter}
+                                onChange={(e) => setStatusUserFilter(e.target.value)}
+                                className="w-full appearance-none bg-gray-700/50 border border-gray-600/50 text-white rounded-xl py-3 px-4 pr-10 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all duration-200"
+                            >
+                                <option value="all">Todos os status</option>
+                                <option value="active">Ativo</option>
+                                <option value="inactive">Inativo</option>
+                            </select>
+                            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Tabela */}
+            <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl min-h-[400px] p-4">
+                {filteredUsers.length === 0 ? (
+                    <div className="flex items-center justify-center h-64">
+                        <div className="text-center">
+                            <p className="text-zinc-400 text-lg mb-2">Nenhum usuário encontrado</p>
+                            {hasActiveFilters && (
+                                <button
+                                    onClick={clearFilters}
+                                    className="text-red-400 hover:text-red-300 text-sm transition-colors duration-200"
+                                >
+                                    Limpar filtros para ver todos os usuários
+                                </button>
                             )}
-                        </TableRow>
-                    )}
-                </TableBody>
-            </Table>
-        </div>
+                        </div>
+                    </div>
+                ) : (
+                    <Table
+                        isVirtualized
+                        aria-label="Tabela de usuários"
+                        removeWrapper
+                        className="w-full h-full bg-transparent"
+                        classNames={{
+                            base: "w-auto bg-transparent",
+                            table: "bg-transparent",
+                            thead: "sticky top-0 z-10 bg-transparent",
+                            th: "bg-transparent text-zinc-700 dark:text-zinc-300 font-semibold text-sm border-b border-zinc-200 dark:border-zinc-700 overflow-hidden",
+                            td: "text-sm border-b border-zinc-100 dark:border-zinc-800 overflow-hidden",
+                            tbody: "bg-transparent",
+                            tr: "bg-transparent hover:bg-zinc-50/30 dark:hover:bg-zinc-700/30 transition-colors duration-300"
+                        }}
+                    >
+                        <TableHeader columns={columns}>
+                            {(column) => (
+                                <TableColumn
+                                    key={column.key}
+                                    className="text-center font-semibold text-zinc-700 dark:text-zinc-300 py-3 h-10 max-h-10 overflow-hidden bg-transparent"
+                                    minWidth={column.key === "actions" ? 180 : 120}
+                                >
+                                    {column.label}
+                                </TableColumn>
+                            )}
+                        </TableHeader>
+                        <TableBody items={filteredUsers}>
+                            {(item) => (
+                                <TableRow key={item.key || item.id} className="h-10 max-h-10 bg-transparent">
+                                    {(columnKey) => (
+                                        <TableCell className="py-2 px-4 h-15 gap-1 overflow-hidden bg-transparent">
+                                            {renderCell(item, columnKey)}
+                                        </TableCell>
+                                    )}
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                )}
+            </div>
+        </section>
     );
 }

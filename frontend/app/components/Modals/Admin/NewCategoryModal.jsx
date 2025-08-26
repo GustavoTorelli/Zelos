@@ -1,19 +1,17 @@
 'use client';
 import { useState } from "react";
-import { Users } from "lucide-react";
+import { LibraryBig } from "lucide-react"; 
 
-export default function NewUserModal({ isOpen, onClose, userData = null }) {
+export default function NewCategoryModal({ isOpen, onClose, categoryData = null }) {
     if (!isOpen) return null;
 
-    const [name, setName] = useState(userData?.name || "");
-    const [email, setEmail] = useState(userData?.email || "");
-    const [password, setPassword] = useState("");
-    const [role, setRole] = useState(userData?.role || "");
+    const [title, setTitle] = useState(categoryData?.title || "");
+    const [description, setDescription] = useState(categoryData?.description || "");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
-    const isEditing = Boolean(userData);
+    const isEditing = Boolean(categoryData);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -22,32 +20,17 @@ export default function NewUserModal({ isOpen, onClose, userData = null }) {
         setLoading(true);
 
         try {
-            if (!name.trim()) throw new Error("Nome é obrigatório");
-            if (!email.trim()) throw new Error("Email é obrigatório");
-            if (!role.trim()) throw new Error("Perfil é obrigatório");
-            if (!isEditing && !password.trim()) throw new Error("Senha é obrigatória");
-
-            // Validação básica de email
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) throw new Error("Email inválido");
+            if (!title.trim()) throw new Error("Título é obrigatório");
+            if (!description.trim()) throw new Error("Descrição é obrigatória");
 
             const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
             const headers = token && token.includes('.') ?
                 { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } :
                 { 'Content-Type': 'application/json' };
 
-            const body = {
-                name,
-                email,
-                role
-            };
+            const body = { title, description };
 
-            // Só inclui senha se não estiver editando ou se foi preenchida
-            if (!isEditing || password.trim()) {
-                body.password = password;
-            }
-
-            const url = isEditing ? `/api/users/${userData.id}` : '/api/users';
+            const url = isEditing ? `/api/categories/${categoryData.id}` : '/api/categories';
             const method = isEditing ? 'PUT' : 'POST';
 
             const res = await fetch(url, {
@@ -58,16 +41,14 @@ export default function NewUserModal({ isOpen, onClose, userData = null }) {
 
             if (!res.ok) {
                 const payload = await res.json().catch(() => ({}));
-                throw new Error(payload?.message || `Falha ao ${isEditing ? 'atualizar' : 'criar'} usuário`);
+                throw new Error(payload?.message || `Falha ao ${isEditing ? 'atualizar' : 'criar'} categoria`);
             }
 
-            setSuccess(`Usuário ${isEditing ? 'atualizado' : 'criado'} com sucesso!`);
+            setSuccess(`Categoria ${isEditing ? 'atualizada' : 'criada'} com sucesso!`);
 
             if (!isEditing) {
-                setName("");
-                setEmail("");
-                setPassword("");
-                setRole("");
+                setTitle("");
+                setDescription("");
             }
 
             setTimeout(() => {
@@ -93,59 +74,33 @@ export default function NewUserModal({ isOpen, onClose, userData = null }) {
             >
                 {/* Título */}
                 <div className="flex gap-2 pb-4 border-b border-gray-700/50 text-white mb-6">
-                    <Users size={25} />
+                    <LibraryBig  size={25} />
                     <h3 className="text-xl font-semibold text-white">
-                        {isEditing ? 'Editar Usuário' : 'Novo Usuário'}
+                        {isEditing ? 'Editar Categoria' : 'Nova Categoria'}
                     </h3>
                 </div>
 
                 {/* Formulário */}
                 <form className="space-y-4" onSubmit={handleSubmit}>
-                    {/* Nome */}
+                    {/* Título */}
                     <input
                         type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
                         className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200 placeholder-zinc-400"
-                        placeholder="Nome completo"
+                        placeholder="Título da categoria"
                         maxLength={100}
                         required
                     />
 
-                    {/* Email */}
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200 placeholder-zinc-400"
-                        placeholder="email@exemplo.com"
+                    {/* Descrição */}
+                    <textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 min-h-[100px] focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200 placeholder-zinc-400"
+                        placeholder="Descrição da categoria"
                         required
                     />
-
-                    {/* Senha */}
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200 placeholder-zinc-400"
-                        placeholder={isEditing ? "Nova senha (deixe vazio para manter)" : "Senha"}
-                        minLength={6}
-                        required={!isEditing}
-                    />
-
-                    {/* Perfil/Role */}
-                    <select
-                        value={role}
-                        onChange={(e) => setRole(e.target.value)}
-                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200"
-                        required
-                    >
-                        <option value="">Selecione o perfil</option>
-                        <option value="admin">Administrador</option>
-                        <option value="user">Usuário</option>
-                        <option value="technician">Técnico</option>
-                        <option value="manager">Gerente</option>
-                    </select>
 
                     {/* Mensagens de feedback */}
                     {error && (

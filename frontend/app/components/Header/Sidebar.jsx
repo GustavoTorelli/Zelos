@@ -2,6 +2,7 @@
 import {
 	Boxes,
 	ChartNoAxesCombined,
+	Database,
 	Headset,
 	Power,
 	Users,
@@ -66,9 +67,9 @@ export default function Sidebar({ onSelect, isOpen }) {
 						className="cursor-pointer flex items-center w-full p-3 rounded-lg hover:bg-zinc-800 transition"
 					>
 						<div className="grid mr-4 place-items-center">
-							<Users />
+							<Database/>
 						</div>
-						Gestão de Usuários
+						Gestão de Dados
 					</button>
 
 					<button
