@@ -15,9 +15,9 @@ export class PatrimonyController {
 
 	async create(req, res) {
 		try {
-			const parsedData = createPatrimonySchema.parse(req.body);
+			const parsed_data = createPatrimonySchema.parse(req.body);
 
-			const patrimony = await Patrimony.create(parsedData);
+			const patrimony = await Patrimony.create(parsed_data);
 
 			return apiResponse(
 				{
@@ -66,10 +66,10 @@ export class PatrimonyController {
 
 	async createMany(req, res) {
 		try {
-			const parsedData = createManyPatrimoniesSchema.parse(req.body);
+			const parsed_data = createManyPatrimoniesSchema.parse(req.body);
 
 			const patrimonies = await Patrimony.createMany(
-				parsedData.patrimonies,
+				parsed_data.patrimonies,
 			);
 
 			return apiResponse(
@@ -133,9 +133,9 @@ export class PatrimonyController {
 
 	async findAll(req, res) {
 		try {
-			const parsedData = findAllPatrimoniesSchema.parse(req.query);
+			const parsed_data = findAllPatrimoniesSchema.parse(req.query);
 
-			const patrimonies = await Patrimony.findAll(parsedData);
+			const patrimonies = await Patrimony.findAll(parsed_data);
 
 			return apiResponse(
 				{
@@ -173,9 +173,9 @@ export class PatrimonyController {
 
 	async findByCode(req, res) {
 		try {
-			const parsedCode = codeSchema.parse(req.params.code);
+			const parsed_code = codeSchema.parse(req.params.code);
 
-			const patrimony = await Patrimony.findByCode(parsedCode);
+			const patrimony = await Patrimony.findByCode(parsed_code);
 
 			return apiResponse(
 				{
@@ -224,10 +224,10 @@ export class PatrimonyController {
 
 	async update(req, res) {
 		try {
-			const parsedCode = codeSchema.parse(req.params.code);
-			const parsedData = updatePatrimonySchema.parse(req.body);
+			const parsed_code = codeSchema.parse(req.params.code);
+			const parsed_data = updatePatrimonySchema.parse(req.body);
 
-			const patrimony = await Patrimony.update(parsedCode, parsedData);
+			const patrimony = await Patrimony.update(parsed_code, parsed_data);
 
 			return apiResponse(
 				{
@@ -287,11 +287,11 @@ export class PatrimonyController {
 
 	async delete(req, res) {
 		try {
-			const parsedCode = codeSchema.parse(req.params.code);
+			const parsed_code = codeSchema.parse(req.params.code);
 
-			console.log(parsedCode);
+			console.log(parsed_code);
 
-			const patrimony = await Patrimony.delete(parsedCode);
+			const patrimony = await Patrimony.delete(parsed_code);
 
 			return apiResponse(
 				{

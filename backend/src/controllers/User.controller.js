@@ -5,23 +5,9 @@ import apiResponse from '../utils/api-response.js';
 import { ZodError } from 'zod';
 import zodErrorFormatter from '../utils/zod-error-formatter.js';
 
-/**
- * @class
- * @classdesc Controller class for handling user-related API requests.
- */
 export class UserController {
-	/**
-	 * Creates an instance of UserController.
-	 * @constructor
-	 */
 	constructor() {}
 
-	/**
-	 * Handles requests for creates a new user
-	 * @param {Request} req - The incoming request
-	 * @param {Response} res - The response to be sent back
-	 * @returns {Promise<void>} A promise that resolves when the user has been created
-	 */
 	async create(req, res) {
 		try {
 			const parsedData = userCreateSchema.parse(req.body);
@@ -100,19 +86,13 @@ export class UserController {
 		}
 	}
 
-	/**
-	 * Handles requests for retrieving all users
-	 * @param {Request} req - The incoming request
-	 * @param {Response} res - The response to be sent back
-	 * @returns {Promise<void>} A promise that resolves when the users have been retrieved
-	 */
 	async getAll(req, res) {
 		try {
-			const includeInactive =
-				req.query.inactive === 'true' ? true : false;
+			const include_inactive =
+				req.query.include_inactive === 'true' ? true : false;
 
 			// Retrieve all users
-			const users = await User.findAll({ includeInactive });
+			const users = await User.findAll({ include_inactive });
 
 			// Return a 200 response with the users
 			return apiResponse(
@@ -138,12 +118,6 @@ export class UserController {
 		}
 	}
 
-	/**
-	 * Handles requests for retrieving a single user
-	 * @param {Request} req - The incoming request
-	 * @param {Response} res - The response to be sent back
-	 * @returns {Promise<void>} A promise that resolves when the user has been retrieved
-	 */
 	async getById(req, res) {
 		try {
 			// Parse the ID from the params
@@ -201,12 +175,6 @@ export class UserController {
 		}
 	}
 
-	/**
-	 * Handles requests for updating a user
-	 * @param {Request} req - The incoming request
-	 * @param {Response} res - The response to be sent back
-	 * @returns {Promise<void>} A promise that resolves when the user has been updated
-	 */
 	async update(req, res) {
 		try {
 			const parsedId = idSchema.parse(req.params.id);
@@ -297,12 +265,6 @@ export class UserController {
 		}
 	}
 
-	/**
-	 * Handles requests for deleting a user
-	 * @param {Request} req - The incoming request
-	 * @param {Response} res - The response to be sent back
-	 * @returns {Promise<void>} A promise that resolves when the user has been deleted
-	 */
 	async delete(req, res) {
 		try {
 			// Parse the ID from the params
@@ -352,12 +314,6 @@ export class UserController {
 		}
 	}
 
-	/**
-	 * Handles requests for activating a user
-	 * @param {Request} req - The incoming request
-	 * @param {Response} res - The response to be sent back
-	 * @returns {Promise<void>} A promise that resolves when the user has been activated
-	 */
 	async activate(req, res) {
 		try {
 			// Parse the ID from the params
@@ -415,12 +371,6 @@ export class UserController {
 		}
 	}
 
-	/**
-	 * Handles requests for deactivating a user
-	 * @param {Request} req - The incoming request
-	 * @param {Response} res - The response to be sent back
-	 * @returns {Promise<void>} A promise that resolves when the user has been deactivated
-	 */
 	async deactivate(req, res) {
 		try {
 			// Parse the ID from the params

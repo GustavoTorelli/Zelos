@@ -30,11 +30,11 @@ export const findAllTicket = z.object({
 			`Status must be 'pending', 'in_progress' or 'completed'`,
 		)
 		.optional(),
-	technicianId: idSchema.optional(),
-	categoryId: idSchema.optional(),
-	patrimonyCode: z.string().optional(),
-	createdAfter: z.iso.date('Date must be in YYYY-MM-DD format').optional(),
-	createdBefore: z.iso.date('Date must be in YYYY-MM-DD format').optional(),
+	technician_id: idSchema.optional(),
+	category_id: idSchema.optional(),
+	patrimony_code: z.string().optional(),
+	created_after: z.iso.date('Date must be in YYYY-MM-DD format').optional(),
+	created_before: z.iso.date('Date must be in YYYY-MM-DD format').optional(),
 });
 
 export const assignTechnician = z

@@ -8,29 +8,15 @@ import { ZodError } from 'zod';
 import apiResponse from '../utils/api-response.js';
 import zodErrorFormatter from '../utils/zod-error-formatter.js';
 
-/**
- * @class
- * @classdesc Controller class for handling authentication-related API requests.
- */
 export class AuthController {
-	/**
-	 * Creates an instance of AuthController.
-	 * @constructor
-	 */
 	constructor() {}
 
-	/**
-	 * Handles login requests
-	 * @param {Request} req - The incoming request
-	 * @param {Response} res - The response to be sent back
-	 * @returns {Promise<void>} A promise that resolves when the user has been logged in
-	 */
 	async login(req, res) {
 		try {
 			// Parse the request body using the loginSchema
-			const parsedData = loginSchema.parse(req.body);
+			const parsed_data = loginSchema.parse(req.body);
 			// Login the user and return a 200 response with the JWT token
-			const token = await Auth.login(parsedData);
+			const token = await Auth.login(parsed_data);
 
 			// Set the JWT token as a cookie
 			res.cookie('jwt_token', token, {
@@ -39,17 +25,17 @@ export class AuthController {
 				sameSite: 'lax',
 			});
 
-			const responseData = {
+			const response_data = {
 				success: true,
 				message: 'Logged in successfully',
 				code: 200,
 			};
 
 			if (process.env.ENVIRONMENT === 'dev') {
-				responseData.data = { token };
+				response_data.data = { token };
 			}
 
-			return apiResponse(responseData, res);
+			return apiResponse(response_data, res);
 		} catch (error) {
 			// If the error is a Zod error, return a 400 response with the validation errors
 			if (error instanceof ZodError) {
@@ -125,9 +111,6 @@ export class AuthController {
 		);
 	}
 
-	/**
-	 * Returns current authenticated user's basic info
-	 */
 	async me(req, res) {
 		try {
 			const { id, role } = req.user;
@@ -155,9 +138,9 @@ export class AuthController {
 
 	async passwordRecovery(req, res) {
 		try {
-			const parsedData = passwordRecoverySchema.parse(req.body);
+			const parsed_data = passwordRecoverySchema.parse(req.body);
 
-			await Auth.passwordRecovery(parsedData);
+			await Auth.passwordRecovery(parsed_data);
 
 			return apiResponse(
 				{
@@ -216,12 +199,12 @@ export class AuthController {
 
 	async resetPassword(req, res) {
 		try {
-			const parsedData = resetPasswordSchema.parse({
+			const parsed_data = resetPasswordSchema.parse({
 				token: req.query.token,
 				password: req.body.password,
 			});
 
-			await Auth.resetPassword(parsedData);
+			await Auth.resetPassword(parsed_data);
 
 			return apiResponse(
 				{
