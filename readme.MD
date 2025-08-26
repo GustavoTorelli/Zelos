@@ -9,6 +9,8 @@ Zelos/
 ├─ backend/    # API em Node.js e Express
 ├─ frontend/   # Aplicação web em Next.js
 └─ database/   # Banco de dados MySQL
+
+# Obs: para rodar  o projeto você deve possuir instalado: Node.js, XAMPP e MySQL
 ```
 
 ### 🛠️ Tecnologias Utilizadas
@@ -49,9 +51,9 @@ npm run dev
 ```
 ---
 ### 🐱‍👤 Colaboradores
-| <img src="https://github.com/gustavotorelli.png" width="100" height="100" alt="Gustavo Torelli" /> | <img src="https://github.com/Matheusrike.png" width="100" height="100" alt="Matheus Ramos" /> |
-|:------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------:|
-| [Gustavo Torelli](https://github.com/gustavotorelli) | [Matheus Ramos](https://github.com/Matheusrike) |
+| <img src="https://github.com/gustavotorelli.png" width="100" height="100" alt="Gustavo Torelli" /> | <img src="https://github.com/Matheusrike.png" width="100" height="100" alt="Matheus Ramos" /> | <img src="https://github.com/Bestofef-afk.png" width="100" height="100" alt="Gianlucca D Estefani" /> |
+|:------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------:|
+| [Gustavo Torelli](https://github.com/gustavotorelli) | [Matheus Ramos](https://github.com/Matheusrike) | [Gianlucca ](https://github.com/Bestofef-afk) |
 
 
 © 2025 Zelos. Todos os direitos reservados.
