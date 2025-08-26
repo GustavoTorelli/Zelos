@@ -151,7 +151,7 @@ export default function UsersPage() {
                                 onChange={(e) => setRoleFilter(e.target.value)}
                                 className="w-full appearance-none bg-gray-700/50 border border-gray-600/50 text-white rounded-xl py-3 px-4 pr-10 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all duration-200"
                             >
-                                <option value="">Selecionar categoria</option>
+                                <option value="">Selecionar perfil</option>
                                 <option value="">teste</option>
                                 <option value="">teste</option>
                             </select>
@@ -170,9 +170,8 @@ export default function UsersPage() {
                                 className="w-full appearance-none bg-gray-700/50 border border-gray-600/50 text-white rounded-xl py-3 px-4 pr-10 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all duration-200"
                             >
                                 <option value="all">Selecionar status</option>
-                                <option value="active">Pendentes</option>
-                                <option value="inactive">Em andamento</option>
-                                <option value="inactive">Concluidos</option>
+                                <option value="active">Ativo</option>
+                                <option value="inactive">Inativo</option>
                             </select>
                             <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                 <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
