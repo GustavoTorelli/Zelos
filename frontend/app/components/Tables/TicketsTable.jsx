@@ -5,15 +5,15 @@ import { useEffect, useState, useMemo } from "react";
 
 export default function TabelaDeTickets({ onViewTicket }) {
     const [tickets, setTickets] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [patrimonies, setPatrimonies] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [statusFilter, setStatusFilter] = useState('');
     const [role, setRole] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
-    const [roleFilter, setRoleFilter] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState('');
     const [statusUserFilter, setStatusUserFilter] = useState('all');
-
-    // Estados não utilizados removidos: isOpen, isOpenSee
 
     const authHeaders = useMemo(() => {
         const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -22,29 +22,55 @@ export default function TabelaDeTickets({ onViewTicket }) {
     }, []);
 
     useEffect(() => {
-        async function loadRole() {
-            try {
-                const res = await fetch('/api/auth/me', { credentials: 'include' });
-                const payload = await res.json();
-                if (res.ok) setRole(payload?.data?.role || '');
-            } catch (_) {
-                // Silently fail - role loading is not critical
-            }
-        }
-
-        async function loadTickets() {
+        async function loadInitialData() {
             setLoading(true);
             try {
-                const qs = statusFilter ? `?status=${encodeURIComponent(statusFilter)}` : '';
-                const res = await fetch(`/api/tickets${qs}`, {
+                // Load user role
+                const roleRes = await fetch('/api/auth/me', { 
+                    headers: { ...authHeaders },
+                    credentials: 'include' 
+                });
+                if (roleRes.ok) {
+                    const rolePayload = await roleRes.json();
+                    setRole(rolePayload?.data?.role || '');
+                }
+
+                // Load tickets
+                const ticketQuery = statusFilter ? `?status=${encodeURIComponent(statusFilter)}` : '';
+                const ticketsRes = await fetch(`/api/tickets${ticketQuery}`, {
                     headers: { ...authHeaders },
                     credentials: 'include'
                 });
 
-            
+                if (!ticketsRes.ok) {
+                    throw new Error(`Error loading tickets: ${ticketsRes.status}`);
+                }
 
-                const payload = await res.json();
-                setTickets(payload?.data || []);
+                const ticketsPayload = await ticketsRes.json();
+                setTickets(ticketsPayload?.data || []);
+
+                // Load categories
+                const categoriesRes = await fetch('/api/categories', {
+                    headers: { ...authHeaders },
+                    credentials: 'include'
+                });
+
+                if (categoriesRes.ok) {
+                    const categoriesPayload = await categoriesRes.json();
+                    setCategories(categoriesPayload?.data || []);
+                }
+
+                // Load patrimonies
+                const patrimoniesRes = await fetch('/api/patrimonies', {
+                    headers: { ...authHeaders },
+                    credentials: 'include'
+                });
+
+                if (patrimoniesRes.ok) {
+                    const patrimoniesPayload = await patrimoniesRes.json();
+                    setPatrimonies(patrimoniesPayload?.data || []);
+                }
+
             } catch (e) {
                 setError(e.message);
                 if (e?.message?.includes('401') || e?.code === 401) {
@@ -55,73 +81,64 @@ export default function TabelaDeTickets({ onViewTicket }) {
             }
         }
 
-        loadRole();
-        loadTickets();
+        loadInitialData();
     }, [authHeaders, statusFilter]);
 
     const clearFilters = () => {
         setSearchTerm('');
-        setRoleFilter('');
+        setCategoryFilter('');
         setStatusUserFilter('all');
         setStatusFilter('');
     };
 
-    const hasActiveFilters = searchTerm || roleFilter || statusUserFilter !== 'all' || statusFilter;
+    const hasActiveFilters = searchTerm || categoryFilter || statusUserFilter !== 'all' || statusFilter;
 
-    // Dados de teste melhorados
-    const rowsToRender = useMemo(() => [
-        {
-            key: "1",
-            id: 1,
-            title: "Problema no equipamento de impressão",
-            category: "Hardware",
-            patrimony_id: 12345,
-            status: "Pendente"
-        },
-        {
-            key: "2",
-            id: 2,
-            title: "Sistema lento para acessar aplicação",
-            category: "Software",
-            patrimony_id: 12346,
-            status: "Em Andamento"
-        },
-        {
-            key: "3",
-            id: 3,
-            title: "Conexão de rede instável",
-            category: "Rede",
-            patrimony_id: 12347,
-            status: "Concluído"
-        },
-        {
-            key: "4",
-            id: 4,
-            title: "Monitor com defeito na tela",
-            category: "Hardware",
-            patrimony_id: null,
-            status: "Pendente"
-        },
-        {
-            key: "5",
-            id: 5,
-            title: "Atualização do sistema operacional",
-            category: "Software",
-            patrimony_id: 12349,
-            status: "Em Andamento"
-        }
-    ], []);
+    // Create lookup maps for efficient data retrieval
+    const categoryMap = useMemo(() => {
+        const map = {};
+        categories.forEach(cat => {
+            map[cat.id] = cat.title;
+        });
+        return map;
+    }, [categories]);
+
+    const patrimonyMap = useMemo(() => {
+        const map = {};
+        patrimonies.forEach(pat => {
+            map[pat.code] = pat;
+        });
+        return map;
+    }, [patrimonies]);
+
+    // Transform tickets data to include category and patrimony names
+    const enrichedTickets = useMemo(() => {
+        return tickets.map(ticket => ({
+            ...ticket,
+            key: ticket.id.toString(),
+            categoryName: categoryMap[ticket.category_id] || 'N/A',
+            patrimonyInfo: ticket.patrimony_code ? patrimonyMap[ticket.patrimony_code] : null
+        }));
+    }, [tickets, categoryMap, patrimonyMap]);
+
+    // Status mapping from API to display
+    const statusDisplayMap = {
+        'pending': 'Pendente',
+        'in_progress': 'Em Andamento', 
+        'completed': 'Concluído',
+        'cancelled': 'Cancelado'
+    };
 
     const columns = [
         { key: "id", label: "ID" },
         { key: "title", label: "Título" },
-        { key: "category", label: "Categoria" },
-        { key: "patrimony_id", label: "Patrimônio" },
+        { key: "categoryName", label: "Categoria" },
+        { key: "patrimony_code", label: "Patrimônio" },
         { key: "status", label: "Status" },
+        { key: "created_at", label: "Criado em" },
         { key: "actions", label: "Ações" },
     ];
 
-    // Função para renderizar células da tabela
+    // Function to render table cells
     const renderCell = (item, columnKey) => {
         switch (columnKey) {
             case "id":
@@ -132,28 +149,36 @@ export default function TabelaDeTickets({ onViewTicket }) {
                         </span>
                     </div>
                 );
-            case "patrimony_id":
+            case "patrimony_code":
                 return (
                     <div className="flex justify-center">
-                        {item.patrimony_id ? (
-                            <span className="font-mono text-sm bg-zinc-200 dark:bg-zinc-600 text-zinc-800 dark:text-zinc-200 px-2 py-1 rounded">
-                                #{item.patrimony_id}
-                            </span>
+                        {item.patrimony_code ? (
+                            <div className="text-center">
+                                <span className="font-mono text-sm bg-zinc-200 dark:bg-zinc-600 text-zinc-800 dark:text-zinc-200 px-2 py-1 rounded block">
+                                    #{item.patrimony_code}
+                                </span>
+                                {item.patrimonyInfo && (
+                                    <span className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 block">
+                                        {item.patrimonyInfo.name}
+                                    </span>
+                                )}
+                            </div>
                         ) : (
                             <span className="text-zinc-400 dark:text-zinc-500 italic text-sm">N/A</span>
                         )}
                     </div>
                 );
             case "status":
+                const displayStatus = statusDisplayMap[item.status] || item.status;
                 const statusStyles = {
-                    "Pendente": "bg-red-500/20 border border-red-500 text-white w-30 text-center",
-                    "Em Andamento": "bg-orange-500/20 border border-orange-500 text-white w-30 text-center ",
-                    "Concluído": "bg-green-500/20 border border-green-500 text-white w-30 text-center"
+                    "Pendente": "bg-red-500/20 border border-red-500 text-white w-30",
+                    "Em Andamento": "bg-orange-500/20 border border-orange-500 text-white w-30",
+                    "Concluído": "bg-green-500/20 border border-green-500 text-white w-30",
                 };
                 return (
                     <div className="flex justify-center items-center">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyles[item.status] || ""}`}>
-                            {item.status}
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium text-center ${statusStyles[displayStatus] || "bg-gray-500/20 border border-gray-500 text-gray-300"}`}>
+                            {displayStatus}
                         </span>
                     </div>
                 );
@@ -165,12 +190,29 @@ export default function TabelaDeTickets({ onViewTicket }) {
                         </p>
                     </div>
                 );
-            case "category":
+            case "categoryName":
                 return (
                     <div className="flex justify-center">
                         <span className="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-medium bg-zinc-100 text-zinc-800 dark:bg-zinc-700 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-600">
-                            {item.category}
+                            {item.categoryName}
                         </span>
+                    </div>
+                );
+            case "created_at":
+                const date = new Date(item.created_at);
+                const formattedDate = date.toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit', 
+                    year: 'numeric'
+                });
+                const formattedTime = date.toLocaleTimeString('pt-BR', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                return (
+                    <div className="text-center">
+                        <div className="text-sm text-zinc-900 dark:text-zinc-100">{formattedDate}</div>
+                        <div className="text-xs text-zinc-500 dark:text-zinc-400">{formattedTime}</div>
                     </div>
                 );
             case "actions":
@@ -178,16 +220,18 @@ export default function TabelaDeTickets({ onViewTicket }) {
                     <div className="flex justify-center gap-2">
                         <button
                             onClick={() => onViewTicket && onViewTicket(item)}
-                            className="bg-red-700 hover:bg-red-800 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
+                            className="cursor-pointer bg-red-700 hover:bg-red-800 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
                         >
                             Visualizar
                         </button>
-                        <button
-                            onClick={() => console.log('Excluir ticket:', item.id)}
-                            className="bg-zinc-700/50 hover:bg-zinc-600/50 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
-                        >
-                            Excluir
-                        </button>
+                        {(role === 'admin' || role === 'technician') && (
+                            <button
+                                onClick={() => console.log('Excluir ticket:', item.id)}
+                                className="cursor-pointer bg-zinc-700/50 hover:bg-zinc-600/50 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
+                            >
+                                Excluir
+                            </button>
+                        )}
                     </div>
                 );
             default:
@@ -195,23 +239,25 @@ export default function TabelaDeTickets({ onViewTicket }) {
         }
     };
 
-    // Filtrar dados baseado nos filtros aplicados
+    // Filter data based on applied filters
     const filteredData = useMemo(() => {
-        return rowsToRender.filter(item => {
-            const matchesSearch = !searchTerm ||
-                item.patrimony_id?.toString().includes(searchTerm) ||
-                item.title.toLowerCase().includes(searchTerm.toLowerCase());
+        return enrichedTickets.filter(item => {
+            const matchesSearch = !searchTerm || 
+                item.patrimony_code?.toString().includes(searchTerm) ||
+                item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.patrimonyInfo?.name.toLowerCase().includes(searchTerm.toLowerCase());
 
-            const matchesCategory = !roleFilter || item.category === roleFilter;
+            const matchesCategory = !categoryFilter || item.category_id.toString() === categoryFilter;
 
             const matchesStatus = statusUserFilter === 'all' ||
-                (statusUserFilter === 'active' && item.status === 'Pendente') ||
-                (statusUserFilter === 'in_progress' && item.status === 'Em Andamento') ||
-                (statusUserFilter === 'completed' && item.status === 'Concluído');
+                (statusUserFilter === 'pending' && item.status === 'pending') ||
+                (statusUserFilter === 'in_progress' && item.status === 'in_progress') ||
+                (statusUserFilter === 'completed' && item.status === 'completed') ||
+                (statusUserFilter === 'cancelled' && item.status === 'cancelled');
 
             return matchesSearch && matchesCategory && matchesStatus;
         });
-    }, [rowsToRender, searchTerm, roleFilter, statusUserFilter]);
+    }, [enrichedTickets, searchTerm, categoryFilter, statusUserFilter]);
 
     if (loading) {
         return (
@@ -223,7 +269,7 @@ export default function TabelaDeTickets({ onViewTicket }) {
 
     return (
         <section>
-            {/* Filtros */}
+            {/* Filters */}
             <div className="mb-8">
                 <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 shadow-xl">
                     <div className="flex items-center justify-between mb-4">
@@ -242,31 +288,33 @@ export default function TabelaDeTickets({ onViewTicket }) {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {/* Busca por ID do patrimônio ou título */}
+                        {/* Search by patrimony ID, title, or patrimony name */}
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <Search size={20} className="text-gray-400" />
                             </div>
                             <input
                                 type="text"
-                                placeholder="Buscar por patrimônio ou título"
+                                placeholder="Buscar por patrimônio, título ou nome"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full bg-gray-700/50 border border-gray-600/50 text-white placeholder-gray-400 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all duration-200"
                             />
                         </div>
 
-                        {/* Filtro por categoria */}
+                        {/* Filter by category */}
                         <div className="relative">
                             <select
-                                value={roleFilter}
-                                onChange={(e) => setRoleFilter(e.target.value)}
+                                value={categoryFilter}
+                                onChange={(e) => setCategoryFilter(e.target.value)}
                                 className="w-full appearance-none bg-gray-700/50 border border-gray-600/50 text-white rounded-xl py-3 px-4 pr-10 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all duration-200"
                             >
                                 <option value="">Todas as categorias</option>
-                                <option value="Hardware">Hardware</option>
-                                <option value="Software">Software</option>
-                                <option value="Rede">Rede</option>
+                                {categories.map(category => (
+                                    <option key={category.id} value={category.id.toString()}>
+                                        {category.title}
+                                    </option>
+                                ))}
                             </select>
                             <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                 <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -275,7 +323,7 @@ export default function TabelaDeTickets({ onViewTicket }) {
                             </div>
                         </div>
 
-                        {/* Filtro por status */}
+                        {/* Filter by status */}
                         <div className="relative">
                             <select
                                 value={statusUserFilter}
@@ -283,9 +331,10 @@ export default function TabelaDeTickets({ onViewTicket }) {
                                 className="w-full appearance-none bg-gray-700/50 border border-gray-600/50 text-white rounded-xl py-3 px-4 pr-10 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all duration-200"
                             >
                                 <option value="all">Todos os status</option>
-                                <option value="active">Pendentes</option>
+                                <option value="pending">Pendentes</option>
                                 <option value="in_progress">Em andamento</option>
                                 <option value="completed">Concluídos</option>
+                                <option value="cancelled">Cancelados</option>
                             </select>
                             <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                 <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -297,7 +346,7 @@ export default function TabelaDeTickets({ onViewTicket }) {
                 </div>
             </div>
 
-            {/* Tabela */}
+            {/* Table */}
             <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl min-h-[400px] p-4">
                 {error ? (
                     <div className="flex justify-center items-center min-h-[300px] text-red-400">
