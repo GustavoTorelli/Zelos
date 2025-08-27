@@ -14,9 +14,18 @@ export default function LoginPage() {
 	// Verificar autenticação inicial
 	useEffect(() => {
 		const checkAuth = async () => {
+			const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+			if (!token) {
+				setIsLoading(false);
+				return;
+			}
+
 			try {
 				const res = await fetch('/api/auth/me', {
-					credentials: 'include',
+					headers: {
+						Authorization: `Bearer ${token}`,
+					},
 				});
 
 				if (res.ok) {
@@ -25,10 +34,12 @@ export default function LoginPage() {
 					localStorage.setItem('user_role', data.role);
 					router.push('/chamados');
 				} else {
+					localStorage.removeItem('token');
 					localStorage.removeItem('user_id');
 					localStorage.removeItem('user_role');
 				}
 			} catch {
+				localStorage.removeItem('token');
 				localStorage.removeItem('user_id');
 				localStorage.removeItem('user_role');
 			} finally {
@@ -47,27 +58,31 @@ export default function LoginPage() {
 			const res = await fetch('/api/auth/login', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				credentials: 'include',
 				body: JSON.stringify({ email: username, password }),
 			});
 
 			if (!res.ok) {
-				setError('Credenciais inválidas');
+				const errData = await res.json();
+				setError(errData.message || 'Credenciais inválidas');
 				return;
 			}
 
-			const meRes = await fetch('/api/auth/me', {
-				credentials: 'include',
-			});
+			const { data } = await res.json(); // Agora sempre tem data.token
+			const token = data.token;
 
+			// Salvar no localStorage
+			localStorage.setItem('token', token);
+			// Opcional: buscar dados do usuário usando /me
+			const meRes = await fetch('/api/auth/me', {
+				headers: { Authorization: `Bearer ${token}` },
+			});
 			if (meRes.ok) {
-				const { data } = await meRes.json();
-				localStorage.setItem('user_id', data.id);
-				localStorage.setItem('user_role', data.role);
-				router.push('/chamados');
-			} else {
-				setError('Erro ao obter dados do usuário');
+				const { data: meData } = await meRes.json();
+				localStorage.setItem('user_id', meData.id);
+				localStorage.setItem('user_role', meData.role);
 			}
+
+			router.push('/chamados');
 		} catch {
 			setError('Erro de conexão. Tente novamente.');
 		}

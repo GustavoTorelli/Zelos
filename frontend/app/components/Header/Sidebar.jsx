@@ -12,6 +12,8 @@ import { useRouter } from 'next/navigation';
 export default function Sidebar({ onSelect, isOpen }) {
 	const router = useRouter();
 
+	const role = typeof window !== 'undefined' ? localStorage.getItem('user_role') : null;
+
 	async function handleLogout() {
 		try {
 			const res = await fetch('/api/auth/logout', {
@@ -20,6 +22,7 @@ export default function Sidebar({ onSelect, isOpen }) {
 			});
 
 			if (res.ok) {
+				localStorage.removeItem('token');
 				localStorage.removeItem('user_id');
 				localStorage.removeItem('user_role');
 				router.push('/');
@@ -41,15 +44,11 @@ export default function Sidebar({ onSelect, isOpen }) {
                 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
 		>
 			<div className="flex flex-col items-center w-full h-full">
-				{/* Logo */}
 				<div className="hidden md:flex items-center justify-center w-full h-2/12">
 					<img src="/img/global/logo_branco.svg" className="h-11" alt="Logo" />
 				</div>
 
-				{/* Buttons */}
 				<nav className="flex min-w-[240px] flex-col gap-1 p-2 font-sans text-base font-normal justify-center items-center h-12/12 md:h-8/12">
-
-
 					<button
 						type="button"
 						onClick={() => onSelect(1)}
@@ -61,27 +60,32 @@ export default function Sidebar({ onSelect, isOpen }) {
 						Gestão de Chamados
 					</button>
 
-					<button
-						type="button"
-						onClick={() => onSelect(2)}
-						className="cursor-pointer flex items-center w-full p-3 rounded-lg hover:bg-zinc-800 transition"
-					>
-						<div className="grid mr-4 place-items-center">
-							<Database/>
-						</div>
-						Gestão de Dados
-					</button>
+					{/* Apenas admins */}
+					{role === 'admin' && (
+						<>
+							<button
+								type="button"
+								onClick={() => onSelect(2)}
+								className="cursor-pointer flex items-center w-full p-3 rounded-lg hover:bg-zinc-800 transition"
+							>
+								<div className="grid mr-4 place-items-center">
+									<Database />
+								</div>
+								Gestão de Dados
+							</button>
 
-					<button
-						type="button"
-						onClick={() => onSelect(3)}
-						className="cursor-pointer flex items-center w-full p-3 rounded-lg hover:bg-zinc-800 transition"
-					>
-						<div className="grid mr-4 place-items-center">
-							<ChartNoAxesCombined />
-						</div>
-						Gerar Relatório
-					</button>
+							<button
+								type="button"
+								onClick={() => onSelect(3)}
+								className="cursor-pointer flex items-center w-full p-3 rounded-lg hover:bg-zinc-800 transition"
+							>
+								<div className="grid mr-4 place-items-center">
+									<ChartNoAxesCombined />
+								</div>
+								Gerar Relatório
+							</button>
+						</>
+					)}
 
 					<button
 						type="button"

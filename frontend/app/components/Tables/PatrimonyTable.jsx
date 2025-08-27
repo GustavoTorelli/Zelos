@@ -8,42 +8,47 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
     const [patrimonios, setPatrimonios] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Função para limpar filtros
     const clearFilters = () => setSearchTerm('');
-
-    // Filtros ativos
     const hasActiveFilters = searchTerm !== '';
 
-    // Buscar dados da API
     useEffect(() => {
         const fetchPatrimonios = async () => {
             try {
-                const res = await fetch('/api/patrimonies'); 
-                
+                const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+                const isJwt = token && token.includes('.');
+                const authHeaders = isJwt ? { Authorization: `Bearer ${token}` } : {};
+
+                const res = await fetch('/api/patrimonies', {
+                    headers: { ...authHeaders },
+                    credentials: 'include'
+                });
+
+                if (!res.ok) throw new Error('Falha ao carregar patrimônios');
+
                 const data = await res.json();
-                setPatrimonios(data);
+                setPatrimonios(data?.data || []);
             } catch (err) {
                 console.error(err);
+                setPatrimonios([]);
             }
         };
 
         fetchPatrimonios();
     }, []);
 
-    // Aplica os filtros
     const filteredPatrimonios = useMemo(() => {
-        return patrimonios.filter(item => {
-            const matchesSearch =
-                searchTerm === '' ||
-                item.code.toString().includes(searchTerm) ||
-                item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.description.toLowerCase().includes(searchTerm.toLowerCase());
-            return matchesSearch;
-        });
+        return Array.isArray(patrimonios)
+            ? patrimonios.filter(item => {
+                const term = searchTerm.toLowerCase();
+                return term === '' ||
+                    item.code.toString().includes(term) ||
+                    item.name.toLowerCase().includes(term) ||
+                    item.location.toLowerCase().includes(term) ||
+                    item.description.toLowerCase().includes(term);
+            })
+            : [];
     }, [patrimonios, searchTerm]);
 
-    // Colunas da tabela
     const columns = [
         { key: "code", label: "Código" },
         { key: "name", label: "Nome" },
@@ -52,7 +57,6 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
         { key: "actions", label: "Ações" },
     ];
 
-    // Renderização das células
     const renderCell = (item, columnKey) => {
         switch (columnKey) {
             case "code":
@@ -65,20 +69,20 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
                 );
             case "name":
                 return (
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100 text-sm text-center">
+                    <p className="font-medium text-zinc-900 dark:text-zinc-100 text-sm text-left">
                         {item.name}
                     </p>
                 );
             case "location":
                 return (
-                    <div className="text-center flex items-center justify-center">
+                    <div className="text-left flex items-center">
                         <span className="text-sm text-zinc-700 dark:text-zinc-300">{item.location}</span>
                     </div>
                 );
             case "description":
                 return (
-                    <div className="text-center flex items-center justify-center">
-                        <p className="text-xs text-zinc-600 text-center w-full dark:text-zinc-400 truncate max-w-[250px] ">
+                    <div className="text-left flex items-center">
+                        <p className="text-xs text-zinc-600 dark:text-zinc-400 truncate max-w-[250px]">
                             {item.description}
                         </p>
                     </div>
@@ -93,7 +97,7 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
                             Editar
                         </button>
                         <button
-                            className="cursor-pointer bg-zinc-700/50 hover:bg-zinc-600/50 text-white  px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
+                            className="cursor-pointer bg-zinc-700/50 hover:bg-zinc-600/50 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
                         >
                             Excluir
                         </button>
@@ -122,7 +126,6 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
 
     return (
         <section>
-            {/* Filtros */}
             <div className="mb-8 mt-8">
                 <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 shadow-xl">
                     <div className="flex items-center justify-between mb-4">
@@ -149,13 +152,12 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
                             placeholder="Buscar por código, nome, localização ou descrição"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-gray-700/50 border  border-gray-600/50 text-white placeholder-gray-400 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all duration-200"
+                            className="w-full bg-gray-700/50 border border-gray-600/50 text-white placeholder-gray-400 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all duration-200"
                         />
                     </div>
                 </div>
             </div>
 
-            {/* Tabela */}
             <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl min-h-[400px] p-4">
                 {filteredPatrimonios.length === 0 ? (
                     <div className="flex items-center justify-center h-64">
@@ -187,7 +189,9 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
                             {(item) => (
                                 <TableRow key={item.key || item.code}>
                                     {(columnKey) => (
-                                        <TableCell className="py-2 px-4 h-15 gap-1 overflow-hidden bg-transparent">{renderCell(item, columnKey)}</TableCell>
+                                        <TableCell className="py-2 px-4 h-15 gap-1 overflow-hidden bg-transparent">
+                                            {renderCell(item, columnKey)}
+                                        </TableCell>
                                     )}
                                 </TableRow>
                             )}

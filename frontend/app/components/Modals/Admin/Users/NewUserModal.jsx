@@ -27,27 +27,20 @@ export default function NewUserModal({ isOpen, onClose, userData = null }) {
             if (!role.trim()) throw new Error("Perfil é obrigatório");
             if (!isEditing && !password.trim()) throw new Error("Senha é obrigatória");
 
-            // Validação básica de email
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) throw new Error("Email inválido");
 
+            // Buscar token do localStorage
             const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-            const headers = token && token.includes('.') ?
-                { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } :
-                { 'Content-Type': 'application/json' };
-
-            const body = {
-                name,
-                email,
-                role
+            const headers = {
+                'Content-Type': 'application/json',
+                ...(token && token.includes('.') ? { Authorization: `Bearer ${token}` } : {}),
             };
 
-            // Só inclui senha se não estiver editando ou se foi preenchida
-            if (!isEditing || password.trim()) {
-                body.password = password;
-            }
+            const body = { name, email, role };
+            if (!isEditing || password.trim()) body.password = password;
 
-            const url = isEditing ? `/api/users/${userData.id}` : '/api/users';
+            const url = isEditing ? `/api/users/${userData.id}` : 'http://localhost:3333/users';
             const method = isEditing ? 'PUT' : 'POST';
 
             const res = await fetch(url, {
@@ -70,9 +63,7 @@ export default function NewUserModal({ isOpen, onClose, userData = null }) {
                 setRole("");
             }
 
-            setTimeout(() => {
-                onClose();
-            }, 1500);
+            setTimeout(() => onClose(), 1500);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -101,53 +92,46 @@ export default function NewUserModal({ isOpen, onClose, userData = null }) {
 
                 {/* Formulário */}
                 <form className="space-y-4" onSubmit={handleSubmit}>
-                    {/* Nome */}
                     <input
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200 placeholder-zinc-400"
+                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3"
                         placeholder="Nome completo"
                         maxLength={100}
                         required
                     />
 
-                    {/* Email */}
                     <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200 placeholder-zinc-400"
+                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3"
                         placeholder="email@exemplo.com"
                         required
                     />
 
-                    {/* Senha */}
                     <input
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200 placeholder-zinc-400"
+                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3"
                         placeholder={isEditing ? "Nova senha (deixe vazio para manter)" : "Senha"}
                         minLength={6}
                         required={!isEditing}
                     />
 
-                    {/* Perfil/Role */}
                     <select
                         value={role}
                         onChange={(e) => setRole(e.target.value)}
-                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200"
+                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3"
                         required
                     >
                         <option value="">Selecione o perfil</option>
-                        <option value="admin">Administrador</option>
                         <option value="user">Usuário</option>
                         <option value="technician">Técnico</option>
-                        <option value="manager">Gerente</option>
                     </select>
 
-                    {/* Mensagens de feedback */}
                     {error && (
                         <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
                             <p className="text-red-300 text-sm text-center">{error}</p>
@@ -160,22 +144,20 @@ export default function NewUserModal({ isOpen, onClose, userData = null }) {
                         </div>
                     )}
 
-                    {/* Botões */}
                     <div className="flex gap-3 pt-4">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="cursor-pointer flex-1 bg-zinc-700/50 hover:bg-zinc-600/50 text-zinc-300 font-medium py-3 px-4 rounded-lg transition-all duration-200 border border-zinc-600/50"
+                            className="cursor-pointer flex-1 bg-zinc-700/50 hover:bg-zinc-600/50 text-zinc-300 font-medium py-3 px-4 rounded-lg border border-zinc-600/50"
                         >
                             Cancelar
                         </button>
-
                         <button
                             type="submit"
                             disabled={loading}
-                            className=" cursor-pointer flex-1 bg-red-700 hover:bg-red-800 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="cursor-pointer flex-1 bg-red-700 hover:bg-red-800 text-white font-medium py-3 px-4 rounded-lg disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                            {loading ? ('Criando...') : ( 'Criar')}
+                            {loading ? (isEditing ? 'Atualizando...' : 'Criando...') : (isEditing ? 'Atualizar' : 'Criar')}
                         </button>
                     </div>
                 </form>

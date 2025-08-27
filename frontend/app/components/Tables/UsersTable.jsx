@@ -17,6 +17,7 @@ export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
 
     // role do usuário atual
     const [currentUserRole, setCurrentUserRole] = useState('');
+    const [selectedUser, setSelectedUser] = useState(null);
 
     // estados de carregamento
     const [users, setUsers] = useState([]);
@@ -173,14 +174,17 @@ export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
                 return (
                     <div className="flex justify-center gap-2">
                         <button
-                            onClick={() => onEditUser && onEditUser(item)}
+                            onClick={() => {
+                                setSelectedUser(item);
+                                setIsOpenSeeUsers(true);
+                            }}
                             className="cursor-pointer bg-red-700 hover:bg-red-800 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
                         >
                             Editar
                         </button>
 
                         <button
-                            className="cursor-pointer bg-zinc-700/50 hover:bg-zinc-600/50 text-white  px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
+                            className="cursor-pointer bg-zinc-700/50 hover:bg-zinc-600/50 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
                         >
                             Excluir
                         </button>
@@ -209,6 +213,7 @@ export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
             <SeeUsersModal
                 isOpen={isOpenSeeUsers}
                 onClose={() => setIsOpenSeeUsers(false)}
+                userData={selectedUser}
             />
 
             {/* Filtros */}
