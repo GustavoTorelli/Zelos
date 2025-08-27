@@ -8,11 +8,17 @@ import {
 	Users,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function Sidebar({ onSelect, isOpen }) {
 	const router = useRouter();
+	const [role, setRole] = useState(null);
 
-	const role = typeof window !== 'undefined' ? localStorage.getItem('user_role') : null;
+	useEffect(() => {
+		// Pega a role armazenada no localStorage
+		const storedRole = localStorage.getItem('user_role');
+		setRole(storedRole);
+	}, []);
 
 	async function handleLogout() {
 		try {
@@ -25,6 +31,7 @@ export default function Sidebar({ onSelect, isOpen }) {
 				localStorage.removeItem('token');
 				localStorage.removeItem('user_id');
 				localStorage.removeItem('user_role');
+
 				router.push('/');
 			} else {
 				console.error('Logout failed');
@@ -44,11 +51,15 @@ export default function Sidebar({ onSelect, isOpen }) {
                 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
 		>
 			<div className="flex flex-col items-center w-full h-full">
+				{/* Logo */}
 				<div className="hidden md:flex items-center justify-center w-full h-2/12">
 					<img src="/img/global/logo_branco.svg" className="h-11" alt="Logo" />
 				</div>
 
+				{/* Buttons */}
 				<nav className="flex min-w-[240px] flex-col gap-1 p-2 font-sans text-base font-normal justify-center items-center h-12/12 md:h-8/12">
+
+					{/* Sempre habilitado */}
 					<button
 						type="button"
 						onClick={() => onSelect(1)}
@@ -60,33 +71,39 @@ export default function Sidebar({ onSelect, isOpen }) {
 						Gestão de Chamados
 					</button>
 
-					{/* Apenas admins */}
-					{role === 'admin' && (
-						<>
-							<button
-								type="button"
-								onClick={() => onSelect(2)}
-								className="cursor-pointer flex items-center w-full p-3 rounded-lg hover:bg-zinc-800 transition"
-							>
-								<div className="grid mr-4 place-items-center">
-									<Database />
-								</div>
-								Gestão de Dados
-							</button>
+					{/* Bloqueado se não for admin */}
+					<button
+						type="button"
+						onClick={() => role === 'admin' && onSelect(2)}
+						disabled={role !== 'admin'}
+						className={`flex items-center w-full p-3 rounded-lg transition 
+							${role !== 'admin'
+								? 'opacity-50 cursor-not-allowed'
+								: 'cursor-pointer hover:bg-zinc-800'}`}
+					>
+						<div className="grid mr-4 place-items-center">
+							<Database />
+						</div>
+						Gestão de Dados
+					</button>
 
-							<button
-								type="button"
-								onClick={() => onSelect(3)}
-								className="cursor-pointer flex items-center w-full p-3 rounded-lg hover:bg-zinc-800 transition"
-							>
-								<div className="grid mr-4 place-items-center">
-									<ChartNoAxesCombined />
-								</div>
-								Gerar Relatório
-							</button>
-						</>
-					)}
+					{/* Bloqueado se não for admin */}
+					<button
+						type="button"
+						onClick={() => role === 'admin' && onSelect(3)}
+						disabled={role !== 'admin'}
+						className={`flex items-center w-full p-3 rounded-lg transition 
+							${role !== 'admin'
+								? 'opacity-50 cursor-not-allowed'
+								: 'cursor-pointer hover:bg-zinc-800'}`}
+					>
+						<div className="grid mr-4 place-items-center">
+							<ChartNoAxesCombined />
+						</div>
+						Gerar Relatório
+					</button>
 
+					{/* Sempre habilitado */}
 					<button
 						type="button"
 						onClick={handleLogout}

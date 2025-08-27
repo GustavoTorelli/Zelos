@@ -138,8 +138,8 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
                     {success && <p className="text-green-500 text-center">{success}</p>}
 
                     <div className="flex gap-3 pt-4">
-                        <button type="button" onClick={onClose} className="cursor-pointer flex-1 bg-zinc-700/50 text-zinc-300 py-3 rounded-lg">Cancelar</button>
-                        <button type="submit" disabled={loading} className="cursor-pointer flex-1 bg-red-700 hover:bg-red-800 text-white py-3 rounded-lg">{loading ? 'Salvando...' : 'Salvar Alterações'}</button>
+                        <button type="button" onClick={onClose}  className="cursor-pointer flex-1 bg-zinc-700/50 hover:bg-zinc-600/50 text-zinc-300 font-medium py-3 px-4 rounded-lg transition-all duration-200 border border-zinc-600/50">Cancelar</button>
+                        <button type="submit" disabled={loading}  className=" cursor-pointer flex-1 bg-red-700 hover:bg-red-800 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed">{loading ? 'Salvando...' : 'Salvar Alterações'}</button>
                     </div>
                 </form>
             </div>
