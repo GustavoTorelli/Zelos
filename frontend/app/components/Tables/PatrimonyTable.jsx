@@ -1,59 +1,47 @@
 'use client'
-import { useMemo, useState } from "react";
+
+import { useEffect, useMemo, useState } from "react";
 import { Funnel, Search } from "lucide-react";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react";
 
-export default function TabelaDePatrimonios({ loading, error, patrimonios = [], onEditPatrimonio }) {
-    // filtros
+export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }) {
+    const [patrimonios, setPatrimonios] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
 
     // Função para limpar filtros
     const clearFilters = () => setSearchTerm('');
 
-    //  filtros ativos
+    // Filtros ativos
     const hasActiveFilters = searchTerm !== '';
 
-    // Dados de exemplo caso não sejam fornecidos
-    const defaultPatrimonios = [
-        {
-            key: "1",
-            name: "Computador Dell 01",
-            location: "B-01",
-            code: "1230178",
-            description: "Computador desktop Dell OptiPlex 3070"
-        },
-        {
-            key: "2",
-            name: "Notebook Lenovo",
-            location: "A-15",
-            code: "4578123",
-            description: "Notebook Lenovo ThinkPad T14"
-        },
-        {
-            key: "3",
-            name: "Impressora HP",
-            location: "C-05",
-            code: "9856321",
-            description: "Impressora HP LaserJet Pro M404dn"
-        }
-    ];
+    // Buscar dados da API
+    useEffect(() => {
+        const fetchPatrimonios = async () => {
+            try {
+                const res = await fetch('/api/patrimonies'); 
+                
+                const data = await res.json();
+                setPatrimonios(data);
+            } catch (err) {
+                console.error(err);
+            }
+        };
 
-    // Usa os dados fornecidos ou os dados de exemplo
-    const allPatrimonios = patrimonios.length > 0 ? patrimonios : defaultPatrimonios;
+        fetchPatrimonios();
+    }, []);
 
     // Aplica os filtros
     const filteredPatrimonios = useMemo(() => {
-        return allPatrimonios.filter(item => {
+        return patrimonios.filter(item => {
             const matchesSearch =
                 searchTerm === '' ||
                 item.code.toString().includes(searchTerm) ||
                 item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 item.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 item.description.toLowerCase().includes(searchTerm.toLowerCase());
-
             return matchesSearch;
         });
-    }, [allPatrimonios, searchTerm]);
+    }, [patrimonios, searchTerm]);
 
     // Colunas da tabela
     const columns = [
@@ -64,7 +52,7 @@ export default function TabelaDePatrimonios({ loading, error, patrimonios = [], 
         { key: "actions", label: "Ações" },
     ];
 
-    // renderização das células
+    // Renderização das células
     const renderCell = (item, columnKey) => {
         switch (columnKey) {
             case "code":
@@ -94,7 +82,6 @@ export default function TabelaDePatrimonios({ loading, error, patrimonios = [], 
                             {item.description}
                         </p>
                     </div>
-
                 );
             case "actions":
                 return (
@@ -105,9 +92,7 @@ export default function TabelaDePatrimonios({ loading, error, patrimonios = [], 
                         >
                             Editar
                         </button>
-
                         <button
-
                             className="cursor-pointer bg-zinc-700/50 hover:bg-zinc-600/50 text-white  px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
                         >
                             Excluir

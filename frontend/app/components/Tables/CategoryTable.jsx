@@ -1,74 +1,53 @@
 'use client'
-import { useMemo, useState } from "react";
+
+import { useEffect, useMemo, useState } from "react";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react";
 import { Funnel, Search } from "lucide-react";
 
-export default function TabelaDeCategorias({ loading, error, categorias = [], onEditCategoria }) {
-    // estado do filtro
-    // filtros
+export default function TabelaDeCategorias({ loading, error, onEditCategoria }) {
+    const [categorias, setCategorias] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Função para limpar filtros
     const clearFilters = () => setSearchTerm('');
-
-    //  filtros ativos
     const hasActiveFilters = searchTerm !== '';
 
-    // dados de exemplo
-    const defaultCategorias = [
-        {
-            id: 1,
-            key: "1",
-            title: "Manutenção",
-            description: "Categoria geral para manutenção."
-        },
-        {
-            id: 2,
-            key: "2",
-            title: "Suporte Técnico",
-            description: "Atendimento para problemas técnicos e TI."
-        },
-        {
-            id: 3,
-            key: "3",
-            title: "Infraestrutura",
-            description: "Questões relacionadas a prédios, energia e rede."
-        }
-    ];
+    useEffect(() => {
+        const fetchCategorias = async () => {
+            try {
+                const res = await fetch('/api/categories');
+                if (!res.ok) throw new Error('Falha ao carregar categorias');
 
-    const allCategorias = categorias.length > 0 ? categorias : defaultCategorias;
+                const data = await res.json();
 
-    // aplica filtro
+                // Pega o array correto da API
+                const arr = Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
+                setCategorias(arr);
+            } catch (err) {
+                console.error(err);
+                setCategorias([]);
+            }
+        };
+
+        fetchCategorias();
+    }, []);
+
     const filteredCategorias = useMemo(() => {
-        return allCategorias.filter(cat => {
-            const term = searchTerm.toLowerCase();
-            return (
-                term === "" ||
-                cat.id.toString().includes(term) ||
-                cat.title.toLowerCase().includes(term)
-            );
-        });
-    }, [allCategorias, searchTerm]);
+        const term = searchTerm.toLowerCase();
+        return categorias.filter(cat =>
+            term === "" ||
+            (cat.title && cat.title.toLowerCase().includes(term)) ||
+            (cat.description && cat.description.toLowerCase().includes(term))
+        );
+    }, [categorias, searchTerm]);
 
-    // colunas
     const columns = [
-        { key: "id", label: "ID" },
         { key: "title", label: "Título" },
         { key: "description", label: "Descrição" },
         { key: "actions", label: "Ações" },
     ];
 
-    // renderização das células
     const renderCell = (item, columnKey) => {
         switch (columnKey) {
-            case "id":
-                return (
-                    <div className="flex justify-center">
-                        <span className="font-mono text-sm bg-zinc-100 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 px-2 py-1 rounded">
-                            #{item.id}
-                        </span>
-                    </div>
-                );
             case "title":
                 return (
                     <p className="font-medium text-zinc-900 dark:text-zinc-100 text-sm text-center">
@@ -92,10 +71,8 @@ export default function TabelaDeCategorias({ loading, error, categorias = [], on
                         >
                             Editar
                         </button>
-
                         <button
-
-                            className="cursor-pointer bg-zinc-700/50 hover:bg-zinc-600/50 text-white  px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
+                            className="cursor-pointer bg-zinc-700/50 hover:bg-zinc-600/50 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
                         >
                             Excluir
                         </button>
@@ -108,23 +85,22 @@ export default function TabelaDeCategorias({ loading, error, categorias = [], on
 
     if (loading) {
         return (
-            <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl min-h-[300px] p-4 flex items-center justify-center">
-                <div className="text-zinc-400">Carregando categorias...</div>
+            <div className="flex justify-center items-center min-h-[300px]">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl min-h-[300px] p-4 flex items-center justify-center">
-                <div className="text-red-400">Erro ao carregar categorias: {error}</div>
+            <div className="flex justify-center items-center min-h-[300px] text-red-400">
+                Erro ao carregar categorias: {error}
             </div>
         );
     }
 
     return (
         <section>
-            {/* Filtros */}
             <div className="mb-8 mt-8">
                 <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 shadow-xl">
                     <div className="flex items-center justify-between mb-4">
@@ -147,20 +123,21 @@ export default function TabelaDeCategorias({ loading, error, categorias = [], on
                             <Search size={20} className="text-gray-400" />
                         </div>
                         <input
-                            placeholder="Buscar categoria por ID ou Nome"
+                            placeholder="Buscar categoria por nome ou descrição"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-gray-700/50 border  border-gray-600/50 text-white placeholder-gray-400 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all duration-200"
+                            className="w-full bg-gray-700/50 border border-gray-600/50 text-white placeholder-gray-400 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all duration-200"
                         />
                     </div>
                 </div>
             </div>
 
-            {/* tabela */}
             <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl min-h-[300px] p-4">
                 {filteredCategorias.length === 0 ? (
                     <div className="flex items-center justify-center h-40">
-                        <p className="text-zinc-400 text-lg">Nenhuma categoria encontrada</p>
+                        <p className="text-zinc-400 text-lg">
+                            {hasActiveFilters ? "Nenhuma categoria encontrada com os filtros aplicados" : "Nenhuma categoria encontrada"}
+                        </p>
                     </div>
                 ) : (
                     <Table
@@ -178,7 +155,6 @@ export default function TabelaDeCategorias({ loading, error, categorias = [], on
                                 <TableColumn
                                     key={column.key}
                                     className="text-center font-semibold text-zinc-700 dark:text-zinc-300 py-3"
-                                    minWidth={column.key === "actions" ? 120 : 100}
                                 >
                                     {column.label}
                                 </TableColumn>
@@ -186,7 +162,7 @@ export default function TabelaDeCategorias({ loading, error, categorias = [], on
                         </TableHeader>
                         <TableBody items={filteredCategorias}>
                             {(item) => (
-                                <TableRow key={item.key || item.id}>
+                                <TableRow key={item.title}>
                                     {(columnKey) => (
                                         <TableCell className="py-2 px-4 h-15 gap-1 overflow-hidden bg-transparent">{renderCell(item, columnKey)}</TableCell>
                                     )}

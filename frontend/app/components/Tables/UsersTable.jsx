@@ -1,24 +1,27 @@
 'use client'
 import { useEffect, useMemo, useState } from "react";
-import { Funnel, Plus, Search } from "lucide-react";
+import { Funnel, Search } from "lucide-react";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react";
 import NewUserModal from "../Modals/Admin/Users/NewUserModal";
 import SeeUsersModal from "../Modals/Admin/Users/SeeUsersModal";
 
-export default function TabelaDeUsuarios({ loading, error, users = [], onEditUser, onViewUser }) {
+export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
     // filtros
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('');
     const [statusUserFilter, setStatusUserFilter] = useState('all');
 
-
-    //  modais
+    // modais
     const [isOpenNewUser, setIsOpenNewUser] = useState(false);
     const [isOpenSeeUsers, setIsOpenSeeUsers] = useState(false);
 
-
-    // role do usuário 
+    // role do usuário atual
     const [currentUserRole, setCurrentUserRole] = useState('');
+
+    // estados de carregamento
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     // Headers de autenticação
     const authHeaders = useMemo(() => {
@@ -41,50 +44,50 @@ export default function TabelaDeUsuarios({ loading, error, users = [], onEditUse
         loadRole();
     }, []);
 
-    // Função para limpar filtros
+    // busca usuários da API
+    useEffect(() => {
+        async function fetchUsers() {
+            setLoading(true);
+            setError(null);
+            try {
+                const res = await fetch('/api/users', { headers: authHeaders, credentials: 'include' });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Erro ao carregar usuários');
+
+                // garante que é array
+                if (Array.isArray(data)) {
+                    setUsers(data);
+                } else if (Array.isArray(data.data)) {
+                    setUsers(data.data);
+                } else if (Array.isArray(data.users)) {
+                    setUsers(data.users);
+                } else {
+                    setUsers([]);
+                    setError('Formato de dados inesperado');
+                }
+
+            } catch (err) {
+                console.error(err);
+                setError(err.message || 'Erro desconhecido');
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchUsers();
+    }, [authHeaders]);
+
+    // limpar filtros
     const clearFilters = () => {
         setSearchTerm('');
         setRoleFilter('');
         setStatusUserFilter('all');
     };
 
-    //  filtros ativos
     const hasActiveFilters = searchTerm || roleFilter || statusUserFilter !== 'all';
 
-    // Dados de exemplo caso não sejam fornecidos
-    const defaultUsers = [
-        {
-            key: "1",
-            id: 1,
-            name: "Richard",
-            email: "richardrrggts@gmail.com",
-            role: "admin",
-            status: "Ativo"
-        },
-        {
-            key: "2",
-            id: 2,
-            name: "Maria Silva",
-            email: "maria.silva@empresa.com",
-            role: "user",
-            status: "Ativo"
-        },
-        {
-            key: "3",
-            id: 3,
-            name: "João Santos",
-            email: "joao.santos@empresa.com",
-            role: "technician",
-            status: "Inativo"
-        }
-    ];
-
-    // Usa os dados fornecidos ou os dados de exemplo
-    const allUsers = users.length > 0 ? users : defaultUsers;
-
-    // Aplica os filtros
+    // aplica filtros
     const filteredUsers = useMemo(() => {
-        return allUsers.filter(user => {
+        return users.filter(user => {
             const matchesSearch = searchTerm === '' ||
                 user.id.toString().includes(searchTerm) ||
                 user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -98,9 +101,9 @@ export default function TabelaDeUsuarios({ loading, error, users = [], onEditUse
 
             return matchesSearch && matchesRole && matchesStatus;
         });
-    }, [allUsers, searchTerm, roleFilter, statusUserFilter]);
+    }, [users, searchTerm, roleFilter, statusUserFilter]);
 
-    // Colunas da tabela
+    // colunas
     const columns = [
         { key: "id", label: "ID" },
         { key: "name", label: "Nome" },
@@ -110,7 +113,6 @@ export default function TabelaDeUsuarios({ loading, error, users = [], onEditUse
         { key: "actions", label: "Ações" },
     ];
 
-    //celulas do heri ui
     const renderCell = (item, columnKey) => {
         switch (columnKey) {
             case "id":
@@ -178,7 +180,6 @@ export default function TabelaDeUsuarios({ loading, error, users = [], onEditUse
                         </button>
 
                         <button
-
                             className="cursor-pointer bg-zinc-700/50 hover:bg-zinc-600/50 text-white  px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
                         >
                             Excluir
@@ -190,33 +191,24 @@ export default function TabelaDeUsuarios({ loading, error, users = [], onEditUse
         }
     };
 
+    if (loading) return (
+        <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl min-h-[400px] p-4 flex items-center justify-center">
+            <div className="text-zinc-400">Carregando usuários...</div>
+        </div>
+    );
 
-    const isLoading = loading;
-    const hasError = error;
-
-    if (isLoading) {
-        return (
-            <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl min-h-[400px] p-4 flex items-center justify-center">
-                <div className="text-zinc-400">Carregando usuários...</div>
-            </div>
-        );
-    }
-
-    if (hasError) {
-        return (
-            <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl min-h-[400px] p-4 flex items-center justify-center">
-                <div className="text-red-400">Erro ao carregar usuários: {hasError}</div>
-            </div>
-        );
-    }
+    if (error) return (
+        <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl min-h-[400px] p-4 flex items-center justify-center">
+            <div className="text-red-400">Erro ao carregar usuários: {error}</div>
+        </div>
+    );
 
     return (
         <section>
-            {/* Modals */}
             <NewUserModal isOpen={isOpenNewUser} onClose={() => setIsOpenNewUser(false)} />
             <SeeUsersModal
                 isOpen={isOpenSeeUsers}
-                onClose={() => ne(false)}
+                onClose={() => setIsOpenSeeUsers(false)}
             />
 
             {/* Filtros */}
@@ -224,9 +216,7 @@ export default function TabelaDeUsuarios({ loading, error, users = [], onEditUse
                 <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 shadow-xl">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                            <div className="w-5 h-5 text-red-500">
-                                <Funnel size={20} />
-                            </div>
+                            <div className="w-5 h-5 text-red-500"><Funnel size={20} /></div>
                             Filtros De Usuário
                         </h3>
                         {hasActiveFilters && (
@@ -240,12 +230,10 @@ export default function TabelaDeUsuarios({ loading, error, users = [], onEditUse
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {/* Busca geral */}
+                        {/* Busca */}
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <div className="h-5 w-5 text-gray-400">
-                                    <Search size={20} />
-                                </div>
+                                <div className="h-5 w-5 text-gray-400"><Search size={20} /></div>
                             </div>
                             <input
                                 type="text"
@@ -341,7 +329,7 @@ export default function TabelaDeUsuarios({ loading, error, users = [], onEditUse
                         </TableHeader>
                         <TableBody items={filteredUsers}>
                             {(item) => (
-                                <TableRow key={item.key || item.id} className="h-10 max-h-10 bg-transparent">
+                                <TableRow key={item.id} className="h-10 max-h-10 bg-transparent">
                                     {(columnKey) => (
                                         <TableCell className="py-2 px-4 h-15 gap-1 overflow-hidden bg-transparent">
                                             {renderCell(item, columnKey)}

@@ -1,35 +1,23 @@
 'use client'
-import { useEffect, useMemo, useState } from "react";
-import { Funnel, Plus, Search } from "lucide-react";
+import { useState } from "react";
+import { Plus } from "lucide-react";
 import TabelaDeTickets from "../Tables/TicketsTable";
 import NewticketModal from "../Modals/Tickets/NewTicketModal";
 import SeeTicketsModal from "../Modals/Tickets/SeeTicketsModal";
 
 export default function TicketsPage() {
-    const [tickets, setTickets] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-    const [statusFilter, setStatusFilter] = useState('');
-    const [role, setRole] = useState('');
-    const [searchTerm, setSearchTerm] = useState('');
-    const [roleFilter, setRoleFilter] = useState('');
-    const [statusUserFilter, setStatusUserFilter] = useState('all');
     const [isOpen, setIsOpen] = useState(false);
     const [isOpenSee, setIsOpenSee] = useState(false);
+    const [selectedTicket, setSelectedTicket] = useState(null);
 
-
-    
-
-   
     return (
-
         <div className="w-full px-4 py-8">
-            {/* modal */}
+            {/* modais */}
             <NewticketModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
             <SeeTicketsModal
                 isOpen={isOpenSee}
                 onClose={() => setIsOpenSee(false)}
-
+                ticketData={selectedTicket}
             />
 
             <div className="mb-8">
@@ -55,38 +43,24 @@ export default function TicketsPage() {
                             onClick={() => setIsOpen(true)}
                             className="relative w-50 h-12 cursor-pointer flex items-center border border-red-700 bg-red-700 group rounded-lg overflow-hidden"
                         >
-                            {/* Texto */}
-                            <span
-                                className="text-white font-semibold ml-8 transform group-hover:translate-x-20 transition-all duration-300"
-                            >
+                            <span className="text-white font-semibold ml-8 transform group-hover:translate-x-20 transition-all duration-300">
                                 Novo Chamado
                             </span>
-
-                            {/* icon*/}
-                            <span
-                                className="absolute right-0 h-full w-12 rounded-lg  bg-red-700 flex items-center justify-center transform group-hover:translate-x-0 group-hover:w-full transition-all duration-300"
-                            >
+                            <span className="absolute right-0 h-full w-12 rounded-lg  bg-red-700 flex items-center justify-center transform group-hover:translate-x-0 group-hover:w-full transition-all duration-300">
                                 <Plus size={20} color="white" />
                             </span>
                         </button>
                     </div>
-
                 </div>
             </div>
 
-           
-
-            {/* tabela*/}
+            {/* tabela */}
             <TabelaDeTickets
-                loading={loading}
-                tickets={tickets || []} // garante que tickets nunca seja undefined
-                error={error}
                 onViewTicket={(ticket) => {
+                    setSelectedTicket(ticket);
                     setIsOpenSee(true);
                 }}
             />
-
         </div>
-
     );
 }
