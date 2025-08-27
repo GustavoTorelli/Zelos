@@ -40,6 +40,7 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
                 method: 'PUT',
                 headers,
                 body: JSON.stringify(body),
+                credentials: 'include'
             });
 
             if (!res.ok) {
@@ -49,7 +50,7 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
 
             setSuccess("Usuário atualizado com sucesso!");
             setPassword("");
-            setTimeout(() => setSuccess(""), 2000);
+            setTimeout(() => onClose(), 1200);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -64,7 +65,7 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
                 <div className="flex items-start justify-between pb-4 border-b border-gray-700/50 mb-6">
                     <div className="flex text-white justify-center items-center gap-2">
                         <Users size={25} />
-                        <h3 className="text-xl font-semibold text-white">Editar Usuário - #{userData?.id || 'id'}</h3>
+                        <h3 className="text-xl font-semibold text-white">Editar Usuário - #{userData?.id || 'N/A'}</h3>
                     </div>
                     <button type="button" onClick={onClose} className="text-zinc-400 hover:text-zinc-200 cursor-pointer">
                         <X size={25} />
@@ -80,8 +81,9 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                placeholder={userData?.name || "Nome do usuário"}
-                                className="w-full bg-zinc-700/50 text-zinc-300 border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200"
+                                placeholder="Nome do usuário"
+                                className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200"
+                                required
                             />
                         </div>
 
@@ -91,8 +93,9 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder={userData?.email || "email@exemplo.com"}
-                                className="w-full bg-zinc-700/50 text-zinc-300 border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200"
+                                placeholder="email@exemplo.com"
+                                className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200"
+                                required
                             />
                         </div>
                     </div>
@@ -104,14 +107,12 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
                                 value={role}
                                 onChange={(e) => setRole(e.target.value)}
                                 className="w-full cursor-pointer bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200"
+                                required
                             >
-                                {/* Placeholder com a role atual */}
-                                <option value="">
-                                    {userData?.role ? `${userData.role}` : "Selecione o perfil"}
-                                </option>
-
-                                {userData?.role === "user" && <option value="technician">Técnico</option>}
-                                {userData?.role === "technician" && <option value="user">Usuário</option>}
+                                <option value="">Selecione o perfil</option>
+                                <option value="user">Usuário</option>
+                                <option value="technician">Técnico</option>
+                                <option value="admin">Administrador</option>
                             </select>
                         </div>
                         <div>
@@ -120,8 +121,8 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
                                 value={status}
                                 onChange={(e) => setStatus(e.target.value)}
                                 className="w-full cursor-pointer bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200"
+                                required
                             >
-                                <option value="">{userData?.status || "Selecione o status"}</option>
                                 <option value="Ativo">Ativo</option>
                                 <option value="Inativo">Inativo</option>
                                 <option value="Suspenso">Suspenso</option>
@@ -131,15 +132,42 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
 
                     <div>
                         <label className="block text-zinc-300 text-sm font-medium mb-1">Nova Senha</label>
-                        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Deixe vazio para manter a atual" className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200" />
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Deixe vazio para manter a atual"
+                            className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200"
+                        />
                     </div>
 
-                    {error && <p className="text-red-500 text-center">{error}</p>}
-                    {success && <p className="text-green-500 text-center">{success}</p>}
+                    {error && (
+                        <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
+                            <p className="text-red-300 text-sm text-center">{error}</p>
+                        </div>
+                    )}
+
+                    {success && (
+                        <div className="p-3 bg-green-500/20 border border-green-500/50 rounded-lg">
+                            <p className="text-green-300 text-sm text-center">{success}</p>
+                        </div>
+                    )}
 
                     <div className="flex gap-3 pt-4">
-                        <button type="button" onClick={onClose}  className="cursor-pointer flex-1 bg-zinc-700/50 hover:bg-zinc-600/50 text-zinc-300 font-medium py-3 px-4 rounded-lg transition-all duration-200 border border-zinc-600/50">Cancelar</button>
-                        <button type="submit" disabled={loading}  className=" cursor-pointer flex-1 bg-red-700 hover:bg-red-800 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed">{loading ? 'Salvando...' : 'Salvar Alterações'}</button>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="cursor-pointer flex-1 bg-zinc-700/50 hover:bg-zinc-600/50 text-zinc-300 font-medium py-3 px-4 rounded-lg transition-all duration-200 border border-zinc-600/50"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="cursor-pointer flex-1 bg-red-700 hover:bg-red-800 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                            {loading ? 'Salvando...' : 'Salvar Alterações'}
+                        </button>
                     </div>
                 </form>
             </div>

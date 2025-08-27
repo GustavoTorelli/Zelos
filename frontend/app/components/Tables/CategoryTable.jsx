@@ -36,11 +36,13 @@ export default function TabelaDeCategorias({ loading, error, onEditCategoria }) 
         return categorias.filter(cat =>
             term === "" ||
             (cat.title && cat.title.toLowerCase().includes(term)) ||
-            (cat.description && cat.description.toLowerCase().includes(term))
+            (cat.description && cat.description.toLowerCase().includes(term)) ||
+            (cat.id && cat.id.toString().toLowerCase().includes(term))
         );
     }, [categorias, searchTerm]);
 
     const columns = [
+        { key: "id", label: "ID" },
         { key: "title", label: "Título" },
         { key: "description", label: "Descrição" },
         { key: "actions", label: "Ações" },
@@ -48,16 +50,24 @@ export default function TabelaDeCategorias({ loading, error, onEditCategoria }) 
 
     const renderCell = (item, columnKey) => {
         switch (columnKey) {
+            case "id":
+                return (
+                    <div className="flex justify-center">
+                        <span className="font-mono text-sm bg-zinc-100 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 px-2 py-1 rounded">
+                            #{item.id}
+                        </span>
+                    </div>
+                );
             case "title":
                 return (
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100 text-sm text-center">
+                    <p className="font-medium text-zinc-900 dark:text-zinc-100 text-sm text-left">
                         {item.title}
                     </p>
                 );
             case "description":
                 return (
-                    <div className="text-center flex items-center justify-center">
-                        <p className="text-xs text-zinc-600 dark:text-zinc-400 truncate max-w-[350px] text-center">
+                    <div className="text-left flex items-center">
+                        <p className="text-xs text-zinc-600 dark:text-zinc-400 truncate max-w-[350px] text-left">
                             {item.description}
                         </p>
                     </div>
@@ -123,7 +133,7 @@ export default function TabelaDeCategorias({ loading, error, onEditCategoria }) 
                             <Search size={20} className="text-gray-400" />
                         </div>
                         <input
-                            placeholder="Buscar categoria por nome ou descrição"
+                            placeholder="Buscar categoria por ID, nome ou descrição"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full bg-gray-700/50 border border-gray-600/50 text-white placeholder-gray-400 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all duration-200"
@@ -154,7 +164,10 @@ export default function TabelaDeCategorias({ loading, error, onEditCategoria }) 
                             {(column) => (
                                 <TableColumn
                                     key={column.key}
-                                    className="text-center font-semibold text-zinc-700 dark:text-zinc-300 py-3"
+                                    className={`font-semibold text-zinc-700 dark:text-zinc-300 py-3 ${column.key === 'actions' ? 'text-center' :
+                                            column.key === 'id' ? 'text-center' :
+                                                'text-center'
+                                        }`}
                                 >
                                     {column.label}
                                 </TableColumn>
@@ -162,7 +175,7 @@ export default function TabelaDeCategorias({ loading, error, onEditCategoria }) 
                         </TableHeader>
                         <TableBody items={filteredCategorias}>
                             {(item) => (
-                                <TableRow key={item.title}>
+                                <TableRow key={item.id || item.title}>
                                     {(columnKey) => (
                                         <TableCell className="py-2 px-4 h-15 gap-1 overflow-hidden bg-transparent">{renderCell(item, columnKey)}</TableCell>
                                     )}

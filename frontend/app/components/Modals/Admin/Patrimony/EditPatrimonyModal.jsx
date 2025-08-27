@@ -20,34 +20,32 @@ export default function EditPatrimonyModal({ isOpen, onClose, assetData }) {
         setLoading(true);
 
         try {
-            if (!name.trim()) throw new Error("Nome do ativo é obrigatório");
+            if (!name.trim()) throw new Error("Nome do patrimônio é obrigatório");
             if (!location.trim()) throw new Error("Localização é obrigatória");
             if (!code.trim()) throw new Error("Código é obrigatório");
             if (!description.trim()) throw new Error("Descrição é obrigatória");
 
-            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-            const headers = token && token.includes('.') ?
-                { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } :
-                { 'Content-Type': 'application/json' };
+            const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+            const headers = token && token.includes(".")
+                ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
+                : { "Content-Type": "application/json" };
 
             const body = { name, location, code, description };
 
-            const res = await fetch(`/api/assets/${assetData.id}`, {
-                method: 'PUT',
+            const res = await fetch(`/api/patrimonies/${assetData.code}`, {
+                method: "PUT",
                 headers,
                 body: JSON.stringify(body),
+                credentials: 'include'
             });
 
             if (!res.ok) {
                 const payload = await res.json().catch(() => ({}));
-                throw new Error(payload?.message || "Falha ao atualizar ativo");
+                throw new Error(payload?.message || "Falha ao atualizar patrimônio");
             }
 
             setSuccess("Patrimônio atualizado com sucesso!");
-
-            setTimeout(() => {
-                onClose();
-            }, 1500);
+            setTimeout(() => onClose(), 1200);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -68,10 +66,8 @@ export default function EditPatrimonyModal({ isOpen, onClose, assetData }) {
             >
                 {/* Título */}
                 <div className="flex gap-2 pb-4 border-b border-gray-700/50 text-white mb-6">
-                    <Pencil size={22} />
-                    <h3 className="text-xl font-semibold text-white">
-                        Editar Patrimônio
-                    </h3>
+                    <Pencil size={25} />
+                    <h3 className="text-xl font-semibold text-white">Editar Patrimônio - #{assetData?.id || 'N/A'}</h3>
                 </div>
 
                 {/* Formulário */}
@@ -82,6 +78,7 @@ export default function EditPatrimonyModal({ isOpen, onClose, assetData }) {
                         onChange={(e) => setName(e.target.value)}
                         className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3"
                         placeholder="Nome do patrimônio"
+                        maxLength={100}
                         required
                     />
 
@@ -111,7 +108,6 @@ export default function EditPatrimonyModal({ isOpen, onClose, assetData }) {
                         required
                     />
 
-                    {/* Mensagens de feedback */}
                     {error && (
                         <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
                             <p className="text-red-300 text-sm text-center">{error}</p>
@@ -124,20 +120,18 @@ export default function EditPatrimonyModal({ isOpen, onClose, assetData }) {
                         </div>
                     )}
 
-                    {/* Botões */}
                     <div className="flex gap-3 pt-4">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 cursor-pointer bg-zinc-700/50 hover:bg-zinc-600/50 text-zinc-300 py-3 px-4 rounded-lg border border-zinc-600/50"
+                            className="cursor-pointer flex-1 bg-zinc-700/50 hover:bg-zinc-600/50 text-zinc-300 font-medium py-3 px-4 rounded-lg border border-zinc-600/50"
                         >
                             Cancelar
                         </button>
-
                         <button
                             type="submit"
                             disabled={loading}
-                            className="cursor-pointer flex-1 bg-red-700 hover:bg-red-800 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="cursor-pointer flex-1 bg-red-700 hover:bg-red-800 text-white font-medium py-3 px-4 rounded-lg disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                             {loading ? "Salvando..." : "Salvar"}
                         </button>

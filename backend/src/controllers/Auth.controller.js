@@ -9,23 +9,12 @@ import apiResponse from '../utils/api-response.js';
 import zodErrorFormatter from '../utils/zod-error-formatter.js';
 
 export class AuthController {
-<<<<<<< HEAD
 	constructor() { }
 
 	async login(req, res) {
 		try {
 			const parsedData = loginSchema.parse(req.body);
 			const token = await Auth.login(parsedData);
-=======
-	constructor() {}
-
-	async login(req, res) {
-		try {
-			// Parse the request body using the loginSchema
-			const parsed_data = loginSchema.parse(req.body);
-			// Login the user and return a 200 response with the JWT token
-			const token = await Auth.login(parsed_data);
->>>>>>> origin/backend-develop
 
 			// Define cookie HTTP-only
 			res.cookie('jwt_token', token, {
@@ -34,27 +23,15 @@ export class AuthController {
 				sameSite: 'lax',
 			});
 
-<<<<<<< HEAD
 			// Retorna token sempre
 			const responseData = {
-=======
-			const response_data = {
->>>>>>> origin/backend-develop
 				success: true,
 				message: 'Logged in successfully',
 				code: 200,
 				data: { token },
 			};
 
-<<<<<<< HEAD
 			return apiResponse(responseData, res);
-=======
-			if (process.env.ENVIRONMENT === 'dev') {
-				response_data.data = { token };
-			}
-
-			return apiResponse(response_data, res);
->>>>>>> origin/backend-develop
 		} catch (error) {
 			if (error instanceof ZodError) {
 				return apiResponse(

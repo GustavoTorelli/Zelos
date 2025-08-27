@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { LibraryBig } from "lucide-react";
 
-export default function EditCategoryModal({ isOpen, onClose, categoryData }) {
+export default function EditCategoryModal({ isOpen, onClose, categoryData, assetData }) {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [loading, setLoading] = useState(false);
@@ -75,7 +75,7 @@ export default function EditCategoryModal({ isOpen, onClose, categoryData }) {
                 <div className="flex gap-2 pb-4 border-b border-gray-700/50 text-white mb-6">
                     <LibraryBig size={25} />
                     <h3 className="text-xl font-semibold text-white">
-                        Editar Categoria
+                        Editar Categoria - #{categoryData?.id || 'N/A'}
                     </h3>
                 </div>
 

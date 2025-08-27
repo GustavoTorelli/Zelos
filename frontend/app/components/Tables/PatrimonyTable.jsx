@@ -41,15 +41,17 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
             ? patrimonios.filter(item => {
                 const term = searchTerm.toLowerCase();
                 return term === '' ||
-                    item.code.toString().includes(term) ||
-                    item.name.toLowerCase().includes(term) ||
-                    item.location.toLowerCase().includes(term) ||
-                    item.description.toLowerCase().includes(term);
+                    (item.id && item.id.toString().toLowerCase().includes(term)) ||
+                    (item.code && item.code.toString().includes(term)) ||
+                    (item.name && item.name.toLowerCase().includes(term)) ||
+                    (item.location && item.location.toLowerCase().includes(term)) ||
+                    (item.description && item.description.toLowerCase().includes(term));
             })
             : [];
     }, [patrimonios, searchTerm]);
 
     const columns = [
+        { key: "id", label: "ID" },
         { key: "code", label: "Código" },
         { key: "name", label: "Nome" },
         { key: "location", label: "Localização" },
@@ -59,6 +61,14 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
 
     const renderCell = (item, columnKey) => {
         switch (columnKey) {
+            case "id":
+                return (
+                    <div className="flex justify-center">
+                        <span className="font-mono text-sm bg-zinc-100 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 px-2 py-1 rounded">
+                            #{item.id}
+                        </span>
+                    </div>
+                );
             case "code":
                 return (
                     <div className="flex justify-center">
@@ -149,7 +159,7 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
                         </div>
                         <input
                             type="text"
-                            placeholder="Buscar por código, nome, localização ou descrição"
+                            placeholder="Buscar por ID, código, nome, localização ou descrição"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full bg-gray-700/50 border border-gray-600/50 text-white placeholder-gray-400 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all duration-200"
@@ -161,7 +171,9 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
             <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl min-h-[400px] p-4">
                 {filteredPatrimonios.length === 0 ? (
                     <div className="flex items-center justify-center h-64">
-                        <p className="text-zinc-400 text-lg">Nenhum patrimônio encontrado</p>
+                        <p className="text-zinc-400 text-lg">
+                            {hasActiveFilters ? "Nenhum patrimônio encontrado com os filtros aplicados" : "Nenhum patrimônio encontrado"}
+                        </p>
                     </div>
                 ) : (
                     <Table
@@ -187,7 +199,7 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
                         </TableHeader>
                         <TableBody items={filteredPatrimonios}>
                             {(item) => (
-                                <TableRow key={item.key || item.code}>
+                                <TableRow key={item.id || item.key || item.code}>
                                     {(columnKey) => (
                                         <TableCell className="py-2 px-4 h-15 gap-1 overflow-hidden bg-transparent">
                                             {renderCell(item, columnKey)}
