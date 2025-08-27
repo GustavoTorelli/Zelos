@@ -21,6 +21,10 @@ router.put('/:id', auth('admin'), async (req, res) => {
 	return await categoryController.update(req, res);
 });
 
+router.delete('/:id', auth('admin'), async (req, res) => {
+	return await categoryController.delete(req, res);
+});
+
 router.patch('/:id/activate', auth('admin'), async (req, res) => {
 	return await categoryController.activate(req, res);
 });

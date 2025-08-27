@@ -1,17 +1,7 @@
 import prisma from '../config/prisma-client.js';
 import hashPassword from '../utils/hash-password.js';
 
-/**
- * @class
- * @classdesc Represents a user with static methods for CRUD operations and
- * instance methods for manipulating a specific user.
- */
 export class User {
-	/**
-	 * Creates an instance of User.
-	 * @param {Object} data - Data for the user instance.
-	 * @param {number} data.id - The user's ID.
-	 */
 	constructor({ id }) {
 		this.id = id;
 	}
@@ -86,8 +76,8 @@ export class User {
 		}
 	}
 
-	static async findAll({ includeInactive = false }) {
-		const where = includeInactive ? {} : { is_active: true };
+	static async findAll({ include_inactive = false }) {
+		const where = include_inactive ? {} : { is_active: true };
 		return await prisma.user.findMany({
 			where,
 			select: this._baseSelect,

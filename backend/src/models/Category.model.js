@@ -1,13 +1,7 @@
 import prisma from '../config/prisma-client.js';
 
 export class Category {
-	/**
-	 * Creates a new category
-	 * @param {{ title: string, description: string, userId: number }} data - The data of the category to be created
-	 * @returns {Promise<Object>} A promise that resolves to the newly created category object
-	 * @throws {Error} If there is an error creating the category
-	 */
-	static async create({ title, description, userId, role }) {
+	static async create({ title, description, user_id, role }) {
 		if (role !== 'admin') throw new Error('FORBIDDEN');
 
 		try {
@@ -15,8 +9,8 @@ export class Category {
 				data: {
 					title,
 					description,
-					created_by: userId,
-					updated_by: userId,
+					created_by: user_id,
+					updated_by: user_id,
 				},
 				select: this._baseSelect,
 			});
@@ -26,49 +20,30 @@ export class Category {
 		}
 	}
 
-	/**
-	 * Finds all categories
-	 * @param {Object} options - The options for finding categories
-	 * @param {boolean} [options.includeInactive=false] - Whether to include inactive categories
-	 * @returns {Promise<Array<Object>>} A promise that resolves to an array of categories
-	 */
-	static async findAll({ includeInactive = false }) {
-		const where = includeInactive ? {} : { is_active: true };
+	static async findAll({ include_inactive = false }) {
+		const where = include_inactive ? {} : { is_active: true };
 		return await prisma.category.findMany({
 			where,
 			select: this._baseSelect,
 		});
 	}
 
-	/**
-	 * Finds a category by its ID
-	 * @param {{ categoryId: number }} data - The data containing the category ID
-	 * @returns {Promise<Object>} A promise that resolves to the category object
-	 * @throws {Error} If the category is not found
-	 */
-	static async findById({ categoryId }) {
+	static async findById({ category_id }) {
 		const category = await prisma.category.findUnique({
-			where: { id: categoryId },
+			where: { id: category_id },
 			select: this._baseSelect,
 		});
 		if (!category) throw new Error('NOT_FOUND');
 		return category;
 	}
 
-	/**
-	 * Updates a category by ID
-	 * @param {{ categoryId: number, data: Object, userId: number }} data - The data containing the category ID and the data to update the category with
-	 * @returns {Promise<Object>} A promise that resolves to the updated category object
-	 * @throws {Error} If the category is not found
-	 * @throws {Error} If there is an error updating the category
-	 */
-	static async update({ categoryId, data, userId, role }) {
+	static async update({ category_id, data, user_id, role }) {
 		if (role !== 'admin') throw new Error('FORBIDDEN');
 
 		try {
 			return await prisma.category.update({
-				where: { id: categoryId },
-				data: { ...data, updated_by: userId },
+				where: { id: category_id },
+				data: { ...data, updated_by: user_id },
 				select: this._baseSelect,
 			});
 		} catch (error) {
@@ -78,13 +53,27 @@ export class Category {
 		}
 	}
 
-	static async activate({ categoryId, userId, role }) {
+	static async delete({ category_id, role }) {
+		if (role !== 'admin') throw new Error('FORBIDDEN');
+
+		try {
+			const category = await prisma.category.delete({
+				where: { id: category_id },
+			});
+			return category.title;
+		} catch (error) {
+			if (error.code === 'P2025') throw new Error('NOT_FOUND');
+			throw new Error(`Error fetching category name: ${error}`);
+		}
+	}
+
+	static async activate({ category_id, user_id, role }) {
 		if (role !== 'admin') throw new Error('FORBIDDEN');
 
 		try {
 			return await prisma.category.update({
-				where: { id: categoryId },
-				data: { is_active: true, updated_by: userId },
+				where: { id: category_id },
+				data: { is_active: true, updated_by: user_id },
 				select: this._baseSelect,
 			});
 		} catch (error) {
@@ -93,13 +82,13 @@ export class Category {
 		}
 	}
 
-	static async deactivate({ categoryId, userId, role }) {
+	static async deactivate({ category_id, user_id, role }) {
 		if (role !== 'admin') throw new Error('FORBIDDEN');
 
 		try {
 			return await prisma.category.update({
-				where: { id: categoryId },
-				data: { is_active: false, updated_by: userId },
+				where: { id: category_id },
+				data: { is_active: false, updated_by: user_id },
 				select: this._baseSelect,
 			});
 		} catch (error) {

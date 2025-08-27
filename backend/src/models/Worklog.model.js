@@ -5,10 +5,10 @@ export class Worklog {
 		this.id = id;
 	}
 
-	static async create({ ticketId, description, technicianId, role }) {
+	static async create({ ticket_id, description, technician_id, role }) {
 		try {
 			const ticket = await prisma.ticket.findUnique({
-				where: { id: ticketId },
+				where: { id: ticket_id },
 				select: { id: true, technician_id: true, status: true },
 			});
 
@@ -19,7 +19,7 @@ export class Worklog {
 
 			if (
 				role === 'technician' &&
-				ticket.technician_id !== technicianId
+				ticket.technician_id !== technician_id
 			) {
 				throw new Error('FORBIDDEN');
 			}
@@ -27,8 +27,8 @@ export class Worklog {
 			return await prisma.worklog.create({
 				data: {
 					description,
-					ticket_id: ticketId,
-					technician_id: technicianId,
+					ticket_id: ticket_id,
+					technician_id: technician_id,
 				},
 				select: this._baseSelect,
 			});

@@ -51,35 +51,35 @@ export class Ticket {
 	}
 
 	static async findAll(
-		{ userId, role },
+		{ user_id, role },
 		{
-			categoryId,
-			patrimonyCode,
+			category_id,
+			patrimony_code,
 			status,
-			technicianId,
-			createdAfter,
-			createdBefore,
+			technician_id,
+			created_after,
+			created_before,
 		},
 	) {
 		let where = {};
 		if (role === 'technician') {
 			where.OR = [
-				{ technician_id: userId },
+				{ technician_id: user_id },
 				{
 					Category: {
 						Technician_Category: {
-							some: { technician_id: userId },
+							some: { technician_id: user_id },
 						},
 					},
 				},
 			];
 		}
-		if (role === 'user') where.user_id = userId;
+		if (role === 'user') where.user_id = user_id;
 
 		let patrimony = null;
-		if (patrimonyCode) {
+		if (patrimony_code) {
 			patrimony = await prisma.patrimony.findUnique({
-				where: { code: patrimonyCode },
+				where: { code: patrimony_code },
 			});
 
 			if (!patrimony) throw new Error('NOT_FOUND');
@@ -88,15 +88,15 @@ export class Ticket {
 		}
 
 		const filters = {
-			...(categoryId && { category_id: categoryId }),
+			...(category_id && { category_id: category_id }),
 			...(status && { status: status }),
-			...(technicianId && { technician_id: technicianId }),
+			...(technician_id && { technician_id: technician_id }),
 		};
 
-		if (createdBefore || createdAfter) {
+		if (created_before || created_after) {
 			filters.created_at = {
-				...(createdBefore && { lte: new Date(createdBefore) }),
-				...(createdAfter && { gte: new Date(createdAfter) }),
+				...(created_before && { lte: new Date(created_before) }),
+				...(created_after && { gte: new Date(created_after) }),
 			};
 		}
 
@@ -108,9 +108,9 @@ export class Ticket {
 		});
 	}
 
-	static async findById({ ticketId, userId, role }) {
+	static async findById({ ticket_id, user_id, role }) {
 		const ticket = await prisma.ticket.findUnique({
-			where: { id: ticketId },
+			where: { id: ticket_id },
 			select: this._baseSelect,
 		});
 
@@ -118,21 +118,21 @@ export class Ticket {
 
 		if (
 			role !== 'admin' &&
-			ticket.user_id !== userId &&
-			ticket.technician_id !== userId
+			ticket.user_id !== user_id &&
+			ticket.technician_id !== user_id
 		)
 			throw new Error('FORBIDDEN');
 
 		return ticket;
 	}
 
-	static async update({ ticketId, data, role }) {
+	static async update({ ticket_id, data, role }) {
 		if (role !== 'admin' && data.patrimony_code)
 			throw new Error('FORBIDDEN');
 
 		try {
 			return await prisma.ticket.update({
-				where: { id: ticketId },
+				where: { id: ticket_id },
 				data,
 				select: this._baseSelect,
 			});
@@ -142,7 +142,22 @@ export class Ticket {
 		}
 	}
 
-	async updateStatus({ status, userId, role }) {
+	static async delete({ ticket_id, role }) {
+		try {
+			if (role !== 'admin') throw new Error('FORBIDDEN');
+
+			await prisma.ticket.delete({
+				where: { id: ticket_id },
+			});
+			return;
+		} catch (error) {
+			if (error.message === 'FORBIDDEN') throw error;
+			if (error.code === 'P2025') throw new Error('NOT_FOUND');
+			throw new Error(`Error deleting ticket: ${error}`);
+		}
+	}
+
+	async updateStatus({ status, user_id, role }) {
 		const ticket = await prisma.ticket.findUnique({
 			where: { id: this.id },
 			select: this._baseSelect,
@@ -155,7 +170,7 @@ export class Ticket {
 		// Only admin and technician can change status
 		if (
 			role !== 'admin' &&
-			(role !== 'technician' || ticket.technician_id !== userId)
+			(role !== 'technician' || ticket.technician_id !== user_id)
 		)
 			throw new Error('FORBIDDEN');
 
@@ -167,12 +182,13 @@ export class Ticket {
 		if (status === 'completed' && ticket.status !== 'in_progress')
 			throw new Error('FORBIDDEN');
 
-		let dataToUpdate = {};
-		if (status === 'in_progress') dataToUpdate = { started_at: new Date() };
+		let data_to_update = {};
+		if (status === 'in_progress')
+			data_to_update = { started_at: new Date() };
 		if (status === 'completed') {
 			const start = new Date(ticket.started_at);
 			const end = new Date();
-			dataToUpdate = {
+			data_to_update = {
 				closed_at: end,
 				duration_seconds: (end.getTime() - start.getTime()) / 1000,
 			};
@@ -182,13 +198,13 @@ export class Ticket {
 			where: { id: this.id },
 			data: {
 				status,
-				...dataToUpdate,
+				...data_to_update,
 			},
 			select: this._baseSelect,
 		});
 	}
 
-	async assignTechnician({ technicianId, role, userId }) {
+	async assignTechnician({ technician_id, role, user_id }) {
 		if (role !== 'admin' && role !== 'technician')
 			throw new Error('FORBIDDEN');
 
@@ -208,7 +224,7 @@ export class Ticket {
 
 			// find technician and categories
 			const technician = await prisma.user.findUnique({
-				where: { id: technicianId },
+				where: { id: technician_id },
 				select: {
 					id: true,
 					role: true,
@@ -221,22 +237,22 @@ export class Ticket {
 			}
 
 			// Check if technician can handle category
-			const canHandleCategory = technician.Technician_Category.some(
+			const can_handle_category = technician.Technician_Category.some(
 				(c) => c.category_id === ticket.category_id,
 			);
-			if (!canHandleCategory) {
+			if (!can_handle_category) {
 				throw new Error('FORBIDDEN_CATEGORY');
 			}
 
 			// if technician is assigned to ticket, change status
-			let dataToUpdate = { technician_id: technicianId };
+			let data_to_update = { technician_id: technician_id };
 			if (
 				role === 'technician' &&
-				technicianId === userId &&
+				technician_id === user_id &&
 				ticket.status === 'pending'
 			) {
-				dataToUpdate = {
-					...dataToUpdate,
+				data_to_update = {
+					...data_to_update,
 					status: 'in_progress',
 					started_at: new Date(),
 				};
@@ -244,7 +260,7 @@ export class Ticket {
 
 			return await prisma.ticket.update({
 				where: { id: this.id },
-				data: dataToUpdate,
+				data: data_to_update,
 				select: this._baseSelect,
 			});
 		} catch (error) {

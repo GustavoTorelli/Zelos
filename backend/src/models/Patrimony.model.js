@@ -24,41 +24,41 @@ export class Patrimony {
 	static async createMany(patrimonies) {
 		try {
 			const result = await prisma.$transaction(async (tx) => {
-				const createdPatrimonies = [];
+				const created_patrimonies = [];
 
-				// Verificar se todos os códigos são únicos
+				// Check if all codes are unique
 				const codes = patrimonies.map((p) => p.code);
-				const uniqueCodes = new Set(codes);
+				const unique_codes = new Set(codes);
 
-				if (codes.length !== uniqueCodes.size) {
+				if (codes.length !== unique_codes.size) {
 					throw new Error('DUPLICATE_CODES_IN_REQUEST');
 				}
 
-				// Verificar se algum código já existe no banco
-				const existingPatrimonies = await tx.patrimony.findMany({
+				// Check if any code already exists in the database
+				const existing_patrimonies = await tx.patrimony.findMany({
 					where: { code: { in: codes } },
 					select: { code: true },
 				});
 
-				if (existingPatrimonies.length > 0) {
-					const existingCodes = existingPatrimonies.map(
+				if (existing_patrimonies.length > 0) {
+					const existing_codes = existing_patrimonies.map(
 						(p) => p.code,
 					);
 					const err = new Error('CODES_ALREADY_EXIST');
-					err.existingCodes = existingCodes;
+					err.existing_codes = existing_codes;
 					throw err;
 				}
 
-				// Criar todos os patrimônios
-				for (const patrimonyData of patrimonies) {
+				// Create all patrimonies
+				for (const patrimony_data of patrimonies) {
 					const created = await tx.patrimony.create({
-						data: patrimonyData,
+						data: patrimony_data,
 						select: this._baseSelect,
 					});
-					createdPatrimonies.push(created);
+					created_patrimonies.push(created);
 				}
 
-				return createdPatrimonies;
+				return created_patrimonies;
 			});
 
 			return result;

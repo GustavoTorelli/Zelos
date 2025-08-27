@@ -10,11 +10,11 @@ export class CategoryController {
 
 	async create(req, res) {
 		try {
-			const parsedData = createCategory.parse(req.body);
+			const parsed_data = createCategory.parse(req.body);
 
 			const category = await Category.create({
-				...parsedData,
-				userId: req.user.id,
+				...parsed_data,
+				user_id: req.user.id,
 				role: req.user.role,
 			});
 			return apiResponse(
@@ -75,11 +75,11 @@ export class CategoryController {
 
 	async findAll(req, res) {
 		try {
-			const includeInactive =
-				req.query.inactive === 'true' ? true : false;
+			const include_inactive =
+				req.query.include_inactive === 'true' ? true : false;
 
 			const categories = await Category.findAll({
-				includeInactive,
+				include_inactive,
 			});
 
 			return apiResponse(
@@ -106,8 +106,10 @@ export class CategoryController {
 
 	async findById(req, res) {
 		try {
-			const parsedId = idSchema.parse(req.params.id);
-			const category = await Category.findById({ categoryId: parsedId });
+			const parsed_id = idSchema.parse(req.params.id);
+			const category = await Category.findById({
+				category_id: parsed_id,
+			});
 			return apiResponse(
 				{
 					code: 200,
@@ -155,13 +157,13 @@ export class CategoryController {
 
 	async update(req, res) {
 		try {
-			const parsedId = idSchema.parse(req.params.id);
-			const parsedData = updateCategory.parse(req.body);
+			const parsed_id = idSchema.parse(req.params.id);
+			const parsed_data = updateCategory.parse(req.body);
 
 			const category = await Category.update({
-				categoryId: parsedId,
-				data: parsedData,
-				userId: req.user.id,
+				category_id: parsed_id,
+				data: parsed_data,
+				user_id: req.user.id,
 				role: req.user.role,
 			});
 
@@ -232,12 +234,60 @@ export class CategoryController {
 		}
 	}
 
+	async delete(req, res) {
+		try {
+			const parsed_id = idSchema.parse(req.params.id);
+			const category_title = await Category.delete({
+				category_id: parsed_id,
+				role: req.user.role,
+			});
+			return apiResponse(
+				{
+					code: 200,
+					success: true,
+					message: `Category '${category_title}' deleted successfully`,
+				},
+				res,
+			);
+		} catch (error) {
+			if (error.message === 'NOT_FOUND') {
+				return apiResponse(
+					{
+						code: 404,
+						success: false,
+						message: 'Category not found',
+					},
+					res,
+				);
+			}
+			if (error.message === 'FORBIDDEN') {
+				return apiResponse(
+					{
+						code: 403,
+						success: false,
+						message: 'You are not allowed to perform this action',
+					},
+					res,
+				);
+			}
+			return apiResponse(
+				{
+					code: 500,
+					success: false,
+					message: 'An unexpected error occurred',
+					errors: error.message,
+				},
+				res,
+			);
+		}
+	}
+
 	async activate(req, res) {
 		try {
-			const parsedId = idSchema.parse(req.params.id);
+			const parsed_id = idSchema.parse(req.params.id);
 			const category = await Category.activate({
-				categoryId: parsedId,
-				userId: req.user.id,
+				category_id: parsed_id,
+				user_id: req.user.id,
 				role: req.user.role,
 			});
 			return apiResponse(
@@ -284,10 +334,10 @@ export class CategoryController {
 
 	async deactivate(req, res) {
 		try {
-			const parsedId = idSchema.parse(req.params.id);
+			const parsed_id = idSchema.parse(req.params.id);
 			const category = await Category.deactivate({
-				categoryId: parsedId,
-				userId: req.user.id,
+				category_id: parsed_id,
+				user_id: req.user.id,
 				role: req.user.role,
 			});
 			return apiResponse(

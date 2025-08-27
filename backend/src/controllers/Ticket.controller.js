@@ -17,10 +17,10 @@ export class TicketController {
 	async create(req, res) {
 		try {
 			const { id } = req.user;
-			const parsedData = createTicket.parse(req.body);
-			parsedData.user_id = id;
+			const parsed_data = createTicket.parse(req.body);
+			parsed_data.user_id = id;
 
-			const ticket = await Ticket.create(parsedData);
+			const ticket = await Ticket.create(parsed_data);
 			return apiResponse(
 				{
 					success: true,
@@ -93,23 +93,23 @@ export class TicketController {
 		try {
 			const { id, role } = req.user;
 			const {
-				categoryId,
-				patrimonyCode,
+				category_id,
+				patrimony_code,
 				status,
-				technicianId,
-				createdAfter,
-				createdBefore,
+				technician_id,
+				created_after,
+				created_before,
 			} = findAllTicket.parse(req.query);
 
 			const tickets = await Ticket.findAll(
-				{ userId: id, role },
+				{ user_id: id, role },
 				{
-					categoryId,
-					patrimonyCode,
+					category_id,
+					patrimony_code,
 					status,
-					technicianId,
-					createdAfter,
-					createdBefore,
+					technician_id,
+					created_after,
+					created_before,
 				},
 			);
 
@@ -160,10 +160,10 @@ export class TicketController {
 
 	async findById(req, res) {
 		try {
-			const parsedId = idSchema.parse(req.params.id);
+			const parsed_id = idSchema.parse(req.params.id);
 			const ticket = await Ticket.findById({
-				ticketId: parsedId,
-				userId: req.user.id,
+				ticket_id: parsed_id,
+				user_id: req.user.id,
 				role: req.user.role,
 			});
 
@@ -226,12 +226,12 @@ export class TicketController {
 
 	async update(req, res) {
 		try {
-			const parsedId = idSchema.parse(req.params.id);
-			const parsedData = updateTicket.parse(req.body);
+			const parsed_id = idSchema.parse(req.params.id);
+			const parsed_data = updateTicket.parse(req.body);
 
 			const ticket = await Ticket.update({
-				ticketId: parsedId,
-				data: parsedData,
+				ticket_id: parsed_id,
+				data: parsed_data,
 				role: req.user.role,
 			});
 
@@ -292,15 +292,76 @@ export class TicketController {
 		}
 	}
 
+	async delete(req, res) {
+		try {
+			const parsed_id = idSchema.parse(req.params.id);
+			await Ticket.delete({ ticket_id: parsed_id, role: req.user.role });
+
+			return apiResponse(
+				{
+					success: true,
+					message: 'Ticket deleted successfully',
+					code: 200,
+				},
+				res,
+			);
+		} catch (error) {
+			if (error instanceof ZodError) {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Invalid request data',
+						errors: zodErrorFormatter(error),
+						code: 400,
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'FORBIDDEN') {
+				return apiResponse(
+					{
+						success: false,
+						message:
+							'You do not have permission to delete this ticket',
+						code: 403,
+					},
+					res,
+				);
+			}
+
+			if (error.message === 'NOT_FOUND') {
+				return apiResponse(
+					{
+						success: false,
+						message: 'Ticket not found',
+						code: 404,
+					},
+					res,
+				);
+			}
+
+			return apiResponse(
+				{
+					code: 500,
+					success: false,
+					message: 'An unexpected error occurred',
+					errors: error.message,
+				},
+				res,
+			);
+		}
+	}
+
 	async updateStatus(req, res) {
 		try {
-			const parsedId = idSchema.parse(req.params.id);
+			const parsed_id = idSchema.parse(req.params.id);
 			const { status } = updateStatus.parse(req.body);
 
-			const ticketInstance = new Ticket({ id: parsedId });
+			const ticketInstance = new Ticket({ id: parsed_id });
 			const updated = await ticketInstance.updateStatus({
 				status,
-				userId: req.user.id,
+				user_id: req.user.id,
 				role: req.user.role,
 			});
 
@@ -353,21 +414,18 @@ export class TicketController {
 
 	async assignTechnician(req, res) {
 		try {
-			const parsedId = idSchema.parse(req.params.id);
-			let technicianId;
+			const parsed_id = idSchema.parse(req.params.id);
 
-			if (req.user.role === 'admin') {
-				const { technician_id } = assignTechnician.parse(req.body);
-				technicianId = technician_id;
-			} else if (req.user.role === 'technician') {
-				technicianId = req.user.id;
-			}
+			let technician_id =
+				req.user.role === 'admin'
+					? assignTechnician.parse(req.body).technician_id
+					: req.user.id;
 
-			const ticket = new Ticket({ id: parsedId });
+			const ticket = new Ticket({ id: parsed_id });
 			const updated = await ticket.assignTechnician({
-				technicianId,
+				technician_id,
 				role: req.user.role,
-				userId: req.user.id,
+				user_id: req.user.id,
 			});
 
 			return apiResponse(

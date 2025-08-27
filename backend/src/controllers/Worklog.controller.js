@@ -14,13 +14,13 @@ export class WorklogController {
 	async create(req, res) {
 		try {
 			const parsedData = createWorklogSchema.parse({
-				ticketId: req.params.ticket_id,
+				ticket_id: req.params.ticket_id,
 				...req.body,
 			});
 
 			const worklog = await Worklog.create({
 				...parsedData,
-				technicianId: req.user.id,
+				technician_id: req.user.id,
 				role: req.user.role,
 			});
 
