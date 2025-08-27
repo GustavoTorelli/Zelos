@@ -1,7 +1,7 @@
 'use client'
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react";
 import { Funnel, Search } from "lucide-react";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 
 export default function TabelaDeTickets({ onViewTicket }) {
     const [tickets, setTickets] = useState([]);
@@ -14,25 +14,47 @@ export default function TabelaDeTickets({ onViewTicket }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
     const [statusUserFilter, setStatusUserFilter] = useState('all');
+    const [userId, setUserId] = useState('');
 
+    // Fix: Better token management
     const authHeaders = useMemo(() => {
         const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
         const isJwt = token && token.includes('.');
         return isJwt ? { Authorization: `Bearer ${token}` } : {};
     }, []);
 
+    // Fix: Better error handling with useCallback
+    const handleApiError = useCallback((error, operation) => {
+        console.error(`Error in ${operation}:`, error);
+        if (error?.message?.includes('401') || error?.status === 401) {
+            localStorage.removeItem("token");
+            window.location.href = '/';
+            return;
+        }
+        setError(`Erro ao ${operation}: ${error.message}`);
+    }, []);
+
     useEffect(() => {
+        let isMounted = true; // Fix: Prevent memory leaks
+
         async function loadInitialData() {
             setLoading(true);
+            setError("");
+
             try {
                 // Load user role
-                const roleRes = await fetch('/api/auth/me', { 
+                const roleRes = await fetch('/api/auth/me', {
                     headers: { ...authHeaders },
-                    credentials: 'include' 
+                    credentials: 'include'
                 });
+
                 if (roleRes.ok) {
                     const rolePayload = await roleRes.json();
-                    setRole(rolePayload?.data?.role || '');
+                    if (isMounted) {
+                        const userData = rolePayload?.data || rolePayload;
+                        setRole(userData?.role || '');
+                        setUserId(userData?.id || ''); // <-- pega o userId do usuário logado
+                    }
                 }
 
                 // Load tickets
@@ -43,11 +65,15 @@ export default function TabelaDeTickets({ onViewTicket }) {
                 });
 
                 if (!ticketsRes.ok) {
-                    throw new Error(`Error loading tickets: ${ticketsRes.status}`);
+                    throw new Error(`HTTP ${ticketsRes.status}`);
                 }
 
                 const ticketsPayload = await ticketsRes.json();
-                setTickets(ticketsPayload?.data || []);
+                if (isMounted) {
+                    // Fix: Better data structure handling
+                    const ticketsData = ticketsPayload?.data || ticketsPayload || [];
+                    setTickets(Array.isArray(ticketsData) ? ticketsData : []);
+                }
 
                 // Load categories
                 const categoriesRes = await fetch('/api/categories', {
@@ -57,7 +83,10 @@ export default function TabelaDeTickets({ onViewTicket }) {
 
                 if (categoriesRes.ok) {
                     const categoriesPayload = await categoriesRes.json();
-                    setCategories(categoriesPayload?.data || []);
+                    if (isMounted) {
+                        const categoriesData = categoriesPayload?.data || categoriesPayload || [];
+                        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+                    }
                 }
 
                 // Load patrimonies
@@ -68,21 +97,30 @@ export default function TabelaDeTickets({ onViewTicket }) {
 
                 if (patrimoniesRes.ok) {
                     const patrimoniesPayload = await patrimoniesRes.json();
-                    setPatrimonies(patrimoniesPayload?.data || []);
+                    if (isMounted) {
+                        const patrimoniesData = patrimoniesPayload?.data || patrimoniesPayload || [];
+                        setPatrimonies(Array.isArray(patrimoniesData) ? patrimoniesData : []);
+                    }
                 }
 
             } catch (e) {
-                setError(e.message);
-                if (e?.message?.includes('401') || e?.code === 401) {
-                    window.location.href = '/';
+                if (isMounted) {
+                    handleApiError(e, 'carregar dados');
                 }
             } finally {
-                setLoading(false);
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
         }
 
         loadInitialData();
-    }, [authHeaders, statusFilter]);
+
+        // Cleanup function
+        return () => {
+            isMounted = false;
+        };
+    }, [authHeaders, statusFilter, handleApiError]);
 
     const clearFilters = () => {
         setSearchTerm('');
@@ -97,7 +135,9 @@ export default function TabelaDeTickets({ onViewTicket }) {
     const categoryMap = useMemo(() => {
         const map = {};
         categories.forEach(cat => {
-            map[cat.id] = cat.title;
+            if (cat && cat.id) {
+                map[cat.id] = cat.title || cat.name || 'N/A';
+            }
         });
         return map;
     }, [categories]);
@@ -105,25 +145,36 @@ export default function TabelaDeTickets({ onViewTicket }) {
     const patrimonyMap = useMemo(() => {
         const map = {};
         patrimonies.forEach(pat => {
-            map[pat.code] = pat;
+            if (pat && (pat.code || pat.id)) {
+                // Fix: Handle both code and id fields
+                const key = pat.code || pat.id;
+                map[key] = pat;
+            }
         });
         return map;
     }, [patrimonies]);
 
     // Transform tickets data to include category and patrimony names
     const enrichedTickets = useMemo(() => {
-        return tickets.map(ticket => ({
-            ...ticket,
-            key: ticket.id.toString(),
-            categoryName: categoryMap[ticket.category_id] || 'N/A',
-            patrimonyInfo: ticket.patrimony_code ? patrimonyMap[ticket.patrimony_code] : null
-        }));
+        return tickets.map(ticket => {
+            // Fix: Handle both patrimony_code and patrimony_id
+            const patrimonyKey = ticket.patrimony_code || ticket.patrimony_id;
+
+            return {
+                ...ticket,
+                key: ticket.id?.toString() || Math.random().toString(),
+                categoryName: categoryMap[ticket.category_id] || 'N/A',
+                patrimonyInfo: patrimonyKey ? patrimonyMap[patrimonyKey] : null,
+                // Normalize patrimony field
+                patrimony_code: patrimonyKey
+            };
+        });
     }, [tickets, categoryMap, patrimonyMap]);
 
     // Status mapping from API to display
     const statusDisplayMap = {
         'pending': 'Pendente',
-        'in_progress': 'Em Andamento', 
+        'in_progress': 'Em Andamento',
         'completed': 'Concluído',
         'cancelled': 'Cancelado'
     };
@@ -186,7 +237,7 @@ export default function TabelaDeTickets({ onViewTicket }) {
                 return (
                     <div className="text-center flex items-center justify-center">
                         <p className="font-medium text-zinc-900 dark:text-zinc-100 text-sm max-w-[200px] truncate" title={item.title}>
-                            {item.title}
+                            {item.title || 'Sem título'}
                         </p>
                     </div>
                 );
@@ -199,22 +250,31 @@ export default function TabelaDeTickets({ onViewTicket }) {
                     </div>
                 );
             case "created_at":
-                const date = new Date(item.created_at);
-                const formattedDate = date.toLocaleDateString('pt-BR', {
-                    day: '2-digit',
-                    month: '2-digit', 
-                    year: 'numeric'
-                });
-                const formattedTime = date.toLocaleTimeString('pt-BR', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-                return (
-                    <div className="text-center">
-                        <div className="text-sm text-zinc-900 dark:text-zinc-100">{formattedDate}</div>
-                        <div className="text-xs text-zinc-500 dark:text-zinc-400">{formattedTime}</div>
-                    </div>
-                );
+                // Fix: Better date handling
+                if (!item.created_at) return <span className="text-zinc-400">N/A</span>;
+
+                try {
+                    const date = new Date(item.created_at);
+                    if (isNaN(date.getTime())) return <span className="text-zinc-400">Data inválida</span>;
+
+                    const formattedDate = date.toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                    });
+                    const formattedTime = date.toLocaleTimeString('pt-BR', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    return (
+                        <div className="text-center">
+                            <div className="text-sm text-zinc-900 dark:text-zinc-100">{formattedDate}</div>
+                            <div className="text-xs text-zinc-500 dark:text-zinc-400">{formattedTime}</div>
+                        </div>
+                    );
+                } catch {
+                    return <span className="text-zinc-400">Data inválida</span>;
+                }
             case "actions":
                 return (
                     <div className="flex justify-center gap-2">
@@ -235,29 +295,47 @@ export default function TabelaDeTickets({ onViewTicket }) {
                     </div>
                 );
             default:
-                return item[columnKey];
+                return item[columnKey] || 'N/A';
         }
     };
 
     // Filter data based on applied filters
     const filteredData = useMemo(() => {
         return enrichedTickets.filter(item => {
-            const matchesSearch = !searchTerm || 
-                item.patrimony_code?.toString().includes(searchTerm) ||
-                item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.patrimonyInfo?.name.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesSearch = !searchTerm ||
+                item.patrimony_code?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.patrimonyInfo?.name?.toLowerCase().includes(searchTerm.toLowerCase());
 
-            const matchesCategory = !categoryFilter || item.category_id.toString() === categoryFilter;
+            const matchesCategory = !categoryFilter || item.category_id?.toString() === categoryFilter;
 
-            const matchesStatus = statusUserFilter === 'all' ||
-                (statusUserFilter === 'pending' && item.status === 'pending') ||
-                (statusUserFilter === 'in_progress' && item.status === 'in_progress') ||
-                (statusUserFilter === 'completed' && item.status === 'completed') ||
-                (statusUserFilter === 'cancelled' && item.status === 'cancelled');
+            // Filtro por role e status
+            let matchesRoleStatus = false;
 
-            return matchesSearch && matchesCategory && matchesStatus;
+            if (role === 'admin') {
+                // Admin vê todos
+                matchesRoleStatus =
+                    statusUserFilter === 'all' ||
+                    ['pending', 'in_progress', 'completed', 'cancelled'].includes(item.status);
+            } else if (role === 'technician') {
+                // Technician vê todos pendentes, e seus próprios tickets em andamento/concluídos
+                if (item.status === 'pending') {
+                    matchesRoleStatus = true;
+                } else if ((item.status === 'in_progress' || item.status === 'completed') &&
+                    String(item.assigned_to) === String(userId)) {
+                    matchesRoleStatus = true;
+                }
+            } else {
+                // Usuário comum
+                matchesRoleStatus =
+                    statusUserFilter === 'all' ||
+                    statusUserFilter === item.status;
+            }
+
+            return matchesSearch && matchesCategory && matchesRoleStatus;
         });
-    }, [enrichedTickets, searchTerm, categoryFilter, statusUserFilter]);
+    }, [enrichedTickets, searchTerm, categoryFilter, statusUserFilter, role, userId]);
+
 
     if (loading) {
         return (
@@ -311,8 +389,8 @@ export default function TabelaDeTickets({ onViewTicket }) {
                             >
                                 <option value="">Todas as categorias</option>
                                 {categories.map(category => (
-                                    <option key={category.id} value={category.id.toString()}>
-                                        {category.title}
+                                    <option key={category.id} value={category.id?.toString()}>
+                                        {category.title || category.name}
                                     </option>
                                 ))}
                             </select>
@@ -350,7 +428,15 @@ export default function TabelaDeTickets({ onViewTicket }) {
             <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl min-h-[400px] p-4">
                 {error ? (
                     <div className="flex justify-center items-center min-h-[300px] text-red-400">
-                        <p>Erro: {error}</p>
+                        <div className="text-center">
+                            <p className="mb-2">Erro: {error}</p>
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="text-sm bg-red-700 hover:bg-red-800 px-4 py-2 rounded transition-colors"
+                            >
+                                Recarregar
+                            </button>
+                        </div>
                     </div>
                 ) : (
                     <Table
