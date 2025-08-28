@@ -2,6 +2,32 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
+function InputError({ message }) {
+	if (!message) return null;
+	return (
+		<p className="text-red-500 mt-2 text-sm text-center" role="alert">
+			{message}
+		</p>
+	);
+}
+
+const ERROR_MAP = {
+	'Token is invalid or has expired':
+		'O link de redefinição expirou. Solicite um novo.',
+	'User does not exist': 'Usuário não encontrado.',
+	'User account is inactive': 'A conta do usuário está inativa.',
+	'Invalid request data': 'Email inválido.',
+};
+
+function translateError(message) {
+	if (!message) return 'Ocorreu um erro inesperado. Tente novamente.';
+	return (
+		ERROR_MAP[message] ||
+		message ||
+		'Ocorreu um erro inesperado. Tente novamente.'
+	);
+}
+
 export default function LoginPage() {
 	const router = useRouter();
 	const [resetMode, setResetMode] = useState(false);
@@ -11,10 +37,18 @@ export default function LoginPage() {
 	const [error, setError] = useState('');
 	const [isLoading, setIsLoading] = useState(true);
 
-	// Verificar autenticação inicial
+	// recovery states
+	const [recoveryEmail, setRecoveryEmail] = useState('');
+	const [recoveryMessage, setRecoveryMessage] = useState('');
+	const [recoveryError, setRecoveryError] = useState('');
+	const [recoveryLoading, setRecoveryLoading] = useState(false);
+
 	useEffect(() => {
 		const checkAuth = async () => {
-			const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+			const token =
+				typeof window !== 'undefined'
+					? localStorage.getItem('token')
+					: null;
 
 			if (!token) {
 				setIsLoading(false);
@@ -23,9 +57,7 @@ export default function LoginPage() {
 
 			try {
 				const res = await fetch('/api/auth/me', {
-					headers: {
-						Authorization: `Bearer ${token}`,
-					},
+					headers: { Authorization: `Bearer ${token}` },
 				});
 
 				if (res.ok) {
@@ -61,21 +93,22 @@ export default function LoginPage() {
 				body: JSON.stringify({ email: username, password }),
 			});
 
-			if (!res.ok) {
-				const errData = await res.json();
-				setError(errData.message || 'Credenciais inválidas');
+			const body = await res.json().catch(() => ({}));
+
+			if (!res.ok || body.success === false) {
+				const msg = body.message || 'Credenciais inválidas';
+				setError(translateError(msg));
 				return;
 			}
 
-			const { data } = await res.json(); // Agora sempre tem data.token
+			const { data } = body;
 			const token = data.token;
-
-			// Salvar no localStorage
 			localStorage.setItem('token', token);
-			// Opcional: buscar dados do usuário usando /me
+
 			const meRes = await fetch('/api/auth/me', {
 				headers: { Authorization: `Bearer ${token}` },
 			});
+
 			if (meRes.ok) {
 				const { data: meData } = await meRes.json();
 				localStorage.setItem('user_id', meData.id);
@@ -83,12 +116,55 @@ export default function LoginPage() {
 			}
 
 			router.push('/chamados');
-		} catch {
+		} catch (err) {
 			setError('Erro de conexão. Tente novamente.');
 		}
 	};
 
-	// Tela de carregamento
+	const handlePasswordRecovery = async (e) => {
+		e.preventDefault();
+		setRecoveryError('');
+		setRecoveryMessage('');
+
+		if (!recoveryEmail) {
+			setRecoveryError('Informe um e-mail válido.');
+			return;
+		}
+
+		setRecoveryLoading(true);
+		try {
+			const localToken =
+				typeof window !== 'undefined'
+					? localStorage.getItem('token')
+					: null;
+			const headers = { 'Content-Type': 'application/json' };
+			if (localToken) headers.Authorization = `Bearer ${localToken}`;
+
+			const res = await fetch('/api/auth/password-recovery', {
+				method: 'POST',
+				headers,
+				body: JSON.stringify({ email: recoveryEmail }),
+			});
+
+			const body = await res.json().catch(() => ({}));
+
+			if (!res.ok || body.success === false) {
+				const friendly = translateError(body.message);
+				setRecoveryError(friendly);
+				return;
+			}
+
+			setRecoveryMessage(
+				'Se o e-mail existir, você receberá um link para redefinir sua senha.'
+			);
+			setRecoveryEmail('');
+		} catch (err) {
+			setRecoveryError('Erro de conexão. Tente novamente.');
+		} finally {
+			setRecoveryLoading(false);
+		}
+	};
+
 	if (isLoading) {
 		return (
 			<section className="w-screen h-screen flex items-center justify-center bg-black">
@@ -118,7 +194,6 @@ export default function LoginPage() {
 						{resetMode ? 'Recuperar Senha' : 'Bem vindo ao Zelos'}
 					</h2>
 
-					{/* Formulário de login */}
 					{!resetMode && (
 						<form className="flex flex-col" onSubmit={handleLogin}>
 							<input
@@ -147,9 +222,13 @@ export default function LoginPage() {
 										setShowPassword(!showPassword)
 									}
 									className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors duration-150"
+									aria-label={
+										showPassword
+											? 'Ocultar senha'
+											: 'Mostrar senha'
+									}
 								>
 									{showPassword ? (
-										// Ícone de olho fechado
 										<svg
 											className="w-5 h-5"
 											fill="none"
@@ -165,7 +244,6 @@ export default function LoginPage() {
 											/>
 										</svg>
 									) : (
-										// Ícone de olho aberto
 										<svg
 											className="w-5 h-5"
 											fill="none"
@@ -193,7 +271,11 @@ export default function LoginPage() {
 							<div className="flex justify-end p-1">
 								<button
 									type="button"
-									onClick={() => setResetMode(true)}
+									onClick={() => {
+										setResetMode(true);
+										setRecoveryMessage('');
+										setRecoveryError('');
+									}}
 									className="relative text-sm text-white/70 cursor-pointer hover:text-white font-semibold transition-colors duration-300 group"
 								>
 									Esqueceu a senha?
@@ -209,28 +291,40 @@ export default function LoginPage() {
 								Entrar
 							</button>
 
-							{error && (
-								<p className="text-red-500 mt-2 text-sm text-center">
-									{error}
-								</p>
-							)}
+							<InputError message={error} />
 						</form>
 					)}
 
-					{/* Formulário de recuperação */}
 					{resetMode && (
-						<form className="flex flex-col">
+						<form
+							className="flex flex-col"
+							onSubmit={handlePasswordRecovery}
+						>
 							<input
 								placeholder="Digite seu e-mail"
 								className="bg-gray-600/80 text-white border-0 rounded-md p-2 mb-4 focus:bg-gray-600 focus:outline-none transition ease-in-out duration-150 hover:bg-gray-600/90"
 								type="email"
+								value={recoveryEmail}
+								onChange={(e) =>
+									setRecoveryEmail(e.target.value)
+								}
+								required
 							/>
+
 							<button
-								className="bg-gradient-to-r from-red-800 to-red-700 text-white font-bold py-2 px-4 rounded-md mt-2 hover:from-red-900 hover:to-red-800 transition ease-in-out duration-150 cursor-pointer"
+								className="bg-gradient-to-r from-red-800 to-red-700 text-white font-bold py-2 px-4 rounded-md mt-2 hover:from-red-900 hover:to-red-800 transition ease-in-out duration-150 cursor-pointer disabled:opacity-50"
 								type="submit"
+								disabled={recoveryLoading}
 							>
-								Enviar
+								{recoveryLoading ? 'Enviando...' : 'Enviar'}
 							</button>
+
+							{recoveryMessage && (
+								<p className="text-green-400 mt-3 text-sm text-center">
+									{recoveryMessage}
+								</p>
+							)}
+							<InputError message={recoveryError} />
 
 							<div className="flex justify-center pt-5">
 								<button
