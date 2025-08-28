@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Funnel, Search } from "lucide-react";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react";
 
 export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }) {
     const [patrimonios, setPatrimonios] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [errorState, setError] = useState('');
+    const [isDeleting, setIsDeleting] = useState(null); // Para mostrar loading no botão
 
     const clearFilters = () => setSearchTerm('');
     const hasActiveFilters = searchTerm !== '';
@@ -26,14 +28,80 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
                 if (!res.ok) throw new Error('Falha ao carregar patrimônios');
 
                 const data = await res.json();
+                console.log('Dados recebidos da API:', data); // Debug
+                console.log('Primeiro item:', data?.data?.[0]); // Debug do primeiro item
                 setPatrimonios(data?.data || []);
+                setError(''); // Limpa erro anterior se a requisição for bem-sucedida
             } catch (err) {
                 console.error(err);
                 setPatrimonios([]);
+                setError('Erro ao carregar patrimônios');
             }
         };
 
         fetchPatrimonios();
+    }, []);
+
+    const handleDeletePatrimony = useCallback(async (patrimony) => {
+        const patrimonyCode = patrimony.code; // Pegamos o code como identificador
+
+        if (!patrimonyCode) {
+            setError("Código do patrimônio inválido.");
+            return;
+        }
+
+        setError("");
+        setIsDeleting(patrimonyCode);
+
+        try {
+            const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+            const isJwt = token && token.includes('.');
+            const authHeaders = isJwt ? { Authorization: `Bearer ${token}` } : {};
+
+            const response = await fetch(`/api/patrimonies/${patrimonyCode}`, {
+                method: 'DELETE',
+                headers: {
+                    ...authHeaders,
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                let errorMessage = `HTTP ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorData.error || errorMessage;
+                } catch (parseError) {
+                    console.warn('Não foi possível parsear resposta de erro:', parseError);
+                }
+                throw new Error(errorMessage);
+            }
+
+            setPatrimonios(prev => prev.filter(p => p.code !== patrimonyCode));
+
+            console.log('Patrimônio excluído com sucesso:', patrimonyCode);
+
+        } catch (error) {
+            console.error('Erro ao excluir patrimônio:', error);
+
+            let errorMessage = "Erro ao excluir patrimônio.";
+            if (error.message.includes('401')) {
+                errorMessage = "Não autorizado. Faça login novamente.";
+            } else if (error.message.includes('403')) {
+                errorMessage = "Sem permissão para excluir este patrimônio.";
+            } else if (error.message.includes('404')) {
+                errorMessage = "Patrimônio não encontrado.";
+            } else if (error.message.includes('500')) {
+                errorMessage = "Erro interno do servidor. Tente novamente.";
+            } else if (error.message !== `HTTP ${error.message}`) {
+                errorMessage = error.message;
+            }
+
+            setError(errorMessage);
+        } finally {
+            setIsDeleting(null);
+        }
     }, []);
 
     const filteredPatrimonios = useMemo(() => {
@@ -42,7 +110,7 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
                 const term = searchTerm.toLowerCase();
                 return term === '' ||
                     (item.id && item.id.toString().toLowerCase().includes(term)) ||
-                    (item.code && item.code.toString().includes(term)) ||
+                    (item.code && item.code.toString().toLowerCase().includes(term)) ||
                     (item.name && item.name.toLowerCase().includes(term)) ||
                     (item.location && item.location.toLowerCase().includes(term)) ||
                     (item.description && item.description.toLowerCase().includes(term));
@@ -102,14 +170,17 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
                     <div className="flex justify-center gap-2">
                         <button
                             onClick={() => onEditPatrimonio && onEditPatrimonio(item)}
-                            className="cursor-pointer bg-red-700 hover:bg-red-800 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
+                            disabled={isDeleting === (item.code || item.id)}
+                            className="cursor-pointer bg-red-700 hover:bg-red-800 disabled:bg-red-800/50 disabled:cursor-not-allowed text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
                         >
                             Editar
                         </button>
                         <button
-                            className="cursor-pointer bg-zinc-700/50 hover:bg-zinc-600/50 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
+                            onClick={() => handleDeletePatrimony(item)}
+                            disabled={isDeleting === (item.code || item.id)}
+                            className="cursor-pointer bg-zinc-700/50 hover:bg-zinc-600/50 disabled:bg-zinc-600/25 disabled:cursor-not-allowed text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
                         >
-                            Excluir
+                            {isDeleting === (item.code || item.id) ? 'Excluindo...' : 'Excluir'}
                         </button>
                     </div>
                 );
@@ -136,6 +207,8 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
 
     return (
         <section>
+
+
             <div className="mb-8 mt-8">
                 <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 shadow-xl">
                     <div className="flex items-center justify-between mb-4">
@@ -199,7 +272,7 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
                         </TableHeader>
                         <TableBody items={filteredPatrimonios}>
                             {(item) => (
-                                <TableRow key={item.id || item.key || item.code}>
+                                <TableRow key={`patrimonio-${item.id}`}>
                                     {(columnKey) => (
                                         <TableCell className="py-2 px-4 h-15 gap-1 overflow-hidden bg-transparent">
                                             {renderCell(item, columnKey)}
