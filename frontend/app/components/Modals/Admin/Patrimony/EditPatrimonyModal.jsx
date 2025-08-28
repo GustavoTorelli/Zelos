@@ -1,6 +1,6 @@
 'use client';
 import { useState } from "react";
-import { Pencil } from "lucide-react";
+import { HousePlus } from "lucide-react";
 
 export default function EditPatrimonyModal({ isOpen, onClose, assetData }) {
     if (!isOpen || !assetData) return null;
@@ -66,7 +66,7 @@ export default function EditPatrimonyModal({ isOpen, onClose, assetData }) {
             >
                 {/* Título */}
                 <div className="flex gap-2 pb-4 border-b border-gray-700/50 text-white mb-6">
-                    <Pencil size={25} />
+                    <HousePlus size={25} />
                     <h3 className="text-xl font-semibold text-white">Editar Patrimônio - #{assetData?.id || 'N/A'}</h3>
                 </div>
 

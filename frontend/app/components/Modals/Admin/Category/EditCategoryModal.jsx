@@ -81,13 +81,6 @@ export default function EditCategoryModal({ isOpen, onClose, categoryData, asset
 
                 {/* Formulário */}
                 <form className="space-y-4" onSubmit={handleSubmit}>
-                    {/* ID somente leitura */}
-                    <input
-                        type="text"
-                        value={categoryData.id}
-                        disabled
-                        className="w-full bg-zinc-700/50 text-zinc-400 border border-zinc-600/50 rounded-lg p-3 cursor-not-allowed"
-                    />
 
                     {/* Título */}
                     <input
