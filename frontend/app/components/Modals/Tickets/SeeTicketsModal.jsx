@@ -332,7 +332,7 @@ export default function SeeTicketsModal({ isOpen, onClose, ticketData = {} }) {
                     <button
                         type="button"
                         onClick={onClose}
-                        className="text-zinc-400 hover:text-zinc-200 transition-colors"
+                        className="text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
                     >
                         <X size={25} />
                     </button>

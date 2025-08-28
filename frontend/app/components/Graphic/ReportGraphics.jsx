@@ -39,8 +39,8 @@ export default function ReportGraphics() {
                         <div className="relative h-80 w-full lg:w-1/2">
                             {/* numero central */}
                             <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 text-center">
-                                <div className="text-2xl font-bold text-white mb-1">12.8K</div>
-                                <div className="text-xs text-gray-400 uppercase tracking-wide">Total Visits</div>
+                                <div className="text-2xl font-bold text-white mb-1">12</div>
+                                <div className="text-xs text-gray-400 uppercase tracking-wide">Chamados</div>
                             </div>
 
                             {/* Gráfico */}
