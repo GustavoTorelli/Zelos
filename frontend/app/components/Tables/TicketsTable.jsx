@@ -1,6 +1,6 @@
 'use client'
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react";
-import { Funnel, Search } from "lucide-react";
+import { Funnel, Search, Trash2 } from "lucide-react";
 import { useEffect, useState, useMemo, useCallback } from "react";
 
 export default function TabelaDeTickets({ onViewTicket }) {
@@ -15,15 +15,15 @@ export default function TabelaDeTickets({ onViewTicket }) {
     const [categoryFilter, setCategoryFilter] = useState('');
     const [statusUserFilter, setStatusUserFilter] = useState('all');
     const [userId, setUserId] = useState('');
+    const [deleteLoading, setDeleteLoading] = useState(null);
 
-    // Fix: Better token management
+    // token
     const authHeaders = useMemo(() => {
         const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
         const isJwt = token && token.includes('.');
         return isJwt ? { Authorization: `Bearer ${token}` } : {};
     }, []);
 
-    // Fix: Better error handling with useCallback
     const handleApiError = useCallback((error, operation) => {
         console.error(`Error in ${operation}:`, error);
         if (error?.message?.includes('401') || error?.status === 401) {
@@ -33,6 +33,43 @@ export default function TabelaDeTickets({ onViewTicket }) {
         }
         setError(`Erro ao ${operation}: ${error.message}`);
     }, []);
+
+    // Função para deletar ticket
+    const handleDeleteTicket = useCallback(async (ticketId) => {
+
+        setDeleteLoading(ticketId);
+        setError("");
+
+        try {
+            const response = await fetch(`/api/tickets/${ticketId}`, {
+                method: 'DELETE',
+                headers: {
+                    ...authHeaders,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `HTTP ${response.status}`);
+            }
+
+            // Remove o user da lista local
+            setTickets(prevTickets => prevTickets.filter(ticket => ticket.id !== ticketId));
+
+
+            setTimeout(() => {
+                if (document.body.contains(successMessage)) {
+                    document.body.removeChild(successMessage);
+                }
+            }, 3000);
+
+        } catch (error) {
+            handleApiError(error, 'excluir ticket');
+        } finally {
+            setDeleteLoading(null);
+        }
+    }, [authHeaders, handleApiError]);
 
     useEffect(() => {
         let isMounted = true; // Fix: Prevent memory leaks
@@ -154,10 +191,8 @@ export default function TabelaDeTickets({ onViewTicket }) {
         return map;
     }, [patrimonies]);
 
-    // Transform tickets data to include category and patrimony names
     const enrichedTickets = useMemo(() => {
         return tickets.map(ticket => {
-            // Fix: Handle both patrimony_code and patrimony_id
             const patrimonyKey = ticket.patrimony_code || ticket.patrimony_id;
 
             return {
@@ -286,7 +321,8 @@ export default function TabelaDeTickets({ onViewTicket }) {
                         </button>
                         {(role === 'admin' || role === 'technician') && (
                             <button
-                                onClick={() => console.log('Excluir ticket:', item.id)}
+                                onClick={() => handleDeleteTicket(item.id)}
+                                disabled={deleteLoading === item.id}
                                 className="cursor-pointer bg-zinc-700/50 hover:bg-zinc-600/50 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
                             >
                                 Excluir

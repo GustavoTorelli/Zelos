@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react";
 import { Funnel, Search } from "lucide-react";
 
-export default function TabelaDeCategorias({ loading, error, onEditCategoria }) {
+export default function TabelaDeCategorias({ loading, error: externalError, onEditCategoria }) {
     const [categorias, setCategorias] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [deleteError, setDeleteError] = useState(null); // erro interno (exclusão)
 
     const clearFilters = () => setSearchTerm('');
     const hasActiveFilters = searchTerm !== '';
@@ -30,6 +31,40 @@ export default function TabelaDeCategorias({ loading, error, onEditCategoria }) 
 
         fetchCategorias();
     }, []);
+
+    const authHeaders = useMemo(() => {
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        const isJwt = token && token.includes('.');
+        return isJwt ? { Authorization: `Bearer ${token}` } : {};
+    }, []);
+
+    const handleDeleteCategory = useCallback(async (categoryId) => {
+        setDeleteError(null);
+
+        try {
+            const response = await fetch(`api/categories/${categoryId}`, {
+                method: 'DELETE',
+                headers: {
+                    ...authHeaders,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `HTTP ${response.status}`);
+            }
+
+            // Atualiza lista removendo a categoria excluída
+            setCategorias(prevCategorias =>
+                prevCategorias.filter(category => category.id !== categoryId)
+            );
+
+        } catch (error) {
+            console.error(error, 'excluir categoria');
+            setDeleteError("Erro ao excluir categoria.");
+        }
+    }, [authHeaders]);
 
     const filteredCategorias = useMemo(() => {
         const term = searchTerm.toLowerCase();
@@ -82,6 +117,7 @@ export default function TabelaDeCategorias({ loading, error, onEditCategoria }) 
                             Editar
                         </button>
                         <button
+                            onClick={() => handleDeleteCategory(item.id)}
                             className="cursor-pointer bg-zinc-700/50 hover:bg-zinc-600/50 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
                         >
                             Excluir
@@ -101,10 +137,10 @@ export default function TabelaDeCategorias({ loading, error, onEditCategoria }) 
         );
     }
 
-    if (error) {
+    if (externalError) {
         return (
             <div className="flex justify-center items-center min-h-[300px] text-red-400">
-                Erro ao carregar categorias: {error}
+                Erro ao carregar categorias: {externalError}
             </div>
         );
     }
@@ -143,10 +179,16 @@ export default function TabelaDeCategorias({ loading, error, onEditCategoria }) 
             </div>
 
             <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl min-h-[300px] p-4">
+                {deleteError && (
+                    <p className="text-red-400 text-sm mb-2">{deleteError}</p>
+                )}
+
                 {filteredCategorias.length === 0 ? (
                     <div className="flex items-center justify-center h-40">
                         <p className="text-zinc-400 text-lg">
-                            {hasActiveFilters ? "Nenhuma categoria encontrada com os filtros aplicados" : "Nenhuma categoria encontrada"}
+                            {hasActiveFilters
+                                ? "Nenhuma categoria encontrada com os filtros aplicados"
+                                : "Nenhuma categoria encontrada"}
                         </p>
                     </div>
                 ) : (
@@ -165,8 +207,8 @@ export default function TabelaDeCategorias({ loading, error, onEditCategoria }) 
                                 <TableColumn
                                     key={column.key}
                                     className={`font-semibold text-zinc-700 dark:text-zinc-300 py-3 ${column.key === 'actions' ? 'text-center' :
-                                            column.key === 'id' ? 'text-center' :
-                                                'text-center'
+                                        column.key === 'id' ? 'text-center' :
+                                            'text-center'
                                         }`}
                                 >
                                     {column.label}
@@ -177,7 +219,9 @@ export default function TabelaDeCategorias({ loading, error, onEditCategoria }) 
                             {(item) => (
                                 <TableRow key={item.id || item.title}>
                                     {(columnKey) => (
-                                        <TableCell className="py-2 px-4 h-15 gap-1 overflow-hidden bg-transparent">{renderCell(item, columnKey)}</TableCell>
+                                        <TableCell className="py-2 px-4 h-15 gap-1 overflow-hidden bg-transparent">
+                                            {renderCell(item, columnKey)}
+                                        </TableCell>
                                     )}
                                 </TableRow>
                             )}

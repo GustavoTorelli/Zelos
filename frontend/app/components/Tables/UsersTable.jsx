@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Funnel, Search } from "lucide-react";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react";
 import NewUserModal from "../Modals/Admin/Users/NewUserModal";
@@ -44,6 +44,36 @@ export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
         }
         loadRole();
     }, []);
+
+
+    const handleDeleteUser = useCallback(async (userId) => {
+        setError("");
+
+
+        try {
+            const response = await fetch(`/api/users/${userId}`, {
+                method: 'DELETE',
+                headers: {
+                    ...authHeaders,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `HTTP ${response.status}`);
+            }
+
+            // Atualiza lista
+            setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+
+
+
+        } catch (error) {
+            console.error(error, 'excluir user');
+            setError("Erro ao excluir usuário.");
+        }
+    }, [authHeaders]);
 
     // busca usuários da API
     useEffect(() => {
@@ -184,6 +214,7 @@ export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
                         </button>
 
                         <button
+                            onClick={() => handleDeleteUser(item.id)}
                             className="cursor-pointer bg-zinc-700/50 hover:bg-zinc-600/50 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
                         >
                             Excluir
