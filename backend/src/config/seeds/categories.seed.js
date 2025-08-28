@@ -3,6 +3,11 @@ import { createCategory } from '../../schemas/category.schema.js';
 import { ZodError } from 'zod';
 
 export default async function seedCategories() {
+	if (process.env.ENVIRONMENT === 'prod') {
+		console.log('⚠ Skipping category seeding in production environment');
+		return;
+	}
+
 	try {
 		const initial_categories = [
 			{

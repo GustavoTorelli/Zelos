@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import apiResponse from './utils/api-response.js';
 import seedAdmin from './config/seeds/admin.seed.js';
 import seedCategories from './config/seeds/categories.seed.js';
+import seedPatrimonies from './config/seeds/patrimony.seed.js';
 import userRoutes from './routes/User.route.js';
 import authRoutes from './routes/Auth.route.js';
 import categoryRoutes from './routes/Category.route.js';
@@ -40,6 +41,7 @@ app.use('/patrimonies', patrimonyRoutes);
 async function start() {
 	await seedAdmin();
 	await seedCategories();
+	await seedPatrimonies();
 	app.listen(port, () => {
 		console.log(`Server is running at http://localhost:${port}`);
 	});
