@@ -295,7 +295,7 @@ export class TicketController {
 	async delete(req, res) {
 		try {
 			const parsed_id = idSchema.parse(req.params.id);
-			await Ticket.delete({ ticket_id: parsed_id, role: req.user.role });
+			await Ticket.delete({ ticket_id: parsed_id });
 
 			return apiResponse(
 				{
@@ -313,18 +313,6 @@ export class TicketController {
 						message: 'Invalid request data',
 						errors: zodErrorFormatter(error),
 						code: 400,
-					},
-					res,
-				);
-			}
-
-			if (error.message === 'FORBIDDEN') {
-				return apiResponse(
-					{
-						success: false,
-						message:
-							'You do not have permission to delete this ticket',
-						code: 403,
 					},
 					res,
 				);

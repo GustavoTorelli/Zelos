@@ -19,7 +19,6 @@ export class ReportController {
 					reportSubtitle = 'Distribuição de tickets por status';
 
 					if (format === 'csv') {
-						// Para CSV, criamos uma linha para cada ticket individual
 						rows = [];
 						data.forEach((statusGroup) => {
 							statusGroup.sampleTickets.forEach((ticket) => {
@@ -44,7 +43,6 @@ export class ReportController {
 							});
 						});
 					} else {
-						// Para PDF/JSON, mantemos o formato resumido
 						rows = data.map((d) => ({
 							status: d.status,
 							count: d.count,
