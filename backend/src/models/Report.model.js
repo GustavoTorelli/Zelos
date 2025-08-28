@@ -1,27 +1,25 @@
 import prisma from '../config/prisma-client.js';
 
 export class Report {
-	// Build filters
 	static _buildWhere({
-		startDate,
-		endDate,
+		start_date,
+		end_date,
 		status,
-		categoryId,
-		technicianId,
+		category_id,
+		technician_id,
 	}) {
 		const yearStart = new Date(new Date().getFullYear(), 0, 1);
 		return {
 			...(status && { status }),
-			...(categoryId && { category_id: categoryId }),
-			...(technicianId && { technician_id: technicianId }),
+			...(category_id && { category_id }),
+			...(technician_id && { technician_id }),
 			created_at: {
-				gte: startDate ? new Date(startDate) : yearStart,
-				lte: endDate ? new Date(endDate) : new Date(),
+				gte: start_date ? new Date(start_date) : yearStart,
+				lte: end_date ? new Date(end_date) : new Date(),
 			},
 		};
 	}
 
-	// Base select com todos os relacionamentos
 	static _getBaseSelect() {
 		return {
 			id: true,
@@ -70,18 +68,15 @@ export class Report {
 		};
 	}
 
-	// Count tickets by status com dados relacionados
 	static async ticketsByStatus(filters) {
 		const where = this._buildWhere(filters);
 
-		// Busca os tickets agrupados por status
 		const groupedData = await prisma.ticket.groupBy({
 			by: ['status'],
 			_count: { id: true },
 			where,
 		});
 
-		// Para cada status, busca alguns tickets de exemplo com dados completos
 		const enrichedData = await Promise.all(
 			groupedData.map(async (item) => {
 				const sampleTickets = await prisma.ticket.findMany({
@@ -90,7 +85,7 @@ export class Report {
 						status: item.status,
 					},
 					select: this._getBaseSelect(),
-					take: 3, // Pega 3 exemplos de tickets
+					take: 3,
 					orderBy: { created_at: 'desc' },
 				});
 
@@ -105,7 +100,6 @@ export class Report {
 		return enrichedData;
 	}
 
-	// Count tickets by category com dados relacionados
 	static async ticketsByType(filters) {
 		const where = this._buildWhere(filters);
 
@@ -144,7 +138,6 @@ export class Report {
 		return enrichedData;
 	}
 
-	// Activity per technician com dados relacionados
 	static async technicianActivity(filters) {
 		const where = this._buildWhere(filters);
 
@@ -154,7 +147,7 @@ export class Report {
 			_avg: { duration_seconds: true },
 			where: {
 				...where,
-				technician_id: { not: null }, // Remove tickets sem técnico
+				technician_id: { not: null },
 			},
 		});
 
@@ -191,7 +184,6 @@ export class Report {
 		return enrichedData;
 	}
 
-	// Lista completa de tickets com todos os relacionamentos
 	static async listTickets(filters) {
 		const where = this._buildWhere(filters);
 
@@ -202,7 +194,6 @@ export class Report {
 		});
 	}
 
-	// Método auxiliar para formatar duração
 	static _formatDuration(seconds) {
 		if (!seconds) return 'N/A';
 

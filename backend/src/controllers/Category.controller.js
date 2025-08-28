@@ -15,7 +15,6 @@ export class CategoryController {
 			const category = await Category.create({
 				...parsed_data,
 				user_id: req.user.id,
-				role: req.user.role,
 			});
 			return apiResponse(
 				{
@@ -34,17 +33,6 @@ export class CategoryController {
 						success: false,
 						message: 'Validation error',
 						errors: zodErrorFormatter(error),
-					},
-					res,
-				);
-			}
-
-			if (error.message === 'FORBIDDEN') {
-				return apiResponse(
-					{
-						code: 403,
-						success: false,
-						message: 'You are not allowed to perform this action',
 					},
 					res,
 				);
@@ -164,7 +152,6 @@ export class CategoryController {
 				category_id: parsed_id,
 				data: parsed_data,
 				user_id: req.user.id,
-				role: req.user.role,
 			});
 
 			return apiResponse(
@@ -184,17 +171,6 @@ export class CategoryController {
 						success: false,
 						message: 'Validation error',
 						errors: zodErrorFormatter(error),
-					},
-					res,
-				);
-			}
-
-			if (error.message === 'FORBIDDEN') {
-				return apiResponse(
-					{
-						code: 403,
-						success: false,
-						message: 'You are not allowed to perform this action',
 					},
 					res,
 				);
@@ -239,7 +215,6 @@ export class CategoryController {
 			const parsed_id = idSchema.parse(req.params.id);
 			const category_title = await Category.delete({
 				category_id: parsed_id,
-				role: req.user.role,
 			});
 			return apiResponse(
 				{
@@ -256,16 +231,6 @@ export class CategoryController {
 						code: 404,
 						success: false,
 						message: 'Category not found',
-					},
-					res,
-				);
-			}
-			if (error.message === 'FORBIDDEN') {
-				return apiResponse(
-					{
-						code: 403,
-						success: false,
-						message: 'You are not allowed to perform this action',
 					},
 					res,
 				);
@@ -288,7 +253,6 @@ export class CategoryController {
 			const category = await Category.activate({
 				category_id: parsed_id,
 				user_id: req.user.id,
-				role: req.user.role,
 			});
 			return apiResponse(
 				{
@@ -306,16 +270,6 @@ export class CategoryController {
 						code: 404,
 						success: false,
 						message: 'Category not found',
-					},
-					res,
-				);
-			}
-			if (error.message === 'FORBIDDEN') {
-				return apiResponse(
-					{
-						code: 403,
-						success: false,
-						message: 'You are not allowed to perform this action',
 					},
 					res,
 				);
@@ -338,7 +292,6 @@ export class CategoryController {
 			const category = await Category.deactivate({
 				category_id: parsed_id,
 				user_id: req.user.id,
-				role: req.user.role,
 			});
 			return apiResponse(
 				{
@@ -356,16 +309,6 @@ export class CategoryController {
 						code: 404,
 						success: false,
 						message: 'Category not found',
-					},
-					res,
-				);
-			}
-			if (error.message === 'FORBIDDEN') {
-				return apiResponse(
-					{
-						code: 403,
-						success: false,
-						message: 'You are not allowed to perform this action',
 					},
 					res,
 				);

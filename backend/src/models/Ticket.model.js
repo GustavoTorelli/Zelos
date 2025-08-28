@@ -127,6 +127,7 @@ export class Ticket {
 	}
 
 	static async update({ ticket_id, data, role }) {
+		// Regra de negócio: somente admin pode alterar patrimony_code
 		if (role !== 'admin' && data.patrimony_code)
 			throw new Error('FORBIDDEN');
 
@@ -142,16 +143,13 @@ export class Ticket {
 		}
 	}
 
-	static async delete({ ticket_id, role }) {
+	static async delete({ ticket_id }) {
 		try {
-			if (role !== 'admin') throw new Error('FORBIDDEN');
-
 			await prisma.ticket.delete({
 				where: { id: ticket_id },
 			});
 			return;
 		} catch (error) {
-			if (error.message === 'FORBIDDEN') throw error;
 			if (error.code === 'P2025') throw new Error('NOT_FOUND');
 			throw new Error(`Error deleting ticket: ${error}`);
 		}
@@ -167,18 +165,17 @@ export class Ticket {
 
 		if (ticket.status === 'completed') throw new Error('FORBIDDEN');
 
-		// Only admin and technician can change status
+		// Regra de negócio/ownership: admin ou técnico responsável
 		if (
 			role !== 'admin' &&
 			(role !== 'technician' || ticket.technician_id !== user_id)
 		)
 			throw new Error('FORBIDDEN');
 
-		// Status can only be changed from pending to in_progress
+		// Fluxo de estado permitido
 		if (status === 'in_progress' && ticket.status !== 'pending')
 			throw new Error('FORBIDDEN');
 
-		// Status can only be changed from in_progress to completed
 		if (status === 'completed' && ticket.status !== 'in_progress')
 			throw new Error('FORBIDDEN');
 
@@ -205,11 +202,7 @@ export class Ticket {
 	}
 
 	async assignTechnician({ technician_id, role, user_id }) {
-		if (role !== 'admin' && role !== 'technician')
-			throw new Error('FORBIDDEN');
-
 		try {
-			// find ticket
 			const ticket = await prisma.ticket.findUnique({
 				where: { id: this.id },
 				select: {
@@ -222,7 +215,6 @@ export class Ticket {
 
 			if (!ticket) throw new Error('TICKET_NOT_FOUND');
 
-			// find technician and categories
 			const technician = await prisma.user.findUnique({
 				where: { id: technician_id },
 				select: {
@@ -236,7 +228,6 @@ export class Ticket {
 				throw new Error('TECHNICIAN_NOT_FOUND');
 			}
 
-			// Check if technician can handle category
 			const can_handle_category = technician.Technician_Category.some(
 				(c) => c.category_id === ticket.category_id,
 			);
@@ -244,7 +235,6 @@ export class Ticket {
 				throw new Error('FORBIDDEN_CATEGORY');
 			}
 
-			// if technician is assigned to ticket, change status
 			let data_to_update = { technician_id: technician_id };
 			if (
 				role === 'technician' &&

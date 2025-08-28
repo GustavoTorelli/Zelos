@@ -5,12 +5,12 @@ export const reportSchema = z.object({
 
 	format: z.enum(['json', 'csv', 'pdf']).default('json'),
 
-	startDate: z.iso.date().optional(),
-	endDate: z.iso.date().optional(),
+	start_date: z.iso.date().optional(),
+	end_date: z.iso.date().optional(),
 
 	status: z.enum(['pending', 'in_progress', 'completed']).optional(),
 
-	categoryId: z.coerce.number().int().positive().optional(),
+	category_id: z.coerce.number().int().positive().optional(),
 
-	technicianId: z.coerce.number().int().positive().optional(),
+	technician_id: z.coerce.number().int().positive().optional(),
 });

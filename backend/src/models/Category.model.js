@@ -1,9 +1,7 @@
 import prisma from '../config/prisma-client.js';
 
 export class Category {
-	static async create({ title, description, user_id, role }) {
-		if (role !== 'admin') throw new Error('FORBIDDEN');
-
+	static async create({ title, description, user_id }) {
 		try {
 			return await prisma.category.create({
 				data: {
@@ -37,9 +35,7 @@ export class Category {
 		return category;
 	}
 
-	static async update({ category_id, data, user_id, role }) {
-		if (role !== 'admin') throw new Error('FORBIDDEN');
-
+	static async update({ category_id, data, user_id }) {
 		try {
 			return await prisma.category.update({
 				where: { id: category_id },
@@ -53,9 +49,7 @@ export class Category {
 		}
 	}
 
-	static async delete({ category_id, role }) {
-		if (role !== 'admin') throw new Error('FORBIDDEN');
-
+	static async delete({ category_id }) {
 		try {
 			const category = await prisma.category.delete({
 				where: { id: category_id },
@@ -67,9 +61,7 @@ export class Category {
 		}
 	}
 
-	static async activate({ category_id, user_id, role }) {
-		if (role !== 'admin') throw new Error('FORBIDDEN');
-
+	static async activate({ category_id, user_id }) {
 		try {
 			return await prisma.category.update({
 				where: { id: category_id },
@@ -82,9 +74,7 @@ export class Category {
 		}
 	}
 
-	static async deactivate({ category_id, user_id, role }) {
-		if (role !== 'admin') throw new Error('FORBIDDEN');
-
+	static async deactivate({ category_id, user_id }) {
 		try {
 			return await prisma.category.update({
 				where: { id: category_id },

@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import apiResponse from '../utils/api-response.js';
 
-export function auth(requiredRole = null) {
+export function auth(requiredRoles = null) {
 	return (req, res, next) => {
 		const authHeader = (req.headers && req.headers.authorization) || '';
 		const tokenFromHeader = authHeader.startsWith('Bearer ')
@@ -10,7 +10,7 @@ export function auth(requiredRole = null) {
 		const token = (req.cookies && req.cookies.jwt_token) || tokenFromHeader;
 
 		if (!token) {
-			apiResponse(
+			return apiResponse(
 				{
 					success: false,
 					message: 'Authentication token not provided.',
@@ -18,29 +18,33 @@ export function auth(requiredRole = null) {
 				},
 				res,
 			);
-			return;
 		}
 
 		try {
 			const decoded = jwt.verify(token, process.env.JWT_SECRET);
 			req.user = decoded;
 
-			if (requiredRole && decoded.role !== requiredRole) {
-				apiResponse(
-					{
-						success: false,
-						message:
-							'Access denied. You do not have permission to perform this action.',
-						code: 403,
-					},
-					res,
-				);
-				return;
+			if (requiredRoles) {
+				const rolesArray = Array.isArray(requiredRoles)
+					? requiredRoles
+					: [requiredRoles];
+
+				if (!rolesArray.includes(decoded.role)) {
+					return apiResponse(
+						{
+							success: false,
+							message:
+								'Access denied. You do not have permission to perform this action.',
+							code: 403,
+						},
+						res,
+					);
+				}
 			}
 
 			next();
 		} catch (error) {
-			apiResponse(
+			return apiResponse(
 				{
 					success: false,
 					message: 'Invalid authentication token.',
@@ -49,7 +53,6 @@ export function auth(requiredRole = null) {
 				},
 				res,
 			);
-			return;
 		}
 	};
 }

@@ -24,15 +24,15 @@ router.put('/:id', auth(), async (req, res) => {
 	return await ticketController.update(req, res);
 });
 
-router.delete('/:id', auth('admin'), async (req, res) => {
+router.delete('/:id', auth(['admin']), async (req, res) => {
 	return await ticketController.delete(req, res);
 });
 
-router.patch('/:id/status', auth(), async (req, res) => {
+router.patch('/:id/status', auth(['admin', 'technician']), async (req, res) => {
 	return await ticketController.updateStatus(req, res);
 });
 
-router.patch('/:id/assign', auth(), async (req, res) => {
+router.patch('/:id/assign', auth(['admin', 'technician']), async (req, res) => {
 	return await ticketController.assignTechnician(req, res);
 });
 
@@ -45,7 +45,7 @@ router.get('/:ticket_id/worklogs/:id', auth(), (req, res) =>
 	worklogController.findById(req, res),
 );
 
-router.post('/:ticket_id/worklogs', auth(), (req, res) =>
+router.post('/:ticket_id/worklogs', auth(['admin', 'technician']), (req, res) =>
 	worklogController.create(req, res),
 );
 

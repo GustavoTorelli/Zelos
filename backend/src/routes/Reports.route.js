@@ -5,7 +5,7 @@ import { auth } from '../middlewares/auth.js';
 const router = Router();
 const reportController = new ReportController();
 
-router.get('/', async (req, res) => {
+router.get('/', auth('admin'), async (req, res) => {
 	return await reportController.generate(req, res);
 });
 
