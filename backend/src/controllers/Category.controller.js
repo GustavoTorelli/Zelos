@@ -1,5 +1,8 @@
 import { Category } from '../models/Category.model.js';
-import { createCategory, updateCategory } from '../schemas/category.schema.js';
+import {
+	createCategorySchema,
+	updateCategorySchema,
+} from '../schemas/category.schema.js';
 import { idSchema } from '../schemas/generic.schema.js';
 import apiResponse from '../utils/api-response.js';
 import { ZodError } from 'zod';
@@ -10,7 +13,7 @@ export class CategoryController {
 
 	async create(req, res) {
 		try {
-			const parsed_data = createCategory.parse(req.body);
+			const parsed_data = createCategorySchema.parse(req.body);
 
 			const category = await Category.create({
 				...parsed_data,
@@ -146,7 +149,7 @@ export class CategoryController {
 	async update(req, res) {
 		try {
 			const parsed_id = idSchema.parse(req.params.id);
-			const parsed_data = updateCategory.parse(req.body);
+			const parsed_data = updateCategorySchema.parse(req.body);
 
 			const category = await Category.update({
 				category_id: parsed_id,
