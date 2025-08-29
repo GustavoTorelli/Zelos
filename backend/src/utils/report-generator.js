@@ -152,16 +152,29 @@ export function streamPdf(res, { title, subtitle, filters, rows, type }) {
 		// Verificar se há dados
 		if (!rows || !rows.length) {
 			drawPageHeader();
-			doc.fontSize(14)
+		
+			const message = 'Nenhum registro encontrado para os filtros aplicados.';
+			const fontSize = 14;
+		
+			doc.fontSize(fontSize)
 				.fillColor('#dc3545')
-				.font('Helvetica-Bold')
-				.text('Nenhum registro encontrado para os filtros aplicados.', {
-					align: 'center',
-				});
+				.font('Helvetica-Bold');
+		
+			// medir largura e altura do texto
+			const textWidth = doc.widthOfString(message);
+			const textHeight = doc.heightOfString(message);
+		
+			// calcular posição centralizada
+			const centerX = (doc.page.width - textWidth) / 2;
+			const centerY = (doc.page.height - textHeight) / 2;
+		
+			// renderizar
+			doc.text(message, centerX, centerY);
+		
 			doc.end();
 			return;
 		}
-
+		
 		// Desenhar header inicial
 		let currentY = drawPageHeader();
 		isFirstPage = false;
