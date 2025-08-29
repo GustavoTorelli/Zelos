@@ -53,7 +53,7 @@ npm run dev
 ### 🐱‍👤 Colaboradores
 | <img src="https://github.com/gustavotorelli.png" width="100" height="100" alt="Gustavo Torelli" /> | <img src="https://github.com/Matheusrike.png" width="100" height="100" alt="Matheus Ramos" /> | <img src="https://github.com/Bestofef-afk.png" width="100" height="100" alt="Gianlucca D Estefani" /> |
 |:------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------:|
-| [Gustavo Torelli](https://github.com/gustavotorelli) | [Matheus Ramos](https://github.com/Matheusrike) | [Gianlucca ](https://github.com/Bestofef-afk) |
+| [Gustavo Torelli](https://github.com/gustavotorelli) | [Matheus Ramos](https://github.com/Matheusrike) | [Gianlucca D Estefani](https://github.com/Bestofef-afk) |
 
 
 © 2025 Zelos. Todos os direitos reservados.
