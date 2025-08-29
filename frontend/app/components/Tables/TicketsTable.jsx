@@ -79,7 +79,7 @@ export default function TabelaDeTickets({ onViewTicket }) {
             setError("");
 
             try {
-                // Load user role
+                // busca a role do usuario
                 const roleRes = await fetch('/api/auth/me', {
                     headers: { ...authHeaders },
                     credentials: 'include'
@@ -90,11 +90,11 @@ export default function TabelaDeTickets({ onViewTicket }) {
                     if (isMounted) {
                         const userData = rolePayload?.data || rolePayload;
                         setRole(userData?.role || '');
-                        setUserId(userData?.id || ''); // <-- pega o userId do usuário logado
+                        setUserId(userData?.id || '');
                     }
                 }
 
-                // Load tickets
+                // carrega os tickets
                 const ticketQuery = statusFilter ? `?status=${encodeURIComponent(statusFilter)}` : '';
                 const ticketsRes = await fetch(`/api/tickets${ticketQuery}`, {
                     headers: { ...authHeaders },
@@ -107,12 +107,12 @@ export default function TabelaDeTickets({ onViewTicket }) {
 
                 const ticketsPayload = await ticketsRes.json();
                 if (isMounted) {
-                    // Fix: Better data structure handling
+
                     const ticketsData = ticketsPayload?.data || ticketsPayload || [];
                     setTickets(Array.isArray(ticketsData) ? ticketsData : []);
                 }
 
-                // Load categories
+                // carrega as categorias
                 const categoriesRes = await fetch('/api/categories', {
                     headers: { ...authHeaders },
                     credentials: 'include'
@@ -126,7 +126,7 @@ export default function TabelaDeTickets({ onViewTicket }) {
                     }
                 }
 
-                // Load patrimonies
+                // carrega os patrimonios
                 const patrimoniesRes = await fetch('/api/patrimonies', {
                     headers: { ...authHeaders },
                     credentials: 'include'
@@ -153,7 +153,7 @@ export default function TabelaDeTickets({ onViewTicket }) {
 
         loadInitialData();
 
-        // Cleanup function
+
         return () => {
             isMounted = false;
         };
@@ -168,7 +168,6 @@ export default function TabelaDeTickets({ onViewTicket }) {
 
     const hasActiveFilters = searchTerm || categoryFilter || statusUserFilter !== 'all' || statusFilter;
 
-    // Create lookup maps for efficient data retrieval
     const categoryMap = useMemo(() => {
         const map = {};
         categories.forEach(cat => {
@@ -183,7 +182,7 @@ export default function TabelaDeTickets({ onViewTicket }) {
         const map = {};
         patrimonies.forEach(pat => {
             if (pat && (pat.code || pat.id)) {
-                // Fix: Handle both code and id fields
+
                 const key = pat.code || pat.id;
                 map[key] = pat;
             }
@@ -200,18 +199,16 @@ export default function TabelaDeTickets({ onViewTicket }) {
                 key: ticket.id?.toString() || Math.random().toString(),
                 categoryName: categoryMap[ticket.category_id] || 'N/A',
                 patrimonyInfo: patrimonyKey ? patrimonyMap[patrimonyKey] : null,
-                // Normalize patrimony field
                 patrimony_code: patrimonyKey
             };
         });
     }, [tickets, categoryMap, patrimonyMap]);
 
-    // Status mapping from API to display
+    // status do chamado
     const statusDisplayMap = {
         'pending': 'Pendente',
         'in_progress': 'Em Andamento',
         'completed': 'Concluído',
-        'cancelled': 'Cancelado'
     };
 
     const columns = [
@@ -334,44 +331,35 @@ export default function TabelaDeTickets({ onViewTicket }) {
                 return item[columnKey] || 'N/A';
         }
     };
-
-    // Filter data based on applied filters
     const filteredData = useMemo(() => {
         return enrichedTickets.filter(item => {
-            const matchesSearch = !searchTerm ||
+            const matchesSearch =
+                !searchTerm ||
                 item.patrimony_code?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
                 item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 item.patrimonyInfo?.name?.toLowerCase().includes(searchTerm.toLowerCase());
 
-            const matchesCategory = !categoryFilter || item.category_id?.toString() === categoryFilter;
+            const matchesCategory =
+                !categoryFilter || item.category_id?.toString() === categoryFilter;
 
-            // Filtro por role e status
-            let matchesRoleStatus = false;
+            let matchesRoleAccess = false;
 
-            if (role === 'admin') {
-                // Admin vê todos
-                matchesRoleStatus =
-                    statusUserFilter === 'all' ||
-                    ['pending', 'in_progress', 'completed', 'cancelled'].includes(item.status);
-            } else if (role === 'technician') {
-                // Technician vê todos pendentes, e seus próprios tickets em andamento/concluídos
-                if (item.status === 'pending') {
-                    matchesRoleStatus = true;
-                } else if ((item.status === 'in_progress' || item.status === 'completed') &&
-                    String(item.assigned_to) === String(userId)) {
-                    matchesRoleStatus = true;
+            if (role === 'user') {
+                // usuário só vê os chamados criados por ele
+                matchesRoleAccess =
+                    String(item.created_by) === String(userId) ||
+                    String(item.user_id) === String(userId);
+
+                if (matchesRoleAccess && statusUserFilter !== 'all') {
+                    matchesRoleAccess = statusUserFilter === item.status;
                 }
             } else {
-                // Usuário comum
-                matchesRoleStatus =
-                    statusUserFilter === 'all' ||
-                    statusUserFilter === item.status;
+                matchesRoleAccess = true;
             }
 
-            return matchesSearch && matchesCategory && matchesRoleStatus;
+            return matchesSearch && matchesCategory && matchesRoleAccess;
         });
     }, [enrichedTickets, searchTerm, categoryFilter, statusUserFilter, role, userId]);
-
 
     if (loading) {
         return (
@@ -383,7 +371,7 @@ export default function TabelaDeTickets({ onViewTicket }) {
 
     return (
         <section>
-            {/* Filters */}
+            {/* filtros */}
             <div className="mb-8">
                 <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 shadow-xl">
                     <div className="flex items-center justify-between mb-4">
@@ -402,7 +390,7 @@ export default function TabelaDeTickets({ onViewTicket }) {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {/* Search by patrimony ID, title, or patrimony name */}
+                        {/* pesquisa */}
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <Search size={20} className="text-gray-400" />
@@ -416,7 +404,7 @@ export default function TabelaDeTickets({ onViewTicket }) {
                             />
                         </div>
 
-                        {/* Filter by category */}
+                        {/* categoria */}
                         <div className="relative">
                             <select
                                 value={categoryFilter}
@@ -437,7 +425,7 @@ export default function TabelaDeTickets({ onViewTicket }) {
                             </div>
                         </div>
 
-                        {/* Filter by status */}
+                        {/* status */}
                         <div className="relative">
                             <select
                                 value={statusUserFilter}
@@ -448,7 +436,7 @@ export default function TabelaDeTickets({ onViewTicket }) {
                                 <option value="pending">Pendentes</option>
                                 <option value="in_progress">Em andamento</option>
                                 <option value="completed">Concluídos</option>
-                                <option value="cancelled">Cancelados</option>
+
                             </select>
                             <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                 <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -460,7 +448,7 @@ export default function TabelaDeTickets({ onViewTicket }) {
                 </div>
             </div>
 
-            {/* Table */}
+            {/* tabela */}
             <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl min-h-[400px] p-4">
                 {error ? (
                     <div className="flex justify-center items-center min-h-[300px] text-red-400">

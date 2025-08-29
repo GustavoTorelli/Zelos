@@ -8,7 +8,6 @@ export default function ReportGraphics() {
         { name: 'Direct', value: 35, color: '#3B82F6' },
         { name: 'Social', value: 25, color: '#10B981' },
         { name: 'Search', value: 30, color: '#F59E0B' },
-        { name: 'Email', value: 10, color: '#EF4444' },
     ];
 
 
