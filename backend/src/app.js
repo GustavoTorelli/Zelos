@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import apiResponse from './utils/api-response.js';
+import setupSwagger from './config/swagger.js';
 import seedAdmin from './config/seeds/admin.seed.js';
 import seedCategories from './config/seeds/categories.seed.js';
 import seedPatrimonies from './config/seeds/patrimony.seed.js';
@@ -37,6 +38,7 @@ app.use('/categories', categoryRoutes);
 app.use('/tickets', ticketRoutes);
 app.use('/reports', reportRoutes);
 app.use('/patrimonies', patrimonyRoutes);
+setupSwagger(app, port);
 
 async function start() {
 	await seedAdmin();
@@ -44,6 +46,7 @@ async function start() {
 	await seedPatrimonies();
 	app.listen(port, () => {
 		console.log(`Server is running at http://localhost:${port}`);
+		console.log(`API docs available at http://localhost:${port}/docs`);
 	});
 }
 
