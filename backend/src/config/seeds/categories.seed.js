@@ -1,5 +1,5 @@
 import prisma from '../prisma-client.js';
-import { createCategory } from '../../schemas/category.schema.js';
+import { createCategorySchema } from '../../schemas/category.schema.js';
 import { ZodError } from 'zod';
 
 export default async function seedCategories() {
@@ -54,7 +54,7 @@ export default async function seedCategories() {
 		let valid_categories = [];
 
 		for (const category of initial_categories) {
-			valid_categories.push(createCategory.parse(category));
+			valid_categories.push(createCategorySchema.parse(category));
 		}
 
 		for (const category of valid_categories) {
