@@ -1,5 +1,5 @@
 # 🖥️ Zelos – Sistema de Chamados 
-Zelos é um sistema de gerenciamento de chamados desenvolvido com foco para o SENAI, criado como um RACATOM, que permite controlar solicitações de forma eficiente, integrando um frontend moderno, backend robusto e um banco de dados relacional.
+Zelos é um sistema de gerenciamento de chamados desenvolvido com foco para o SENAI, criado como um hackathon, que permite controlar solicitações de forma eficiente, integrando um frontend moderno, backend robusto e um banco de dados relacional.
 
 ---
 

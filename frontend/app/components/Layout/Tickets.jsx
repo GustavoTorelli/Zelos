@@ -1,5 +1,5 @@
 'use client'
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Plus } from "lucide-react";
 import TabelaDeTickets from "../Tables/TicketsTable";
 import NewticketModal from "../Modals/Tickets/NewTicketModal";
@@ -9,6 +9,36 @@ export default function TicketsPage() {
     const [isOpen, setIsOpen] = useState(false);
     const [isOpenSee, setIsOpenSee] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState(null);
+    const [role, setRole] = useState(""); // armazenar role do usuário
+    const [loadingRole, setLoadingRole] = useState(true);
+
+    const authHeaders = useMemo(() => {
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        return token && token.includes('.') ? { Authorization: `Bearer ${token}` } : {};
+    }, []);
+
+    // Buscar dados do usuário logado
+    useEffect(() => {
+        const fetchUserRole = async () => {
+            try {
+                const response = await fetch("/api/auth/me", {
+                    headers: { ...authHeaders },
+                    credentials: "include"
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const userData = data?.data || data;
+                    setRole(userData?.role || "");
+                }
+            } catch (error) {
+                console.error("Erro ao buscar role do usuário:", error);
+            } finally {
+                setLoadingRole(false);
+            }
+        };
+
+        fetchUserRole();
+    }, [authHeaders]);
 
     return (
         <div className="w-full px-4 py-8">
@@ -37,20 +67,22 @@ export default function TicketsPage() {
                         </div>
                     </div>
 
-                    {/* Botão criar chamado */}
-                    <div className="flex flex-col sm:flex-row gap-3">
-                        <button
-                            onClick={() => setIsOpen(true)}
-                            className="relative w-50 h-12 cursor-pointer flex items-center border border-red-700 bg-red-700 group rounded-lg overflow-hidden"
-                        >
-                            <span className="text-white font-semibold ml-8 transform group-hover:translate-x-20 transition-all duration-300">
-                                Novo Chamado
-                            </span>
-                            <span className="absolute right-0 h-full w-12 rounded-lg  bg-red-700 flex items-center justify-center transform group-hover:translate-x-0 group-hover:w-full transition-all duration-300">
-                                <Plus size={20} color="white" />
-                            </span>
-                        </button>
-                    </div>
+                    {/* Botão criar chamado - escondido se role for technician */}
+                    {!loadingRole && role !== "technician" && (
+                        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                            <button
+                                onClick={() => setIsOpen(true)}
+                                className="relative min-w-0 sm:min-w-[220px] h-12 cursor-pointer flex items-center border border-red-700 bg-red-700 group rounded-lg overflow-hidden"
+                            >
+                                <span className="text-white font-semibold ml-8 transform group-hover:translate-x-20 transition-all duration-300">
+                                    Novo Chamado
+                                </span>
+                                <span className="absolute right-0 h-full w-12 rounded-lg bg-red-700 flex items-center justify-center transform group-hover:translate-x-0 group-hover:w-full transition-all duration-300">
+                                    <Plus size={20} color="white" />
+                                </span>
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
