@@ -3,11 +3,11 @@ import { ZodError } from 'zod';
 import apiResponse from '../utils/api-response.js';
 import zodErrorFormatter from '../utils/zod-error-formatter.js';
 import {
-	createTicket,
-	updateTicket,
-	updateStatus,
-	assignTechnician,
-	findAllTicket,
+	createTicketSchema,
+	updateTicketSchema,
+	updateStatusSchema,
+	assignTechnicianSchema,
+	findAllTicketSchema,
 } from '../schemas/ticket.schema.js';
 import { idSchema } from '../schemas/generic.schema.js';
 
@@ -17,7 +17,7 @@ export class TicketController {
 	async create(req, res) {
 		try {
 			const { id } = req.user;
-			const parsed_data = createTicket.parse(req.body);
+			const parsed_data = createTicketSchema.parse(req.body);
 			parsed_data.user_id = id;
 
 			const ticket = await Ticket.create(parsed_data);
@@ -99,7 +99,7 @@ export class TicketController {
 				technician_id,
 				created_after,
 				created_before,
-			} = findAllTicket.parse(req.query);
+			} = findAllTicketSchema.parse(req.query);
 
 			const tickets = await Ticket.findAll(
 				{ user_id: id, role },
@@ -227,7 +227,7 @@ export class TicketController {
 	async update(req, res) {
 		try {
 			const parsed_id = idSchema.parse(req.params.id);
-			const parsed_data = updateTicket.parse(req.body);
+			const parsed_data = updateTicketSchema.parse(req.body);
 
 			const ticket = await Ticket.update({
 				ticket_id: parsed_id,
@@ -344,7 +344,7 @@ export class TicketController {
 	async updateStatus(req, res) {
 		try {
 			const parsed_id = idSchema.parse(req.params.id);
-			const { status } = updateStatus.parse(req.body);
+			const { status } = updateStatusSchema.parse(req.body);
 
 			const ticketInstance = new Ticket({ id: parsed_id });
 			const updated = await ticketInstance.updateStatus({
@@ -406,7 +406,7 @@ export class TicketController {
 
 			let technician_id =
 				req.user.role === 'admin'
-					? assignTechnician.parse(req.body).technician_id
+					? assignTechnicianSchema.parse(req.body).technician_id
 					: req.user.id;
 
 			const ticket = new Ticket({ id: parsed_id });

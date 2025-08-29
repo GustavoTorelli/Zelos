@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { idSchema } from './generic.schema.js';
 
-export const createTicket = z.object({
+export const createTicketSchema = z.object({
 	title: z.string('Title is required').min(1, 'Title cannot be empty'),
 	description: z
 		.string('Description is required')
@@ -10,20 +10,20 @@ export const createTicket = z.object({
 	patrimony_code: z.string().optional(),
 });
 
-export const updateTicket = z.object({
+export const updateTicketSchema = z.object({
 	title: z.string().min(1, 'Title cannot be empty').optional(),
 	description: z.string().min(1, 'Description cannot be empty').optional(),
 	category_id: idSchema.optional(),
 });
 
-export const updateStatus = z.object({
+export const updateStatusSchema = z.object({
 	status: z.enum(
 		['pending', 'in_progress', 'completed'],
 		`Status must be 'pending', 'in_progress' or 'completed'`,
 	),
 });
 
-export const findAllTicket = z.object({
+export const findAllTicketSchema = z.object({
 	status: z
 		.enum(
 			['pending', 'in_progress', 'completed'],
@@ -37,7 +37,7 @@ export const findAllTicket = z.object({
 	created_before: z.iso.date('Date must be in YYYY-MM-DD format').optional(),
 });
 
-export const assignTechnician = z
+export const assignTechnicianSchema = z
 	.object({
 		technician_id: idSchema,
 	})
