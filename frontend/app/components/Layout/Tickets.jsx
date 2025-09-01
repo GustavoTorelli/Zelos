@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import TabelaDeTickets from "../Tables/TicketsTable";
 import NewticketModal from "../Modals/Tickets/NewTicketModal";
 import SeeTicketsModal from "../Modals/Tickets/SeeTicketsModal";
+import TabelaDePatrimonios from "../Tables/PatrimonyTable";
 
 export default function TicketsPage() {
     const [isOpen, setIsOpen] = useState(false);
@@ -93,6 +94,9 @@ export default function TicketsPage() {
                     setIsOpenSee(true);
                 }}
             />
+
+            {/* tabela de patrimonios (apenas technician) */}
+            {!loadingRole && role === "technician" && <TabelaDePatrimonios />}
         </div>
     );
 }

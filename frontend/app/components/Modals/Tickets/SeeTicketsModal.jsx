@@ -470,7 +470,7 @@ export default function SeeTicketsModal({ isOpen, onClose, ticketData = {} }) {
                                             handleUpdateTicket();
                                         }}
                                         disabled={loading}
-                                        className="bg-red-700 hover:bg-red-800 cursor-pointer text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                                       className=" cursor-pointer flex-1 bg-zinc-700/50 hover:bg-zinc-600/50 text-zinc-300 font-medium py-3 px-4 rounded-lg transition-all duration-200 border border-zinc-600/50 w-full"
                                     >
                                         {loading ? "Salvando..." : "Salvar Alterações"}
                                     </button>
@@ -480,7 +480,7 @@ export default function SeeTicketsModal({ isOpen, onClose, ticketData = {} }) {
                                             handleConcluir();
                                         }}
                                         disabled={loading || status === "completed"}
-                                        className="bg-green-700 hover:bg-green-800 cursor-pointer text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                                         className=" cursor-pointer flex-1 bg-red-700 hover:bg-red-800 text-zinc-300 font-medium py-3 px-4 rounded-lg transition-all duration-200 border border-zinc-600/50 w-full"
                                     >
                                         {loading ? "Concluindo..." : "Concluir Ticket"}
                                     </button>

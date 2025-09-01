@@ -8,16 +8,110 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
     const [patrimonios, setPatrimonios] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [errorState, setError] = useState('');
-    const [isDeleting, setIsDeleting] = useState(null); // Para mostrar loading no botão
+    const [isDeleting, setIsDeleting] = useState(null);
+    const [role, setRole] = useState(null);
 
     const clearFilters = () => setSearchTerm('');
     const hasActiveFilters = searchTerm !== '';
 
+    // Buscar role do usuário logado
+    useEffect(() => {
+        const fetchUserRole = async () => {
+            try {
+                const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+                const isJwt = token && token.includes(".");
+                const authHeaders = isJwt ? { Authorization: `Bearer ${token}` } : {};
+
+                console.log("Token encontrado:", !!token, "É JWT:", isJwt);
+
+                // Primeiro tenta /me (endpoint específico do usuário logado)
+                let res = await fetch("/api/users/me", {
+                    headers: { ...authHeaders },
+                    credentials: "include",
+                });
+
+                let userData = null;
+
+                if (res.ok) {
+                    // Sucesso com /me
+                    userData = await res.json();
+                    console.log("Dados do usuário via /me:", userData);
+                } else {
+                    console.log("Endpoint /me falhou, tentando /users");
+
+                    // Se /me não existir, tenta /users
+                    res = await fetch("/api/users", {
+                        headers: { ...authHeaders },
+                        credentials: "include",
+                    });
+
+                    if (!res.ok) {
+                        throw new Error(`Falha ao carregar usuário: ${res.status} ${res.statusText}`);
+                    }
+
+                    const data = await res.json();
+                    console.log("Resposta completa da API /users:", data);
+
+                    if (Array.isArray(data)) {
+                        // Se retornou lista, precisa encontrar o usuário logado
+                        // Opção 1: Se tem token JWT, decodifica para pegar o ID
+                        if (isJwt) {
+                            try {
+                                const payload = JSON.parse(atob(token.split('.')[1]));
+                                const userId = payload.id || payload.userId || payload.sub;
+                                userData = data.find(user => user.id === userId);
+                                console.log("Usuário encontrado por JWT:", userData);
+                            } catch (jwtError) {
+                                console.warn("Erro ao decodificar JWT:", jwtError);
+                            }
+                        }
+
+                        // Opção 2: Se não conseguiu pelo JWT, pega o primeiro (fallback)
+                        if (!userData && data.length > 0) {
+                            userData = data[0];
+                            console.log("Usando primeiro usuário como fallback:", userData);
+                        }
+                    } else {
+                        // Se retornou objeto único
+                        userData = data;
+                    }
+                }
+
+                if (!userData) {
+                    throw new Error("Nenhum dado de usuário encontrado");
+                }
+
+                const userRole = userData.role;
+                console.log("Role detectada:", userRole);
+
+                // Validar se a role é válida
+                const validRoles = ['admin', 'technician', 'user']; // Ajuste conforme suas roles
+                if (!validRoles.includes(userRole)) {
+                    console.warn("Role inválida detectada:", userRole);
+                    setError(`Role inválida: ${userRole}`);
+                    setRole(null);
+                    return;
+                }
+
+                setRole(userRole);
+                setError(''); // Limpa erro anterior
+
+            } catch (err) {
+                console.error("Erro completo ao buscar role do usuário:", err);
+                setRole(null);
+                setError(`Erro ao carregar perfil: ${err.message}`);
+            }
+        };
+
+        fetchUserRole();
+    }, []);
+
+    // Buscar patrimônios
     useEffect(() => {
         const fetchPatrimonios = async () => {
             try {
                 const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-                const isJwt = token && token.includes('.');
+                const isJwt = token && token.includes(".");
                 const authHeaders = isJwt ? { Authorization: `Bearer ${token}` } : {};
 
                 const res = await fetch('/api/patrimonies', {
@@ -28,10 +122,8 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
                 if (!res.ok) throw new Error('Falha ao carregar patrimônios');
 
                 const data = await res.json();
-                console.log('Dados recebidos da API:', data); // Debug
-                console.log('Primeiro item:', data?.data?.[0]); // Debug do primeiro item
                 setPatrimonios(data?.data || []);
-                setError(''); // Limpa erro anterior se a requisição for bem-sucedida
+                setError('');
             } catch (err) {
                 console.error(err);
                 setPatrimonios([]);
@@ -43,7 +135,7 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
     }, []);
 
     const handleDeletePatrimony = useCallback(async (patrimony) => {
-        const patrimonyCode = patrimony.code; // Pegamos o code como identificador
+        const patrimonyCode = patrimony.code;
 
         if (!patrimonyCode) {
             setError("Código do patrimônio inválido.");
@@ -79,9 +171,7 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
             }
 
             setPatrimonios(prev => prev.filter(p => p.code !== patrimonyCode));
-
             console.log('Patrimônio excluído com sucesso:', patrimonyCode);
-
         } catch (error) {
             console.error('Erro ao excluir patrimônio:', error);
 
@@ -118,14 +208,19 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
             : [];
     }, [patrimonios, searchTerm]);
 
-    const columns = [
-        { key: "id", label: "ID" },
-        { key: "code", label: "Código" },
-        { key: "name", label: "Nome" },
-        { key: "location", label: "Localização" },
-        { key: "description", label: "Descrição" },
-        { key: "actions", label: "Ações" },
-    ];
+    const columns = useMemo(() => {
+        const baseColumns = [
+            { key: "id", label: "ID" },
+            { key: "code", label: "Código" },
+            { key: "name", label: "Nome" },
+            { key: "location", label: "Localização" },
+            { key: "description", label: "Descrição" },
+        ];
+        if (role !== "technician") {
+            baseColumns.push({ key: "actions", label: "Ações" });
+        }
+        return baseColumns;
+    }, [role]);
 
     const renderCell = (item, columnKey) => {
         switch (columnKey) {
@@ -197,18 +292,16 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
         );
     }
 
-    if (error) {
+    if (error || errorState) {
         return (
             <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl min-h-[400px] p-4 flex items-center justify-center">
-                <div className="text-red-400">Erro ao carregar patrimônios: {error}</div>
+                <div className="text-red-400">Erro ao carregar patrimônios: {error || errorState}</div>
             </div>
         );
     }
 
     return (
         <section>
-
-
             <div className="mb-8 mt-8">
                 <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 shadow-xl">
                     <div className="flex items-center justify-between mb-4">
