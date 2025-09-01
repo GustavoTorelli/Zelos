@@ -1,4 +1,3 @@
-// src/utils/report-generator.js
 import { Parser } from 'json2csv';
 import dayjs from 'dayjs';
 import sanitizeHtml from 'sanitize-html';
