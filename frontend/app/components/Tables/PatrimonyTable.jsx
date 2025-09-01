@@ -16,94 +16,49 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
 
     // Buscar role do usuário logado
     useEffect(() => {
-        const fetchUserRole = async () => {
+        const getUserRole = () => {
             try {
-                const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-                const isJwt = token && token.includes(".");
-                const authHeaders = isJwt ? { Authorization: `Bearer ${token}` } : {};
+                // Tenta pegar role diretamente do localStorage
+                const storedRole = localStorage.getItem("role") || localStorage.getItem("userRole");
 
-                console.log("Token encontrado:", !!token, "É JWT:", isJwt);
-
-                // Primeiro tenta /me (endpoint específico do usuário logado)
-                let res = await fetch("/api/users/me", {
-                    headers: { ...authHeaders },
-                    credentials: "include",
-                });
-
-                let userData = null;
-
-                if (res.ok) {
-                    // Sucesso com /me
-                    userData = await res.json();
-                    console.log("Dados do usuário via /me:", userData);
-                } else {
-                    console.log("Endpoint /me falhou, tentando /users");
-
-                    // Se /me não existir, tenta /users
-                    res = await fetch("/api/users", {
-                        headers: { ...authHeaders },
-                        credentials: "include",
-                    });
-
-                    if (!res.ok) {
-                        throw new Error(`Falha ao carregar usuário: ${res.status} ${res.statusText}`);
-                    }
-
-                    const data = await res.json();
-                    console.log("Resposta completa da API /users:", data);
-
-                    if (Array.isArray(data)) {
-                        // Se retornou lista, precisa encontrar o usuário logado
-                        // Opção 1: Se tem token JWT, decodifica para pegar o ID
-                        if (isJwt) {
-                            try {
-                                const payload = JSON.parse(atob(token.split('.')[1]));
-                                const userId = payload.id || payload.userId || payload.sub;
-                                userData = data.find(user => user.id === userId);
-                                console.log("Usuário encontrado por JWT:", userData);
-                            } catch (jwtError) {
-                                console.warn("Erro ao decodificar JWT:", jwtError);
-                            }
-                        }
-
-                        // Opção 2: Se não conseguiu pelo JWT, pega o primeiro (fallback)
-                        if (!userData && data.length > 0) {
-                            userData = data[0];
-                            console.log("Usando primeiro usuário como fallback:", userData);
-                        }
-                    } else {
-                        // Se retornou objeto único
-                        userData = data;
-                    }
-                }
-
-                if (!userData) {
-                    throw new Error("Nenhum dado de usuário encontrado");
-                }
-
-                const userRole = userData.role;
-                console.log("Role detectada:", userRole);
-
-                // Validar se a role é válida
-                const validRoles = ['admin', 'technician', 'user']; // Ajuste conforme suas roles
-                if (!validRoles.includes(userRole)) {
-                    console.warn("Role inválida detectada:", userRole);
-                    setError(`Role inválida: ${userRole}`);
-                    setRole(null);
+                if (storedRole) {
+                    console.log("Role encontrada no localStorage:", storedRole);
+                    setRole(storedRole);
                     return;
                 }
 
-                setRole(userRole);
-                setError(''); // Limpa erro anterior
+                // Se não tem role salva, tenta extrair do token JWT
+                const token = localStorage.getItem("token");
+
+                if (token && token.includes(".")) {
+                    try {
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        console.log("Payload do JWT:", payload);
+
+                        const userRole = payload.role || payload.user_role || payload.type;
+                        console.log("Role extraída do token:", userRole);
+
+                        if (userRole) {
+                            setRole(userRole);
+                            // Salva no localStorage para próximas vezes
+                            localStorage.setItem("role", userRole);
+                        }
+                    } catch (jwtError) {
+                        console.error("Erro ao decodificar JWT:", jwtError);
+                        setRole(null);
+                    }
+                } else {
+                    console.log("Nenhum token válido encontrado");
+                    setRole(null);
+                }
 
             } catch (err) {
-                console.error("Erro completo ao buscar role do usuário:", err);
+                console.error("Erro ao buscar role:", err);
                 setRole(null);
-                setError(`Erro ao carregar perfil: ${err.message}`);
             }
         };
 
-        fetchUserRole();
+        getUserRole();
     }, []);
 
     // Buscar patrimônios
@@ -226,7 +181,7 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
         switch (columnKey) {
             case "id":
                 return (
-                    <div className="flex justify-center">
+                    <div className="flex justify-center items-start">
                         <span className="font-mono text-sm bg-zinc-100 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 px-2 py-1 rounded">
                             #{item.id}
                         </span>
