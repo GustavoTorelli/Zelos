@@ -1,5 +1,9 @@
 import { User } from '../models/User.model.js';
-import { userCreateSchema, userUpdateSchema } from '../schemas/user.schema.js';
+import {
+	userCreateSchema,
+	userUpdateSchema,
+	userFilterSchema,
+} from '../schemas/user.schema.js';
 import { idSchema } from '../schemas/generic.schema.js';
 import apiResponse from '../utils/api-response.js';
 import { ZodError } from 'zod';
@@ -88,13 +92,10 @@ export class UserController {
 
 	async getAll(req, res) {
 		try {
-			const include_inactive =
-				req.query.include_inactive === 'true' ? true : false;
+			const filters = userFilterSchema.parse(req.query);
 
-			// Retrieve all users
-			const users = await User.findAll({ include_inactive });
+			const users = await User.findAll(filters);
 
-			// Return a 200 response with the users
 			return apiResponse(
 				{
 					success: true,
@@ -105,7 +106,19 @@ export class UserController {
 				res,
 			);
 		} catch (error) {
-			// Return a 500 response with the error message
+			if (error instanceof ZodError) {
+				apiResponse(
+					{
+						success: false,
+						message: 'Bad Request',
+						errors: zodErrorFormatter(error),
+						code: 400,
+					},
+					res,
+				);
+				return;
+			}
+
 			return apiResponse(
 				{
 					success: false,

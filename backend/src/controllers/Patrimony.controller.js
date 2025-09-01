@@ -549,8 +549,6 @@ export class PatrimonyController {
 		try {
 			const parsed_code = codeSchema.parse(req.params.code);
 
-			console.log(parsed_code);
-
 			const patrimony = await Patrimony.delete(parsed_code);
 
 			return apiResponse(

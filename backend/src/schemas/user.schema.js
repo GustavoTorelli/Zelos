@@ -36,3 +36,11 @@ export const userUpdateSchema = z
 		(obj) => Object.keys(obj).length > 0,
 		'At least one field is required',
 	);
+
+export const userFilterSchema = z.object({
+	include_inactive: z
+		.enum(['true', 'false'])
+		.optional()
+		.transform((val) => val === 'true'),
+	role: z.enum(['user', 'admin', 'technician']).optional(),
+});

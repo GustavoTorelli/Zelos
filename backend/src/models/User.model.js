@@ -76,8 +76,17 @@ export class User {
 		}
 	}
 
-	static async findAll({ include_inactive = false }) {
-		const where = include_inactive ? {} : { is_active: true };
+	static async findAll({ include_inactive = false, role }) {
+		const where = {};
+
+		if (!include_inactive) {
+			where.is_active = true;
+		}
+
+		if (role) {
+			where.role = role;
+		}
+
 		return await prisma.user.findMany({
 			where,
 			select: this._baseSelect,

@@ -105,7 +105,7 @@ const reportController = new ReportController();
  *         value:
  *           type: status
  *           format: json
- *           start_date: "2025-01-01T00:00:00.000Z"
+ *           start_date: "2025-01-01"
  *           end_date: "2025-12-31T23:59:59.999Z"
  *       categoryReportCsv:
  *         summary: Relatório por Categoria (CSV)
@@ -119,7 +119,7 @@ const reportController = new ReportController();
  *           type: technician
  *           format: pdf
  *           technician_id: 5
- *           start_date: "2025-08-01T00:00:00.000Z"
+ *           start_date: "2025-08-01"
  *       ticketListReport:
  *         summary: Lista Completa de Tickets
  *         value:
