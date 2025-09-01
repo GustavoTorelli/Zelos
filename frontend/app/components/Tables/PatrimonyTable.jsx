@@ -8,16 +8,65 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
     const [patrimonios, setPatrimonios] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [errorState, setError] = useState('');
-    const [isDeleting, setIsDeleting] = useState(null); // Para mostrar loading no botão
+    const [isDeleting, setIsDeleting] = useState(null);
+    const [role, setRole] = useState(null);
 
     const clearFilters = () => setSearchTerm('');
     const hasActiveFilters = searchTerm !== '';
 
+    // Buscar role do usuário logado
+    useEffect(() => {
+        const getUserRole = () => {
+            try {
+                // Tenta pegar role diretamente do localStorage
+                const storedRole = localStorage.getItem("role") || localStorage.getItem("userRole");
+
+                if (storedRole) {
+                    console.log("Role encontrada no localStorage:", storedRole);
+                    setRole(storedRole);
+                    return;
+                }
+
+                // Se não tem role salva, tenta extrair do token JWT
+                const token = localStorage.getItem("token");
+
+                if (token && token.includes(".")) {
+                    try {
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        console.log("Payload do JWT:", payload);
+
+                        const userRole = payload.role || payload.user_role || payload.type;
+                        console.log("Role extraída do token:", userRole);
+
+                        if (userRole) {
+                            setRole(userRole);
+                            // Salva no localStorage para próximas vezes
+                            localStorage.setItem("role", userRole);
+                        }
+                    } catch (jwtError) {
+                        console.error("Erro ao decodificar JWT:", jwtError);
+                        setRole(null);
+                    }
+                } else {
+                    console.log("Nenhum token válido encontrado");
+                    setRole(null);
+                }
+
+            } catch (err) {
+                console.error("Erro ao buscar role:", err);
+                setRole(null);
+            }
+        };
+
+        getUserRole();
+    }, []);
+
+    // Buscar patrimônios
     useEffect(() => {
         const fetchPatrimonios = async () => {
             try {
                 const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-                const isJwt = token && token.includes('.');
+                const isJwt = token && token.includes(".");
                 const authHeaders = isJwt ? { Authorization: `Bearer ${token}` } : {};
 
                 const res = await fetch('/api/patrimonies', {
@@ -28,10 +77,8 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
                 if (!res.ok) throw new Error('Falha ao carregar patrimônios');
 
                 const data = await res.json();
-                console.log('Dados recebidos da API:', data); // Debug
-                console.log('Primeiro item:', data?.data?.[0]); // Debug do primeiro item
                 setPatrimonios(data?.data || []);
-                setError(''); // Limpa erro anterior se a requisição for bem-sucedida
+                setError('');
             } catch (err) {
                 console.error(err);
                 setPatrimonios([]);
@@ -43,7 +90,7 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
     }, []);
 
     const handleDeletePatrimony = useCallback(async (patrimony) => {
-        const patrimonyCode = patrimony.code; // Pegamos o code como identificador
+        const patrimonyCode = patrimony.code;
 
         if (!patrimonyCode) {
             setError("Código do patrimônio inválido.");
@@ -79,9 +126,7 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
             }
 
             setPatrimonios(prev => prev.filter(p => p.code !== patrimonyCode));
-
             console.log('Patrimônio excluído com sucesso:', patrimonyCode);
-
         } catch (error) {
             console.error('Erro ao excluir patrimônio:', error);
 
@@ -118,20 +163,25 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
             : [];
     }, [patrimonios, searchTerm]);
 
-    const columns = [
-        { key: "id", label: "ID" },
-        { key: "code", label: "Código" },
-        { key: "name", label: "Nome" },
-        { key: "location", label: "Localização" },
-        { key: "description", label: "Descrição" },
-        { key: "actions", label: "Ações" },
-    ];
+    const columns = useMemo(() => {
+        const baseColumns = [
+            { key: "id", label: "ID" },
+            { key: "code", label: "Código" },
+            { key: "name", label: "Nome" },
+            { key: "location", label: "Localização" },
+            { key: "description", label: "Descrição" },
+        ];
+        if (role !== "technician") {
+            baseColumns.push({ key: "actions", label: "Ações" });
+        }
+        return baseColumns;
+    }, [role]);
 
     const renderCell = (item, columnKey) => {
         switch (columnKey) {
             case "id":
                 return (
-                    <div className="flex justify-center">
+                    <div className="flex justify-center items-start">
                         <span className="font-mono text-sm bg-zinc-100 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 px-2 py-1 rounded">
                             #{item.id}
                         </span>
@@ -197,18 +247,16 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
         );
     }
 
-    if (error) {
+    if (error || errorState) {
         return (
             <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl min-h-[400px] p-4 flex items-center justify-center">
-                <div className="text-red-400">Erro ao carregar patrimônios: {error}</div>
+                <div className="text-red-400">Erro ao carregar patrimônios: {error || errorState}</div>
             </div>
         );
     }
 
     return (
         <section>
-
-
             <div className="mb-8 mt-8">
                 <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 shadow-xl">
                     <div className="flex items-center justify-between mb-4">

@@ -16,6 +16,7 @@ export default function TabelaDeTickets({ onViewTicket }) {
     const [statusUserFilter, setStatusUserFilter] = useState('all');
     const [userId, setUserId] = useState('');
     const [deleteLoading, setDeleteLoading] = useState(null);
+    const [successMessage] = useState(null);
 
     // token
     const authHeaders = useMemo(() => {

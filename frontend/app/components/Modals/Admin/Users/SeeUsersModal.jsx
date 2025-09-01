@@ -1,5 +1,5 @@
 'use client';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Users, X } from "lucide-react";
 
 export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
@@ -9,10 +9,45 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
     const [email, setEmail] = useState(userData?.email || "");
     const [password, setPassword] = useState("");
     const [role, setRole] = useState(userData?.role || "");
-    const [status, setStatus] = useState(userData?.status || "Ativo");
+    const [categoryId, setCategoryId] = useState(userData?.categories?.[0] || "");
+    const [categoryName, setCategoryName] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+
+    // Fetch category name for technician
+    useEffect(() => {
+        if (role === "technician" && categoryId) {
+            async function fetchCategoryName() {
+                try {
+                    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+                    const headers = token && token.includes('.') ?
+                        { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } :
+                        { 'Content-Type': 'application/json' };
+
+                    const res = await fetch(`/api/categories`, {
+                        method: 'GET',
+                        headers,
+                        credentials: 'include'
+                    });
+
+                    if (!res.ok) throw new Error('Falha ao carregar categoria');
+
+                    const data = await res.json();
+                    const categories = Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
+                    const category = categories.find(cat => cat.id === parseInt(categoryId));
+                    setCategoryName(category?.title || "Categoria não encontrada");
+                } catch (err) {
+                    setError("Falha ao carregar categoria");
+                    setCategoryName("Erro ao carregar");
+                }
+            }
+
+            fetchCategoryName();
+        } else {
+            setCategoryName("");
+        }
+    }, [role, categoryId]);
 
     const handleUpdate = async (e) => {
         e.preventDefault();
@@ -24,6 +59,7 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
             if (!name.trim()) throw new Error("Nome é obrigatório");
             if (!email.trim()) throw new Error("Email é obrigatório");
             if (!role.trim()) throw new Error("Perfil é obrigatório");
+            if (role === "technician" && !categoryId) throw new Error("Categoria é obrigatória para técnico");
 
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) throw new Error("Email inválido");
@@ -33,8 +69,9 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
                 { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } :
                 { 'Content-Type': 'application/json' };
 
-            const body = { name, email, role, status };
+            const body = { name, email, role };
             if (password.trim()) body.password = password;
+            if (role === "technician" && categoryId) body.categories = [parseInt(categoryId)];
 
             const res = await fetch(`/api/users/${userData.id}`, {
                 method: 'PUT',
@@ -74,7 +111,7 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
 
                 {/* Form */}
                 <form onSubmit={handleUpdate} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
                         <div>
                             <label className="block text-zinc-300 text-sm font-medium mb-1">Nome</label>
                             <input
@@ -86,7 +123,9 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
                                 required
                             />
                         </div>
+              
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-zinc-300 text-sm font-medium mb-1">Email</label>
                             <input
@@ -98,9 +137,6 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
                                 required
                             />
                         </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-zinc-300 text-sm font-medium mb-1">Perfil</label>
                             <select
@@ -115,20 +151,20 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
                                 <option value="admin">Administrador</option>
                             </select>
                         </div>
-                        <div>
-                            <label className="block text-zinc-300 text-sm font-medium mb-1">Status</label>
-                            <select
-                                value={status}
-                                onChange={(e) => setStatus(e.target.value)}
-                                className="w-full cursor-pointer bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200"
-                                required
-                            >
-                                <option value="Ativo">Ativo</option>
-                                <option value="Inativo">Inativo</option>
-                                <option value="Suspenso">Suspenso</option>
-                            </select>
-                        </div>
                     </div>
+
+                    {role === "technician" && (
+                        <div>
+                            <label className="block text-zinc-300 text-sm font-medium mb-1">Categoria</label>
+                            <input
+                                type="text"
+                                value={categoryName}
+                                disabled
+                                className="w-full bg-zinc-700/50 text-zinc-400 border border-zinc-600/50 rounded-lg p-3 cursor-not-allowed"
+                                placeholder="Carregando..."
+                            />
+                        </div>
+                    )}
 
                     <div>
                         <label className="block text-zinc-300 text-sm font-medium mb-1">Nova Senha</label>

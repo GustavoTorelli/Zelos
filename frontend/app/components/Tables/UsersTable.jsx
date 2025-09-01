@@ -9,7 +9,6 @@ export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
     // filtros
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('');
-    const [statusUserFilter, setStatusUserFilter] = useState('all');
 
     // modais
     const [isOpenNewUser, setIsOpenNewUser] = useState(false);
@@ -111,10 +110,9 @@ export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
     const clearFilters = () => {
         setSearchTerm('');
         setRoleFilter('');
-        setStatusUserFilter('all');
     };
 
-    const hasActiveFilters = searchTerm || roleFilter || statusUserFilter !== 'all';
+    const hasActiveFilters = searchTerm || roleFilter;
 
     // aplica filtros
     const filteredUsers = useMemo(() => {
@@ -126,13 +124,10 @@ export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
 
             const matchesRole = roleFilter === '' || user.role === roleFilter;
 
-            const matchesStatus = statusUserFilter === 'all' ||
-                (statusUserFilter === 'active' && user.status === 'Ativo') ||
-                (statusUserFilter === 'inactive' && user.status === 'Inativo');
 
-            return matchesSearch && matchesRole && matchesStatus;
+            return matchesSearch && matchesRole;
         });
-    }, [users, searchTerm, roleFilter, statusUserFilter]);
+    }, [users, searchTerm, roleFilter,]);
 
     // colunas
     const columns = [
@@ -140,7 +135,6 @@ export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
         { key: "name", label: "Nome" },
         { key: "email", label: "E-mail" },
         { key: "role", label: "Perfil" },
-        { key: "status", label: "Status" },
         { key: "actions", label: "Ações" },
     ];
 
@@ -185,18 +179,6 @@ export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
                     <div className="flex justify-center">
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${roleStyles[item.role] || "bg-zinc-500/20 border border-zinc-500 text-zinc-300"}`}>
                             {roleLabels[item.role] || item.role}
-                        </span>
-                    </div>
-                );
-            case "status":
-                const statusStyles = {
-                    "Ativo": "bg-green-500/20 border border-green-500 text-white w-20 text-center",
-                    "Inativo": "bg-red-500/20 border border-red-500 text-white w-20 text-center",
-                };
-                return (
-                    <div className="flex justify-center">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyles[item.status] || "bg-zinc-500/20 border border-zinc-500 text-zinc-300"}`}>
-                            {item.status || "Ativo"}
                         </span>
                     </div>
                 );
@@ -265,7 +247,7 @@ export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
                         )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                         {/* Busca */}
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -291,24 +273,6 @@ export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
                                 <option value="admin">Administrador</option>
                                 <option value="user">Usuário</option>
                                 <option value="technician">Técnico</option>
-                            </select>
-                            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </div>
-                        </div>
-
-                        {/* Filtro por status */}
-                        <div className="relative">
-                            <select
-                                value={statusUserFilter}
-                                onChange={(e) => setStatusUserFilter(e.target.value)}
-                                className="w-full appearance-none bg-gray-700/50 border border-gray-600/50 text-white rounded-xl py-3 px-4 pr-10 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all duration-200"
-                            >
-                                <option value="all">Todos os status</option>
-                                <option value="active">Ativo</option>
-                                <option value="inactive">Inativo</option>
                             </select>
                             <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                 <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

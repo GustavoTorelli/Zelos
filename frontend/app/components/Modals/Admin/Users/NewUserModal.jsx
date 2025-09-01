@@ -143,6 +143,7 @@ export default function NewUserModal({ isOpen, onClose, userData = null }) {
                         <option value="">Selecione o perfil</option>
                         <option value="user">Usuário</option>
                         <option value="technician">Técnico</option>
+                        <option value="admin">Admin</option>
                     </select>
 
                     {role === "technician" && (
@@ -173,7 +174,7 @@ export default function NewUserModal({ isOpen, onClose, userData = null }) {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex-1 bg-red-700 hover:bg-red-800 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="cursor-pointer flex-1 bg-red-700 hover:bg-red-800 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                             {loading ? (isEditing ? 'Atualizando...' : 'Criando...') : (isEditing ? 'Atualizar' : 'Criar')}
                         </button>
