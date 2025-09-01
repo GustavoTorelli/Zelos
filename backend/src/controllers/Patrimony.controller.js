@@ -10,6 +10,268 @@ import {
 	codeSchema,
 } from '../schemas/patrimony.schema.js';
 
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Patrimony:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           example: 1
+ *         name:
+ *           type: string
+ *           example: "Notebook Dell"
+ *         location:
+ *           type: string
+ *           example: "Sala 10 - Prédio A"
+ *         code:
+ *           type: string
+ *           example: "PAT-0001"
+ *         description:
+ *           type: string
+ *           example: "Notebook usado pela equipe de desenvolvimento"
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-09-02T09:00:00.000Z"
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-09-03T12:15:00.000Z"
+ *
+ *   examples:
+ *     ValidationErrors:
+ *       summary: Erro de validação dos dados (Zod)
+ *       value:
+ *         success: false
+ *         message: "Invalid request data"
+ *         data: null
+ *         code: 400
+ *         errors:
+ *           - path: ["name"]
+ *             message: "Name is required"
+ *             expected: undefined
+ *
+ *     DuplicateCodes:
+ *       summary: Códigos duplicados no corpo da requisição
+ *       value:
+ *         success: false
+ *         message: "Duplicate codes found in request"
+ *         data: null
+ *         code: 400
+ *         errors:
+ *           - "ABC123"
+ *           - "XYZ789"
+ *
+ *   responses:
+ *     PatrimoniesFound:
+ *       description: Lista de patrimônios encontrada
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: true
+ *             message: "Patrimonies found successfully"
+ *             code: 200
+ *             data:
+ *               - id: 1
+ *                 name: "Notebook Dell"
+ *                 location: "Sala 10 - Prédio A"
+ *                 code: "PAT-0001"
+ *                 description: "Notebook usado pela equipe de desenvolvimento"
+ *                 created_at: "2025-09-02T09:00:00.000Z"
+ *                 updated_at: "2025-09-03T12:15:00.000Z"
+ *
+ *     PatrimonyFound:
+ *       description: Patrimônio encontrado
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: true
+ *             message: "Patrimony found successfully"
+ *             code: 200
+ *             data:
+ *               id: 1
+ *               name: "Notebook Dell"
+ *               location: "Sala 10 - Prédio A"
+ *               code: "PAT-0001"
+ *               description: "Notebook usado pela equipe de desenvolvimento"
+ *               created_at: "2025-09-02T09:00:00.000Z"
+ *               updated_at: "2025-09-03T12:15:00.000Z"
+ *
+ *     PatrimonyCreated:
+ *       description: Patrimônio criado com sucesso
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: true
+ *             message: "Patrimony created successfully"
+ *             code: 201
+ *             data:
+ *               id: 3
+ *               name: "Roteador Cisco"
+ *               location: "Sala Servidores"
+ *               code: "PAT-0010"
+ *               description: "Roteador principal"
+ *               created_at: "2025-09-04T08:00:00.000Z"
+ *               updated_at: "2025-09-04T08:00:00.000Z"
+ *
+ *     PatrimoniesCreated:
+ *       description: Vários patrimônios criados com sucesso
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: true
+ *             message: "2 patrimonies created successfully"
+ *             code: 201
+ *             data:
+ *               - id: 4
+ *                 name: "Teclado"
+ *                 location: "Sala 15"
+ *                 code: "PAT-0020"
+ *                 description: "Teclado mecânico"
+ *                 created_at: "2025-09-04T09:00:00.000Z"
+ *                 updated_at: "2025-09-04T09:00:00.000Z"
+ *               - id: 5
+ *                 name: "Mouse"
+ *                 location: "Sala 15"
+ *                 code: "PAT-0021"
+ *                 description: "Mouse óptico"
+ *                 created_at: "2025-09-04T09:00:00.000Z"
+ *                 updated_at: "2025-09-04T09:00:00.000Z"
+ *
+ *     PatrimonyUpdated:
+ *       description: Patrimônio atualizado com sucesso
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: true
+ *             message: "Patrimony updated successfully"
+ *             code: 200
+ *             data:
+ *               id: 1
+ *               name: "Notebook Dell - i7"
+ *               location: "Sala 10 - Prédio A"
+ *               code: "PAT-0001"
+ *               description: "Notebook atualizado"
+ *               created_at: "2025-09-02T09:00:00.000Z"
+ *               updated_at: "2025-09-05T10:00:00.000Z"
+ *
+ *     PatrimonyDeleted:
+ *       description: Patrimônio deletado com sucesso
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: true
+ *             message: "Patrimony deleted successfully"
+ *             code: 200
+ *             data:
+ *               id: 1
+ *               name: "Notebook Dell"
+ *               location: "Sala 10 - Prédio A"
+ *               code: "PAT-0001"
+ *               description: "Notebook usado pela equipe de desenvolvimento"
+ *               created_at: "2025-09-02T09:00:00.000Z"
+ *               updated_at: "2025-09-03T12:15:00.000Z"
+ *
+ *     CodeAlreadyExists:
+ *       description: Código de patrimony já existe
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: false
+ *             message: "Patrimony code already exists"
+ *             code: 409
+ *             data: null
+ *
+ *     NotFoundPatrimony:
+ *       description: Patrimônio não encontrado
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: false
+ *             message: "Patrimony not found"
+ *             code: 404
+ *             data: null
+ *
+ *     CodesAlreadyExist:
+ *       description: Alguns códigos já existem no banco (criação em lote)
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: false
+ *             message: "Some patrimony codes already exist"
+ *             code: 409
+ *             data: null
+ *             errors:
+ *               existingCodes: ["PAT-0001", "PAT-0005"]
+ *
+ *     PatrimonyHasTickets:
+ *       description: Não é possível deletar patrimony com tickets associados
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: false
+ *             message: "Cannot delete patrimony with associated tickets"
+ *             code: 409
+ *             data: null
+ *
+ *     InvalidRequest:
+ *       description: Erro de validação dos dados (Zod)
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: false
+ *             message: "Invalid request data"
+ *             code: 400
+ *             data: null
+ *             errors:
+ *               - path: ["name"]
+ *                 message: "Name is required"
+ *                 expected: undefined
+ *
+ *     UnauthorizedError:
+ *       description: Falha de autenticação — token ausente ou inválido
+ *       content:
+ *         application/json:
+ *           examples:
+ *             missingToken:
+ *               value:
+ *                 success: false
+ *                 message: "Authentication token not provided."
+ *                 code: 401
+ *                 data: null
+ *             invalidToken:
+ *               value:
+ *                 success: false
+ *                 message: "Invalid authentication token."
+ *                 code: 401
+ *                 data: null
+ *                 errors: "jwt malformed"
+ *
+ *     ForbiddenError:
+ *       description: Acesso negado — usuário autenticado sem permissão
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: false
+ *             message: "Access denied. You do not have permission to perform this action."
+ *             code: 403
+ *             data: null
+ *
+ *     ServerError:
+ *       description: Erro inesperado do servidor
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: false
+ *             message: "An unexpected error occurred"
+ *             code: 500
+ *             data: null
+ *             errors: "Error details"
+ */
+
 export class PatrimonyController {
 	constructor() {}
 

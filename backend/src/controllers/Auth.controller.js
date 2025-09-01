@@ -8,8 +8,91 @@ import { ZodError } from 'zod';
 import apiResponse from '../utils/api-response.js';
 import zodErrorFormatter from '../utils/zod-error-formatter.js';
 
+/**
+ * @openapi
+ * components:
+ *   responses:
+ *     LoginSuccess:
+ *       description: Login realizado com sucesso
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               success:
+ *                 type: boolean
+ *                 example: true
+ *               message:
+ *                 type: string
+ *                 example: Logged in successfully
+ *               data:
+ *                 type: object
+ *                 properties:
+ *                   token:
+ *                     type: string
+ *                     example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *
+ *     InvalidRequest:
+ *       description: Requisição inválida (validação)
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               success:
+ *                 type: boolean
+ *                 example: false
+ *               message:
+ *                 type: string
+ *                 example: Invalid request data
+ *               errors:
+ *                 type: object
+ *
+ *     UnauthorizedError:
+ *       description: Credenciais inválidas ou token inválido
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               success:
+ *                 type: boolean
+ *                 example: false
+ *               message:
+ *                 type: string
+ *                 example: Invalid password
+ *
+ *     NotFoundUser:
+ *       description: Usuário não existe
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               success:
+ *                 type: boolean
+ *                 example: false
+ *               message:
+ *                 type: string
+ *                 example: User does not exist
+ *
+ *     AccountInactive:
+ *       description: Conta inativa
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               success:
+ *                 type: boolean
+ *                 example: false
+ *               message:
+ *                 type: string
+ *                 example: User account is inactive
+ */
+
 export class AuthController {
-	constructor() { }
+	constructor() {}
 
 	async login(req, res) {
 		try {
