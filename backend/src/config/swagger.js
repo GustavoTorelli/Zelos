@@ -1,12 +1,11 @@
 import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
-import { registry } from '../utils/register.js'; // seu registry
+import { registry } from '../utils/register.js';
 import pkg from '@asteasolutions/zod-to-openapi';
-
-// porque o pacote é CommonJS: pegamos o export do default
 const { OpenApiGeneratorV3 } = pkg;
 
 export default function setupSwagger(app, port) {
+	// Basic Swagger base configuration
 	const swaggerDefinition = {
 		openapi: '3.0.0',
 		info: {
@@ -17,38 +16,32 @@ export default function setupSwagger(app, port) {
 		servers: [{ url: `http://localhost:${port}` }],
 	};
 
-	// 1) gera spec a partir dos comentários JSDoc (rotas/controllers)
+	// Define initial swagger spec and which files to scan for annotations
 	const swaggerSpec = swaggerJSDoc({
 		swaggerDefinition,
-		apis: ['./src/routes/*.js', './src/controllers/*.js'], // seus JSDoc
+		apis: ['./src/routes/*.js', './src/controllers/*.js'],
 	});
 
-	// 2) gera componentes a partir do registry zod -> OpenAPI
+	// Generate OpenAPI components from Zod schemas
 	const generator = new OpenApiGeneratorV3(registry.definitions || []);
-	// generateComponents() produz a seção de components (schemas, parameters, etc)
 	const zodComponentsRaw = generator.generateComponents();
-
-	// dependendo da versão a lib pode retornar:
-	// { components: { schemas: {...} } }  OR  { schemas: {...}, parameters: {...} }
-	// normalizamos para um objeto components
 	const zodComponents =
-		zodComponentsRaw && zodComponentsRaw.components
-			? zodComponentsRaw.components
-			: zodComponentsRaw || {};
+		zodComponentsRaw?.components || zodComponentsRaw || {};
 
-	// 3) mescla components do swagger-jsdoc + components gerados pelo zod
+	// Merge initial spec with generated components
 	const finalSpec = {
 		...swaggerSpec,
 		components: {
-			...((swaggerSpec && swaggerSpec.components) || {}),
+			// Add components from routes and controllers and from registered Zod schemas
+			...(swaggerSpec.components || {}),
 			...zodComponents,
 		},
-		// mantemos os paths vindos dos comentários; se quiser incluir caminhos
-		// registrados no registry, veja nota abaixo.
 		paths: {
-			...((swaggerSpec && swaggerSpec.paths) || {}),
+			// Add paths from routes
+			...(swaggerSpec.paths || {}),
 		},
 	};
 
+	// Serve Swagger UI
 	app.use('/docs', swaggerUi.serve, swaggerUi.setup(finalSpec));
 }
