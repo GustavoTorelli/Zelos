@@ -9,7 +9,7 @@ export default function SeeTicketsModal({ isOpen, onClose, ticketData = {} }) {
     const [patrimony, setPatrimony] = useState(ticketData?.patrimony_code || ticketData?.patrimony_id || "");
     const [description, setDescription] = useState(ticketData?.description || "");
     const [category, setCategory] = useState(ticketData?.category_id || "");
-
+    const [status, setStatus] = useState(ticketData?.status || "");
     const [apontamento, setApontamento] = useState("");
     const [tecnicoSelecionado, setTecnicoSelecionado] = useState(ticketData?.assigned_to || "");
     const [loading, setLoading] = useState(false);
@@ -21,136 +21,157 @@ export default function SeeTicketsModal({ isOpen, onClose, ticketData = {} }) {
     const [worklogs, setWorklogs] = useState([]);
     const [patrimonyData, setPatrimonyData] = useState(null);
 
-    // Função para buscar headers de autenticação
+    // Headers de autenticação
     const getHeaders = () => {
         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        return token && token.includes(".")
-            ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
-            : { "Content-Type": "application/json" };
+        if (token && token.trim().length > 0) {
+            return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+        }
+        return { "Content-Type": "application/json" };
     };
 
-    // Buscar dados do usuário logado
+    // Dados do usuário
     useEffect(() => {
         const fetchUserData = async () => {
             try {
                 const token = localStorage.getItem("token");
-                if (!token) return;
-
+                if (!token) {
+                    console.error("No token found in localStorage");
+                    return;
+                }
                 const response = await fetch("/api/auth/me", {
                     headers: { Authorization: `Bearer ${token}` },
                 });
-
                 if (response.ok) {
                     const data = await response.json();
                     const userData = data?.data || data;
                     setRole(userData?.role || "");
+                } else {
+                    console.error("Failed to fetch user data:", response.status, await response.text());
                 }
             } catch (error) {
                 console.error("Erro ao buscar dados do usuário:", error);
             }
         };
-
         fetchUserData();
     }, []);
 
-    // Buscar técnicos da API /users com role "technician"
+    // Técnicos
     useEffect(() => {
         const fetchTechnicians = async () => {
             try {
-                const response = await fetch("/api/users", {
-                    headers: getHeaders(),
-                });
-
+                const response = await fetch("/api/users", { headers: getHeaders() });
                 if (response.ok) {
                     const data = await response.json();
                     const usersData = data?.data || data || [];
                     const technicians = usersData.filter(user => user.role === "technician");
                     setTecnicos(technicians);
+                } else {
+                    console.error("Failed to fetch technicians:", response.status, await response.text());
+                    setTecnicos([]);
                 }
             } catch (error) {
-                console.error("Erro ao buscar técnicos:", error);
+                console.error("Error fetching technicians:", error);
                 setTecnicos([]);
             }
         };
-
         fetchTechnicians();
     }, []);
 
-    // Buscar categorias
+    // Categorias
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const response = await fetch("/api/categories", {
-                    headers: getHeaders(),
-                });
-
+                const response = await fetch("/api/categories", { headers: getHeaders() });
                 if (response.ok) {
                     const data = await response.json();
-                    const categoriesData = data?.data || data || [];
-                    setCategories(categoriesData);
+                    setCategories(data?.data || data || []);
+                } else {
+                    console.error("Failed to fetch categories:", response.status, await response.text());
+                    setCategories([]);
                 }
             } catch (error) {
-                console.error("Erro ao buscar categorias:", error);
+                console.error("Error fetching categories:", error);
                 setCategories([]);
             }
         };
-
         fetchCategories();
     }, []);
 
-    // Buscar worklogs do ticket
-    useEffect(() => {
-        const fetchWorklogs = async () => {
-            if (!ticketData?.id) return;
-
-            try {
-                const response = await fetch(`/api/tickets/${ticketData.id}/worklogs`, {
-                    headers: getHeaders(),
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    const worklogsData = data?.data || data || [];
-                    setWorklogs(worklogsData);
-                }
-            } catch (error) {
-                console.error("Erro ao buscar worklogs:", error);
+    // Worklogs
+    const loadWorklogs = async () => {
+        if (!ticketData?.id) {
+            console.error("No ticket ID provided for fetching worklogs");
+            return;
+        }
+        try {
+            const response = await fetch(`/api/tickets/${ticketData.id}/worklogs`, {
+                headers: getHeaders(),
+            });
+            if (response.ok) {
+                const data = await response.json();
+                console.log("Worklogs response:", data); // Debugging
+                setWorklogs(data?.data || data || []);
+            } else {
+                console.error("Failed to fetch worklogs:", response.status, await response.text());
                 setWorklogs([]);
+                setError("Failed to load worklogs");
             }
-        };
+        } catch (error) {
+            console.error("Error fetching worklogs:", error);
+            setWorklogs([]);
+            setError("Error loading worklogs");
+        }
+    };
 
-        fetchWorklogs();
+    useEffect(() => {
+        loadWorklogs();
     }, [ticketData?.id]);
 
-    // Buscar dados do patrimônio se existir
+    // Patrimônio
     useEffect(() => {
         const fetchPatrimonyData = async () => {
             if (!patrimony) {
                 setPatrimonyData(null);
                 return;
             }
-
             try {
                 const response = await fetch(`/api/patrimonies/${patrimony}`, {
                     headers: getHeaders(),
                 });
-
                 if (response.ok) {
                     const data = await response.json();
                     setPatrimonyData(data?.data || data);
+                } else {
+                    console.error("Failed to fetch patrimony:", response.status, await response.text());
+                    setPatrimonyData(null);
                 }
             } catch (error) {
-                console.error("Erro ao buscar dados do patrimônio:", error);
+                console.error("Error fetching patrimony:", error);
                 setPatrimonyData(null);
             }
         };
-
         fetchPatrimonyData();
     }, [patrimony]);
 
-    // Atualizar dados do ticket
+    // Sincronizar dados do ticket
+    useEffect(() => {
+        if (ticketData?.category_id) setCategory(ticketData.category_id);
+        if (ticketData?.assigned_to) setTecnicoSelecionado(ticketData.assigned_to);
+        if (ticketData?.status) setStatus(ticketData.status);
+    }, [ticketData]);
+
+    // Atualizar ticket
     const handleUpdateTicket = async () => {
-        if (role === "user") return; // Usuários comuns não podem editar
+        const canEdit = role === "admin" || role === "technician";
+        if (!canEdit || !ticketData?.id) {
+            setError("No permission or invalid ticket ID");
+            return;
+        }
+
+        if (!title.trim()) return setError("Título é obrigatório");
+        if (!description.trim()) return setError("Descrição é obrigatória");
+        if (!category) return setError("Categoria é obrigatória");
 
         setLoading(true);
         setError("");
@@ -158,22 +179,21 @@ export default function SeeTicketsModal({ isOpen, onClose, ticketData = {} }) {
 
         try {
             const updateData = {
-                title,
-                description,
+                title: title.trim(),
+                description: description.trim(),
                 category_id: Number(category),
             };
-
+            if (patrimony && patrimony.trim()) {
+                updateData.patrimony_code = patrimony.trim();
+            }
             const response = await fetch(`/api/tickets/${ticketData.id}`, {
                 method: "PUT",
                 headers: getHeaders(),
                 body: JSON.stringify(updateData),
             });
-
-            if (!response.ok) {
-                throw new Error("Erro ao atualizar ticket");
-            }
-
+            if (!response.ok) throw new Error(await response.text());
             setSuccess("Ticket atualizado com sucesso!");
+            setTimeout(() => setSuccess(""), 3000);
         } catch (err) {
             setError(err.message || "Erro ao atualizar ticket");
         } finally {
@@ -181,12 +201,14 @@ export default function SeeTicketsModal({ isOpen, onClose, ticketData = {} }) {
         }
     };
 
-    // Criar worklog (apontamento)
-    const handleCreateWorklog = async (e) => {
-        e.preventDefault();
+    // Atualizar status
+    const handleStatusChange = async (newStatus) => {
+        setStatus(newStatus);
+        if (!ticketData?.id) return;
 
-        if (!apontamento.trim()) {
-            setError("Apontamento é obrigatório");
+        const canEdit = role === "admin" || role === "technician";
+        if (!canEdit) {
+            setError("Sem permissão para alterar status");
             return;
         }
 
@@ -195,68 +217,85 @@ export default function SeeTicketsModal({ isOpen, onClose, ticketData = {} }) {
         setSuccess("");
 
         try {
-            // Criar worklog
+            const response = await fetch(`/api/tickets/${ticketData.id}/status`, {
+                method: "PATCH",
+                headers: getHeaders(),
+                body: JSON.stringify({ status: newStatus }),
+            });
+            if (!response.ok) throw new Error(await response.text());
+            setSuccess("Status atualizado com sucesso!");
+            setTimeout(() => setSuccess(""), 3000);
+        } catch (err) {
+            setError(err.message || "Erro ao atualizar status");
+            setStatus(ticketData?.status || "");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Criar apontamento
+    const handleCreateWorklog = async (e) => {
+        e.preventDefault();
+        if (!apontamento.trim()) return setError("Apontamento é obrigatório");
+
+        const canEdit = role === "admin" || role === "technician";
+        if (!canEdit) return setError("Sem permissão para criar apontamentos");
+
+        setLoading(true);
+        setError("");
+        setSuccess("");
+
+        try {
             const worklogResponse = await fetch(`/api/tickets/${ticketData.id}/worklogs`, {
                 method: "POST",
                 headers: getHeaders(),
-                body: JSON.stringify({
-                    description: apontamento
-                }),
+                body: JSON.stringify({ description: apontamento.trim() }),
             });
-
-            if (!worklogResponse.ok) {
-                throw new Error("Erro ao criar apontamento");
-            }
-
-            // Se um técnico foi selecionado, atribuir o ticket
-            if (tecnicoSelecionado && tecnicoSelecionado !== ticketData.assigned_to) {
-                await fetch(`/api/tickets/${ticketData.id}/assign`, {
-                    method: "PATCH",
-                    headers: getHeaders(),
-                    body: JSON.stringify({
-                        technician_id: tecnicoSelecionado
-                    }),
-                });
-            }
-
-            // Atualizar status para "in_progress" se ainda estiver pendente
-            if (ticketData.status === "pending") {
-                await fetch(`/api/tickets/${ticketData.id}/status`, {
-                    method: "PATCH",
-                    headers: getHeaders(),
-                    body: JSON.stringify({
-                        status: "in_progress"
-                    }),
-                });
-            }
-
+            if (!worklogResponse.ok) throw new Error(await worklogResponse.text());
             setSuccess("Apontamento criado com sucesso!");
             setApontamento("");
-
-            // Recarregar worklogs
-            const worklogsResponse = await fetch(`/api/tickets/${ticketData.id}/worklogs`, {
-                headers: getHeaders(),
-            });
-
-            if (worklogsResponse.ok) {
-                const data = await worklogsResponse.json();
-                const worklogsData = data?.data || data || [];
-                setWorklogs(worklogsData);
-            }
-
+            await loadWorklogs();
         } catch (err) {
+            console.error("Worklog creation error:", err);
             setError(err.message || "Erro ao criar apontamento");
         } finally {
             setLoading(false);
         }
     };
 
+    // Selecionar técnico → atribui + muda status para in_progress
+    const handleSelectTecnico = async (value) => {
+        setTecnicoSelecionado(value);
+        if (!value || !ticketData?.id) return;
+
+        try {
+            const assignResponse = await fetch(`/api/tickets/${ticketData.id}/assign`, {
+                method: "PATCH",
+                headers: getHeaders(),
+                body: JSON.stringify({ technician_id: Number(value) }),
+            });
+            if (!assignResponse.ok) throw new Error(await assignResponse.text());
+
+            const statusResponse = await fetch(`/api/tickets/${ticketData.id}/status`, {
+                method: "PATCH",
+                headers: getHeaders(),
+                body: JSON.stringify({ status: "in_progress" }),
+            });
+            if (!statusResponse.ok) throw new Error(await statusResponse.text());
+            setStatus("in_progress");
+        } catch (err) {
+            console.error("Erro ao atribuir técnico:", err);
+            setError(err.message || "Erro ao atribuir técnico");
+        }
+    };
+
     // Concluir ticket
     const handleConcluir = async () => {
         if (!ticketData?.id) return;
+        const canEdit = role === "admin" || role === "technician";
+        if (!canEdit) return setError("Sem permissão para concluir tickets");
 
-        const confirmConcluir = window.confirm("Tem certeza que deseja concluir este ticket?");
-        if (!confirmConcluir) return;
+        if (!window.confirm("Tem certeza que deseja concluir este ticket?")) return;
 
         setLoading(true);
         setError("");
@@ -268,18 +307,10 @@ export default function SeeTicketsModal({ isOpen, onClose, ticketData = {} }) {
                 headers: getHeaders(),
                 body: JSON.stringify({ status: "completed" }),
             });
-
-            if (!response.ok) {
-                throw new Error("Erro ao concluir ticket");
-            }
-
+            if (!response.ok) throw new Error(await response.text());
             setSuccess("Chamado concluído com sucesso!");
-
-            // Fechar modal após 2 segundos
-            setTimeout(() => {
-                onClose();
-            }, 2000);
-
+            setStatus("completed");
+            setTimeout(() => onClose(), 2000);
         } catch (err) {
             setError(err.message || "Falha ao concluir chamado");
         } finally {
@@ -287,23 +318,14 @@ export default function SeeTicketsModal({ isOpen, onClose, ticketData = {} }) {
         }
     };
 
-    const isUser = role === "user";
     const canEdit = role === "admin" || role === "technician";
 
-    // Mapear status para português
-    const statusMap = {
-        "pending": "Pendente",
-        "in_progress": "Em Andamento",
-        "completed": "Concluído",
-        "cancelled": "Cancelado"
-    };
-
-    const statusColor = {
-        "pending": "text-yellow-400",
-        "in_progress": "text-blue-400",
-        "completed": "text-green-400",
-        "cancelled": "text-red-400"
-    };
+    // Status options
+    const statusOptions = [
+        { value: "pending", label: "Pendente" },
+        { value: "in_progress", label: "Em Andamento" },
+        { value: "completed", label: "Concluído" },
+    ];
 
     return (
         <div
@@ -324,18 +346,17 @@ export default function SeeTicketsModal({ isOpen, onClose, ticketData = {} }) {
                             <h3 className="text-xl font-semibold text-white">
                                 Ticket #{ticketData?.id || 'N/A'}
                             </h3>
-                            <p className={`text-sm font-medium ${statusColor[ticketData?.status] || 'text-gray-400'}`}>
-                                Status: {statusMap[ticketData?.status] || ticketData?.status || 'N/A'}
-                            </p>
                         </div>
                     </div>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-                    >
-                        <X size={25} />
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+                        >
+                            <X size={25} />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="flex flex-col lg:flex-row max-h-[calc(90vh-120px)] overflow-hidden">
@@ -353,8 +374,11 @@ export default function SeeTicketsModal({ isOpen, onClose, ticketData = {} }) {
                                     <input
                                         type="text"
                                         value={title}
-                                        onChange={(e) => setTitle(e.target.value)}
-                                        disabled={isUser}
+                                        onChange={(e) => {
+                                            console.log("Título alterado:", e.target.value);
+                                            setTitle(e.target.value);
+                                        }}
+                                        disabled={!canEdit}
                                         className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50"
                                     />
                                 </div>
@@ -365,8 +389,11 @@ export default function SeeTicketsModal({ isOpen, onClose, ticketData = {} }) {
                                         <input
                                             type="text"
                                             value={patrimony}
-                                            onChange={(e) => setPatrimony(e.target.value)}
-                                            disabled={isUser}
+                                            onChange={(e) => {
+                                                console.log("Patrimônio alterado:", e.target.value);
+                                                setPatrimony(e.target.value);
+                                            }}
+                                            disabled={!canEdit}
                                             className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50"
                                             placeholder="Código do patrimônio"
                                         />
@@ -382,29 +409,54 @@ export default function SeeTicketsModal({ isOpen, onClose, ticketData = {} }) {
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">Categoria</label>
-                                <select
-                                    value={category}
-                                    onChange={(e) => setCategory(e.target.value)}
-                                    disabled={isUser}
-                                    className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50"
-                                >
-                                    <option value="">Selecione a categoria</option>
-                                    {categories.map((cat) => (
-                                        <option key={cat.id} value={cat.id}>
-                                            {cat.title || cat.name}
-                                        </option>
-                                    ))}
-                                </select>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-300 mb-2">Categoria</label>
+                                    <select
+                                        value={category}
+                                        onChange={(e) => {
+                                            console.log("Categoria alterada:", e.target.value);
+                                            setCategory(e.target.value);
+                                        }}
+                                        disabled={!canEdit}
+                                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50"
+                                    >
+                                        <option value="">Selecione a categoria</option>
+                                        {categories.map((cat) => (
+                                            <option key={cat.id} value={cat.id}>
+                                                {cat.title || cat.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
+                                    <select
+                                        value={status}
+                                        onChange={(e) => handleStatusChange(e.target.value)}
+                                        disabled={!canEdit}
+                                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50"
+                                    >
+                                        <option value="">Selecione o status</option>
+                                        {statusOptions.map((option) => (
+                                            <option key={option.value} value={option.value}>
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">Descrição</label>
                                 <textarea
                                     value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    disabled={isUser}
+                                    onChange={(e) => {
+                                        console.log("Descrição alterada:", e.target.value);
+                                        setDescription(e.target.value);
+                                    }}
+                                    disabled={!canEdit}
                                     className="w-full h-32 resize-none bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50"
                                     placeholder="Descrição do problema..."
                                 />
@@ -413,22 +465,25 @@ export default function SeeTicketsModal({ isOpen, onClose, ticketData = {} }) {
                             {canEdit && (
                                 <div className="flex gap-3">
                                     <button
-                                        onClick={handleUpdateTicket}
+                                        onClick={() => {
+                                            console.log("Botão de salvar clicado");
+                                            handleUpdateTicket();
+                                        }}
                                         disabled={loading}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                                        className="bg-red-700 hover:bg-red-800 cursor-pointer text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
                                     >
                                         {loading ? "Salvando..." : "Salvar Alterações"}
                                     </button>
-
-                                    {ticketData?.status !== "completed" && (
-                                        <button
-                                            onClick={handleConcluir}
-                                            disabled={loading}
-                                            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
-                                        >
-                                            Concluir Ticket
-                                        </button>
-                                    )}
+                                    <button
+                                        onClick={() => {
+                                            console.log("Botão de concluir clicado");
+                                            handleConcluir();
+                                        }}
+                                        disabled={loading || status === "completed"}
+                                        className="bg-green-700 hover:bg-green-800 cursor-pointer text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                                    >
+                                        {loading ? "Concluindo..." : "Concluir Ticket"}
+                                    </button>
                                 </div>
                             )}
                         </div>
@@ -448,7 +503,7 @@ export default function SeeTicketsModal({ isOpen, onClose, ticketData = {} }) {
                                         <label className="block text-sm font-medium text-gray-300 mb-2">Técnico Responsável</label>
                                         <select
                                             value={tecnicoSelecionado}
-                                            onChange={(e) => setTecnicoSelecionado(e.target.value)}
+                                            onChange={(e) => handleSelectTecnico(e.target.value)}
                                             className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50"
                                         >
                                             <option value="">Selecione o técnico</option>
@@ -474,7 +529,7 @@ export default function SeeTicketsModal({ isOpen, onClose, ticketData = {} }) {
                                     <button
                                         type="submit"
                                         disabled={loading}
-                                        className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                        className="w-full cursor-pointer bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                                     >
                                         <Send size={16} />
                                         {loading ? "Salvando..." : "Adicionar Apontamento"}
@@ -485,7 +540,7 @@ export default function SeeTicketsModal({ isOpen, onClose, ticketData = {} }) {
 
                         {/* Lista de Worklogs */}
                         <div className="flex-1 overflow-y-auto p-6">
-                            <div className="space-y-3">
+                            <div className="space-y-3 max-h-[300px] overflow-y-auto">
                                 {worklogs.length === 0 ? (
                                     <p className="text-gray-400 text-center py-8">Nenhum apontamento encontrado</p>
                                 ) : (
