@@ -5,66 +5,94 @@ import { Users, X } from 'lucide-react';
 export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
 	if (!isOpen) return null;
 
-	const [name, setName] = useState(userData?.name || '');
-	const [email, setEmail] = useState(userData?.email || '');
+	const [name, setName] = useState('');
+	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
-	const [role, setRole] = useState(userData?.role || '');
-	const [categoryId, setCategoryId] = useState(
-		userData?.categories?.[0] || ''
-	);
-	const [categoryName, setCategoryName] = useState('');
+	const [role, setRole] = useState('');
+	const [category_id, setcategory_id] = useState(''); // string for select value
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
 	const [success, setSuccess] = useState('');
+	const [categories, setCategories] = useState([]);
 
-	// Fetch category name for technician
+	const getHeaders = () => {
+		const token =
+			typeof window !== 'undefined'
+				? localStorage.getItem('token')
+				: null;
+		return token && token.includes('.')
+			? {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+			  }
+			: { 'Content-Type': 'application/json' };
+	};
+
 	useEffect(() => {
-		if (role === 'technician' && categoryId) {
-			async function fetchCategoryName() {
-				try {
-					const token =
-						typeof window !== 'undefined'
-							? localStorage.getItem('token')
-							: null;
-					const headers =
-						token && token.includes('.')
-							? {
-									Authorization: `Bearer ${token}`,
-									'Content-Type': 'application/json',
-							  }
-							: { 'Content-Type': 'application/json' };
+		if (!isOpen) return;
 
-					const res = await fetch(`/api/categories`, {
-						method: 'GET',
-						headers,
-						credentials: 'include',
-					});
+		setError('');
+		setSuccess('');
+		setPassword('');
 
-					if (!res.ok) throw new Error('Falha ao carregar categoria');
+		const initialName = userData?.name || '';
+		const initialEmail = userData?.email || '';
+		const initialRole = userData?.role || '';
 
-					const data = await res.json();
-					const categories = Array.isArray(data)
-						? data
-						: Array.isArray(data.data)
-						? data.data
-						: [];
-					const category = categories.find(
-						(cat) => cat.id === parseInt(categoryId)
-					);
-					setCategoryName(
-						category?.title || 'Categoria não encontrada'
-					);
-				} catch (err) {
-					setError('Falha ao carregar categoria');
-					setCategoryName('Erro ao carregar');
-				}
-			}
+		let initialCategory = '';
 
-			fetchCategoryName();
-		} else {
-			setCategoryName('');
+		if (
+			Array.isArray(userData?.categories) &&
+			userData.categories.length > 0
+		) {
+			const first = userData.categories[0];
+			initialCategory =
+				typeof first === 'object' && first !== null
+					? String(first.id ?? first.category_id ?? first)
+					: String(first);
+		} else if (
+			Array.isArray(userData?.Technician_Category) &&
+			userData.Technician_Category.length > 0
+		) {
+			initialCategory = String(
+				userData.Technician_Category[0].category_id
+			);
+		} else if (userData?.category_id) {
+			initialCategory = String(userData.category_id);
 		}
-	}, [role, categoryId]);
+
+		setName(initialName);
+		setEmail(initialEmail);
+		setRole(initialRole);
+		setcategory_id(initialCategory);
+	}, [isOpen, userData]);
+
+	useEffect(() => {
+		let mounted = true;
+		async function fetchCategories() {
+			try {
+				const res = await fetch('/api/categories', {
+					method: 'GET',
+					headers: getHeaders(),
+					credentials: 'include',
+				});
+				if (!res.ok) throw new Error('Falha ao carregar categorias');
+				const payload = await res.json();
+				const data = Array.isArray(payload)
+					? payload
+					: Array.isArray(payload?.data)
+					? payload.data
+					: [];
+				if (mounted) setCategories(data);
+			} catch (err) {
+				if (mounted) setCategories([]);
+			}
+		}
+		if (isOpen) fetchCategories();
+		return () => {
+			mounted = false;
+		};
+	}, [isOpen]);
 
 	const handleUpdate = async (e) => {
 		e.preventDefault();
@@ -76,32 +104,23 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
 			if (!name.trim()) throw new Error('Nome é obrigatório');
 			if (!email.trim()) throw new Error('Email é obrigatório');
 			if (!role.trim()) throw new Error('Perfil é obrigatório');
-			if (role === 'technician' && !categoryId)
+			if (role === 'technician' && !String(category_id).trim())
 				throw new Error('Categoria é obrigatória para técnico');
 
 			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 			if (!emailRegex.test(email)) throw new Error('Email inválido');
 
-			const token =
-				typeof window !== 'undefined'
-					? localStorage.getItem('token')
-					: null;
-			const headers =
-				token && token.includes('.')
-					? {
-							Authorization: `Bearer ${token}`,
-							'Content-Type': 'application/json',
-					  }
-					: { 'Content-Type': 'application/json' };
-
 			const body = { name, email, role };
 			if (password.trim()) body.password = password;
-			if (role === 'technician' && categoryId)
-				body.categories = [parseInt(categoryId)];
+			if (role === 'technician' && String(category_id).trim()) {
+				body.categories = [Number(category_id)];
+			} else {
+				body.categories = []; // make explicit if backend expects removal when not technician
+			}
 
 			const res = await fetch(`/api/users/${userData.id}`, {
 				method: 'PUT',
-				headers,
+				headers: getHeaders(),
 				body: JSON.stringify(body),
 				credentials: 'include',
 			});
@@ -117,7 +136,7 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
 			setPassword('');
 			setTimeout(() => onClose(), 1200);
 		} catch (err) {
-			setError(err.message);
+			setError(err.message || 'Erro ao atualizar usuário');
 		} finally {
 			setLoading(false);
 		}
@@ -129,12 +148,11 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
 				className="relative w-full max-w-5xl mx-4 bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6"
 				onClick={(e) => e.stopPropagation()}
 			>
-				{/* Header */}
 				<div className="flex items-start justify-between pb-4 border-b border-gray-700/50 mb-6">
 					<div className="flex text-white justify-center items-center gap-2">
 						<Users size={25} />
 						<h3 className="text-xl font-semibold text-white">
-							Editar Usuário - #{userData?.id || 'N/A'}
+							Editar Usuário - #{userData?.id ?? 'N/A'}
 						</h3>
 					</div>
 					<button
@@ -146,7 +164,6 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
 					</button>
 				</div>
 
-				{/* Form */}
 				<form onSubmit={handleUpdate} className="space-y-4">
 					<div>
 						<label className="block text-zinc-300 text-sm font-medium mb-1">
@@ -201,13 +218,21 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
 							<label className="block text-zinc-300 text-sm font-medium mb-1">
 								Categoria
 							</label>
-							<input
-								type="text"
-								value={categoryName}
-								disabled
-								className="w-full bg-zinc-700/50 text-zinc-400 border border-zinc-600/50 rounded-lg p-3 cursor-not-allowed"
-								placeholder="Carregando..."
-							/>
+							<select
+								value={category_id}
+								onChange={(e) => setcategory_id(e.target.value)}
+								className="w-full cursor-pointer bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200"
+								required
+							>
+								<option value="">
+									Selecione uma categoria
+								</option>
+								{categories.map((cat) => (
+									<option key={cat.id} value={String(cat.id)}>
+										{cat.title}
+									</option>
+								))}
+							</select>
 						</div>
 					)}
 
