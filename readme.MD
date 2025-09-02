@@ -6,7 +6,7 @@ Zelos é um sistema de gerenciamento de chamados desenvolvido com foco para o SE
 ### 📁 Estrutura do Projeto
 ```bash
 Zelos/
-├─ backend/    # API em Node.js e Express
+├─ backend/    # API em Node.js e Express, ORM - Prisma
 ├─ frontend/   # Aplicação web em Next.js
 └─ database/   # Banco de dados MySQL
 
@@ -29,8 +29,11 @@ cd Zelos
 ### 2. Configurar o Banco de Dados
 
 ```bash
-CREATE DATABASE zelos3TD;
-start  mysql no xampp
+# No banco de dadados desejado
+1. CREATE DATABASE zelos3TD;
+
+# No painel de controle do XAMPP
+2. start mysql
 ```
 
 ### 3. Configurar .env  (em desenvolvimento)
@@ -92,6 +95,7 @@ SMTP_REFRESH_TOKEN='seu-refresh-token' # Refresh Token do OAuth Playground
 ### 4. Configurar o Backend
 
 ```bash
+# Verifique se a rota http://localhost:3333 está disponivel
 cd backend
 npm i
 npx prisma migrate deploy
@@ -102,6 +106,7 @@ npm run dev
 ### 5. Configurar o Frontend
 
 ```bash
+# Verifique se a rota http://localhost:3000 está disponivel
 cd frontend
 npm i
 npm run dev
