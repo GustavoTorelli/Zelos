@@ -107,7 +107,7 @@ export default function EditPatrimonyModal({ isOpen, onClose, assetData }) {
                         onChange={(e) => setDescription(e.target.value)}
                         className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 min-h-[100px]"
                         placeholder="Descrição detalhada"
-                        maxLength={70}
+                        maxLength={150}
                         required
                     />
 
