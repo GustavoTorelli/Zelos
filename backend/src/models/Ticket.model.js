@@ -298,6 +298,7 @@ export class Ticket {
 			select: {
 				id: true,
 				code: true,
+				name: true,
 				description: true,
 			},
 		},

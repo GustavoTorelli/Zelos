@@ -76,7 +76,7 @@ export class User {
 		}
 	}
 
-	static async findAll({ include_inactive = false, role }) {
+	static async findAll({ include_inactive = false, role, category_id }) {
 		const where = {};
 
 		if (!include_inactive) {
@@ -87,10 +87,48 @@ export class User {
 			where.role = role;
 		}
 
-		return await prisma.user.findMany({
+		const include = [];
+
+		if (category_id && role === 'technician') {
+			include.push({
+				model: prisma.technician_Category,
+				as: 'Technician_Category',
+				where: {
+					category_id: category_id,
+				},
+				required: true,
+			});
+		}
+
+		const findOptions = {
 			where,
-			select: this._baseSelect,
-		});
+			select: {
+				...this._baseSelect,
+				Technician_Category: category_id
+					? {
+							select: {
+								category_id: true,
+							},
+						}
+					: false,
+			},
+		};
+
+		if (category_id && role === 'technician') {
+			return await prisma.user.findMany({
+				where: {
+					...where,
+					Technician_Category: {
+						some: {
+							category_id: category_id,
+						},
+					},
+				},
+				select: this._baseSelect,
+			});
+		}
+
+		return await prisma.user.findMany(findOptions);
 	}
 
 	static async find(id) {

@@ -119,7 +119,7 @@ model Worklog {
   ticket_id     Int
 
   Technician User   @relation(fields: [technician_id], references: [id])
-  Ticket     Ticket @relation(fields: [ticket_id], references: [id])
+  Ticket     Ticket @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
 
   @@map("worklog")
 }

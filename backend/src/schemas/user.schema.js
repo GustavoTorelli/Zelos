@@ -43,4 +43,8 @@ export const userFilterSchema = z.object({
 		.optional()
 		.transform((val) => val === 'true'),
 	role: z.enum(['user', 'admin', 'technician']).optional(),
+	category_id: z
+		.string()
+		.optional()
+		.transform((val) => (val ? parseInt(val) : undefined)),
 });
