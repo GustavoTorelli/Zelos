@@ -201,7 +201,6 @@ export default function TabelaDeTickets({ onViewTicket, refreshTrigger }) {
 		statusUserFilter !== 'all' ||
 		statusFilter;
 
-	// Corrigido: Mapeamento das categorias baseado na estrutura da API
 	const categoryMap = useMemo(() => {
 		const map = {};
 		categories.forEach((cat) => {
@@ -212,7 +211,6 @@ export default function TabelaDeTickets({ onViewTicket, refreshTrigger }) {
 		return map;
 	}, [categories]);
 
-	// Corrigido: Mapeamento dos patrimônios baseado na estrutura da API
 	const patrimonyMap = useMemo(() => {
 		const map = {};
 		patrimonies.forEach((pat) => {
@@ -224,23 +222,27 @@ export default function TabelaDeTickets({ onViewTicket, refreshTrigger }) {
 		return map;
 	}, [patrimonies]);
 
-	// Corrigido: Enriquecimento dos tickets baseado na estrutura da API
 	const enrichedTickets = useMemo(() => {
 		return tickets.map((ticket) => {
-			// A API retorna Category e Patrimony como objetos aninhados
 			const category = ticket.Category;
 			const patrimony = ticket.Patrimony;
+			const assignedTechId =
+				ticket.technician_id ??
+				ticket.assigned_to ??
+				ticket?.Technician?.id ??
+				null;
+			const assignedTechName = ticket?.Technician?.name ?? null;
 
 			return {
 				...ticket,
 				key: ticket.id?.toString() || Math.random().toString(),
-				// Usar o objeto Category retornado pela API
 				categoryName: category?.title || category?.name || 'N/A',
 				category_id: category?.id,
-				// Usar o objeto Patrimony retornado pela API
 				patrimonyInfo: patrimony,
 				patrimony_code: patrimony?.code,
 				patrimony_id: patrimony?.id,
+				assignedTechId,
+				assignedTechName,
 			};
 		});
 	}, [tickets]);
@@ -337,14 +339,12 @@ export default function TabelaDeTickets({ onViewTicket, refreshTrigger }) {
 			case 'created_at':
 				if (!item.created_at)
 					return <span className="text-zinc-400">N/A</span>;
-
 				try {
 					const date = new Date(item.created_at);
 					if (isNaN(date.getTime()))
 						return (
 							<span className="text-zinc-400">Data inválida</span>
 						);
-
 					const formattedDate = date.toLocaleDateString('pt-BR', {
 						day: '2-digit',
 						month: '2-digit',
@@ -392,7 +392,6 @@ export default function TabelaDeTickets({ onViewTicket, refreshTrigger }) {
 		}
 	};
 
-	// Corrigido: Filtros baseados na nova estrutura dos dados
 	const filteredData = useMemo(() => {
 		return enrichedTickets.filter((item) => {
 			const matchesSearch =
@@ -406,19 +405,28 @@ export default function TabelaDeTickets({ onViewTicket, refreshTrigger }) {
 					?.toLowerCase()
 					.includes(searchTerm.toLowerCase());
 
-			// Corrigido: Usar category_id do ticket enriquecido
 			const matchesCategory =
 				!categoryFilter ||
 				item.category_id?.toString() === categoryFilter;
-
 			const matchesStatus =
 				statusUserFilter === 'all' || item.status === statusUserFilter;
 
+			// role-based visibility:
+			// - user: only own tickets (user_id)
+			// - technician: only tickets without a different assigned technician (i.e., show if unassigned or assigned to current)
+			// - admin: see all
 			let matchesRoleAccess = false;
 
 			if (role === 'user') {
-				// Corrigido: Usar user_id da estrutura da API
 				matchesRoleAccess = String(item.user_id) === String(userId);
+			} else if (role === 'technician') {
+				// hide tickets that already have another technician assigned
+				if (!item.assignedTechId) {
+					matchesRoleAccess = true; // unassigned -> visible
+				} else {
+					matchesRoleAccess =
+						String(item.assignedTechId) === String(userId); // visible only if assigned to current technician
+				}
 			} else {
 				matchesRoleAccess = true;
 			}

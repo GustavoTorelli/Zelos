@@ -35,10 +35,12 @@ export default function SeeTicketsModal({
 	const [error, setError] = useState('');
 	const [success, setSuccess] = useState('');
 	const [role, setRole] = useState('');
+	const [userId, setUserId] = useState(null);
 	const [tecnicos, setTecnicos] = useState([]);
 	const [categories, setCategories] = useState([]);
 	const [worklogs, setWorklogs] = useState([]);
 	const [patrimonyData, setPatrimonyData] = useState(null);
+	const [assignedTechnician, setAssignedTechnician] = useState(null);
 
 	const [patrimonies, setPatrimonies] = useState([]);
 	const [showPatrimonyDropdown, setShowPatrimonyDropdown] = useState(false);
@@ -75,6 +77,7 @@ export default function SeeTicketsModal({
 					const data = await response.json();
 					const userData = data?.data || data;
 					setRole(userData?.role || '');
+					setUserId(userData?.id ?? null);
 				}
 			} catch {}
 		};
@@ -262,10 +265,13 @@ export default function SeeTicketsModal({
 		);
 		setPatrimonyData(null);
 		setPatrimonyEdited(false);
+
+		const techObj = ticketData?.Technician || null;
+		setAssignedTechnician(techObj);
 		const techId =
 			ticketData?.technician_id ??
 			ticketData?.assigned_to ??
-			ticketData?.Technician?.id ??
+			techObj?.id ??
 			null;
 		setTecnicoSelecionado(techId ? String(techId) : '');
 	}, [ticketData]);
@@ -370,10 +376,12 @@ export default function SeeTicketsModal({
 				setCategory(updatedTicket.category_id ?? category);
 				setStatus(updatedTicket.status ?? status);
 
+				const finalTechObj = updatedTicket?.Technician || null;
+				setAssignedTechnician(finalTechObj);
 				const finalTechId =
 					updatedTicket?.technician_id ??
 					updatedTicket?.assigned_to ??
-					updatedTicket?.Technician?.id ??
+					finalTechObj?.id ??
 					null;
 				setTecnicoSelecionado(finalTechId ? String(finalTechId) : '');
 
@@ -390,6 +398,59 @@ export default function SeeTicketsModal({
 			setTimeout(() => setSuccess(''), 3000);
 		} catch (err) {
 			setError(err.message || 'Erro ao atualizar ticket');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleSelfAssign = async () => {
+		if (!ticketData?.id) return;
+		setLoading(true);
+		setError('');
+		setSuccess('');
+		try {
+			const resp = await fetch(`/api/tickets/${ticketData.id}/assign`, {
+				method: 'PATCH',
+				headers: getHeaders(),
+			});
+			if (!resp.ok) {
+				const txt = await resp.text();
+				throw new Error(txt || 'Failed to self assign');
+			}
+
+			const finalResp = await fetch(`/api/tickets/${ticketData.id}`, {
+				headers: getHeaders(),
+			});
+			if (!finalResp.ok) {
+				const txt = await finalResp.text();
+				throw new Error(
+					txt || 'Failed to fetch updated ticket after assign'
+				);
+			}
+			const finalJson = await finalResp.json();
+			const updatedTicket = finalJson?.data || finalJson;
+
+			if (updatedTicket) {
+				const finalTechObj = updatedTicket?.Technician || null;
+				setAssignedTechnician(finalTechObj);
+				const finalTechId =
+					updatedTicket?.technician_id ??
+					updatedTicket?.assigned_to ??
+					finalTechObj?.id ??
+					null;
+				setTecnicoSelecionado(finalTechId ? String(finalTechId) : '');
+				setStatus(updatedTicket.status ?? status);
+				if (updatedTicket?.Patrimony) {
+					setPatrimony(updatedTicket.Patrimony.code ?? patrimony);
+					setPatrimonyData(updatedTicket.Patrimony);
+				}
+			}
+
+			setSuccess('Autoatribuição realizada com sucesso!');
+			if (onTicketUpdated) onTicketUpdated(updatedTicket);
+			setTimeout(() => setSuccess(''), 3000);
+		} catch (err) {
+			setError(err.message || 'Erro ao autoatribuir');
 		} finally {
 			setLoading(false);
 		}
@@ -462,12 +523,15 @@ export default function SeeTicketsModal({
 	};
 
 	const canEdit = role === 'admin' || role === 'technician';
+	const canEditCategory = role === 'admin';
 
 	const statusOptions = [
 		{ value: 'pending', label: 'Pendente' },
 		{ value: 'in_progress', label: 'Em Andamento' },
-		{ value: 'completed', label: 'Concluído' },
 	];
+
+	const assignedIsCurrentUser =
+		assignedTechnician && String(assignedTechnician.id) === String(userId);
 
 	return (
 		<div
@@ -637,7 +701,7 @@ export default function SeeTicketsModal({
 										onChange={(e) =>
 											setCategory(e.target.value)
 										}
-										disabled={!canEdit}
+										disabled={!canEditCategory}
 										className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50"
 									>
 										<option value="">
@@ -663,9 +727,6 @@ export default function SeeTicketsModal({
 										disabled={!canEdit}
 										className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50"
 									>
-										<option value="">
-											Selecione o status
-										</option>
 										{statusOptions.map((option) => (
 											<option
 												key={option.value}
@@ -751,35 +812,87 @@ export default function SeeTicketsModal({
 										<label className="block text-sm font-medium text-gray-300 mb-2">
 											Técnico Responsável
 										</label>
-										<select
-											value={tecnicoSelecionado}
-											onChange={(e) =>
-												setTecnicoSelecionado(
-													e.target.value
-												)
-											}
-											className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50"
-										>
-											<option value="">
-												{category
-													? 'Selecione o técnico'
-													: 'Selecione uma categoria primeiro'}
-											</option>
-											{tecnicos.map((tecnico) => (
-												<option
-													key={tecnico.id}
-													value={String(tecnico.id)}
+
+										{/* Mostrar quem é o técnico responsável, se houver */}
+										{assignedTechnician ? (
+											<div className="mb-2">
+												<div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-700/30 text-sm">
+													<span className="font-medium text-white">
+														{assignedIsCurrentUser
+															? 'Você'
+															: assignedTechnician.name}
+													</span>
+													{assignedTechnician.email && (
+														<span className="text-xs text-zinc-400">
+															(
+															{
+																assignedTechnician.email
+															}
+															)
+														</span>
+													)}
+												</div>
+											</div>
+										) : null}
+
+										{role === 'technician' ? (
+											// técnico logado: botão para autoatribuir quando não houver técnico (ou se já for o próprio técnico botão fica desabilitado)
+											!assignedTechnician ||
+											assignedIsCurrentUser ? (
+												<button
+													type="button"
+													onClick={handleSelfAssign}
+													disabled={
+														loading ||
+														assignedIsCurrentUser
+													}
+													className="w-full cursor-pointer bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
 												>
-													{tecnico.name}
+													{loading
+														? 'Atribuindo...'
+														: assignedIsCurrentUser
+														? 'Você já está atribuído'
+														: 'Se autoatribuir'}
+												</button>
+											) : null
+										) : (
+											// admin: permite selecionar técnico (pode ver/alterar)
+											<select
+												value={tecnicoSelecionado}
+												onChange={(e) =>
+													setTecnicoSelecionado(
+														e.target.value
+													)
+												}
+												className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+											>
+												<option value="">
+													{category
+														? 'Selecione o técnico'
+														: 'Selecione uma categoria primeiro'}
 												</option>
-											))}
-										</select>
-										{category && tecnicos.length === 0 && (
-											<p className="text-xs text-yellow-400 mt-1">
-												Nenhum técnico disponível para
-												esta categoria
-											</p>
+												{tecnicos.map((tecnico) => (
+													<option
+														key={tecnico.id}
+														value={String(
+															tecnico.id
+														)}
+													>
+														{tecnico.name}
+													</option>
+												))}
+											</select>
 										)}
+
+										{category &&
+											tecnicos.length === 0 &&
+											role !== '' &&
+											role !== 'technician' && (
+												<p className="text-xs text-yellow-400 mt-1">
+													Nenhum técnico disponível
+													para esta categoria
+												</p>
+											)}
 									</div>
 
 									<div>
