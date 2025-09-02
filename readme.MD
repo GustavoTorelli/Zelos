@@ -12,6 +12,19 @@ Zelos/
 
 # Obs: para rodar  o projeto você deve possuir instalado: Node.js, XAMPP e MySQL
 ```
+###  🗃️ Banco de Dados
+```bash 
+MySQL/
+├─ _prisma_migrations   # Tabela que interage com o prisma. 
+├─ category             # Tabaela onde todas as categorias estão salvas.
+├─ patrimony            # Tabela onde todos os patrimonios são salvos.
+├─ technician_category  # Tabela de categorias atribuidas ao técnico.
+├─ ticket               # Tabela onde todos os chamados são salvos.
+├─ user                 # Tabela de usuários, contendo informações como nome, email, senha e role.
+└─ worklog              # Tabela de apontamentos relacionados aos chamados.
+
+# Obs: essas tabelas são geeadas pelo prisma.
+```
 
 ### 🛠️ Tecnologias Utilizadas
 ```bash
@@ -23,8 +36,8 @@ Frontend ─ Next.js ─ React | Estilização ─ Tailwind CSS | Backend ─ No
 ### 1. Clonar o projeto
 
 ```bash
-git clone https://github.com/GustavoTorelli/Zelos.git
-cd Zelos
+1. git clone https://github.com/GustavoTorelli/Zelos.git
+2. cd Zelos
 ```
 ### 2. Configurar o Banco de Dados
 
@@ -77,7 +90,7 @@ cd Zelos
 
 5. Gere o Refresh Token no Google OAuth 2.0 Playground
 # - Acesse https://developers.google.com/oauthplayground no seu navegador.
-# - Clique no ícone de engrenagem (⚙️) no canto superior direito.
+# - Clique no ícone de engrenagem no canto superior direito.
 # - Marque "Use your own OAuth credentials".
 # - Insira o "Client ID" e o "Client Secret" copiados do Google Cloud Console.
 # - Na seção "Step 1: Select & authorize APIs", selecione o escopo: https://mail.google.com/
@@ -86,10 +99,10 @@ cd Zelos
 # - Copie o "Refresh Token" gerado.
 
 6. Adicione as credenciais ao arquivo .env
-SMTP_USER='seuemail@gmail.com'         # Seu endereço de e-mail do Gmail
-SMTP_CLIENT_ID='seu-client-id'         # Client ID do Google Cloud Console
-SMTP_CLIENT_SECRET='seu-client-secret' # Client Secret do Google Cloud Console
-SMTP_REFRESH_TOKEN='seu-refresh-token' # Refresh Token do OAuth Playground
+- SMTP_USER='seuemail@gmail.com'         # Seu endereço de e-mail do Gmail
+- SMTP_CLIENT_ID='seu-client-id'         # Client ID do Google Cloud Console
+- SMTP_CLIENT_SECRET='seu-client-secret' # Client Secret do Google Cloud Console
+- SMTP_REFRESH_TOKEN='seu-refresh-token' # Refresh Token do OAuth Playground
 ```
 
 ### 4. Configurar o Backend
