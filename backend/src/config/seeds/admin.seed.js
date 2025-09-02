@@ -15,7 +15,9 @@ export default async function seedAdmin() {
 
 		await prisma.user.upsert({
 			where: { email: adminData.email },
-			update: {},
+			update: {
+				...adminData,
+			},
 			create: adminData,
 		});
 

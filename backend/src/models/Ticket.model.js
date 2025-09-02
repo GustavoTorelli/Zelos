@@ -134,7 +134,11 @@ export class Ticket {
 		try {
 			const current = await prisma.ticket.findUnique({
 				where: { id: ticket_id },
-				select: { category_id: true, technician_id: true },
+				select: {
+					category_id: true,
+					technician_id: true,
+					status: true,
+				},
 			});
 
 			if (!current) throw new Error('NOT_FOUND');
@@ -144,6 +148,14 @@ export class Ticket {
 			if (data.category_id && data.category_id !== current.category_id) {
 				updateData.technician_id = null;
 				updateData.status = 'pending';
+			}
+
+			if (
+				data.technician_id &&
+				!current.technician_id &&
+				current.status === 'pending'
+			) {
+				updateData.status = 'in_progress';
 			}
 
 			return await prisma.ticket.update({
