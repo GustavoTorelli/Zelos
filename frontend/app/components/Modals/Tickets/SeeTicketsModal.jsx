@@ -584,6 +584,7 @@ export default function SeeTicketsModal({
 											setTitle(e.target.value)
 										}
 										disabled={!canEdit}
+										maxLength={50}
 										className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50"
 									/>
 								</div>
@@ -751,6 +752,7 @@ export default function SeeTicketsModal({
 									disabled={!canEdit}
 									className="w-full h-32 resize-none bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50"
 									placeholder="Descrição do problema..."
+									maxLength={100}
 								/>
 							</div>
 

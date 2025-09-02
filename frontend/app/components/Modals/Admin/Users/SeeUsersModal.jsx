@@ -157,6 +157,7 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
 							value={name}
 							onChange={(e) => setName(e.target.value)}
 							placeholder="Nome do usuário"
+							maxLength={60}
 							className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200"
 							required
 						/>
@@ -172,6 +173,7 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
 								value={email}
 								onChange={(e) => setEmail(e.target.value)}
 								placeholder="email@exemplo.com"
+								maxLength={50}
 								className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200"
 								required
 							/>

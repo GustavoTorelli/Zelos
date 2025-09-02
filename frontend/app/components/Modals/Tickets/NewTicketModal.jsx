@@ -201,7 +201,7 @@ export default function NewticketModal({ isOpen, onClose, onTicketCreated }) {
 						onChange={(e) => setNome(e.target.value)}
 						className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3"
 						placeholder="Título do chamado"
-						maxLength={80}
+						maxLength={50}
 						required
 					/>
 
@@ -302,7 +302,7 @@ export default function NewticketModal({ isOpen, onClose, onTicketCreated }) {
 						onChange={(e) => setDescricao(e.target.value)}
 						className="w-full h-32 resize-none bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3"
 						placeholder="Descreva o problema detalhadamente..."
-						maxLength={500}
+						maxLength={100}
 						required
 					/>
 

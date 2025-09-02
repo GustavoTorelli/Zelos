@@ -23,7 +23,7 @@ MySQL/
 ├─ user                 # Tabela de usuários, contendo informações como nome, email, senha e role.
 └─ worklog              # Tabela de apontamentos relacionados aos chamados.
 
-# Obs: essas tabelas são geeadas pelo prisma.
+# Obs: as tabelas são geradas pelo prisma.
 ```
 
 ### 🛠️ Tecnologias Utilizadas

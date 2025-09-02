@@ -114,7 +114,7 @@ export default function NewUserModal({ isOpen, onClose, userData = null }) {
                         onChange={(e) => setName(e.target.value)}
                         className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3"
                         placeholder="Nome completo"
-                        maxLength={100}
+                        maxLength={60}
                         required
                     />
                     <input
@@ -123,6 +123,7 @@ export default function NewUserModal({ isOpen, onClose, userData = null }) {
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3"
                         placeholder="email@exemplo.com"
+                        maxLength={50}
                         required
                     />
                     <input

@@ -89,7 +89,7 @@ export default function EditCategoryModal({ isOpen, onClose, categoryData, asset
                         onChange={(e) => setTitle(e.target.value)}
                         className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200 placeholder-zinc-400"
                         placeholder="Título da categoria"
-                        maxLength={100}
+                        maxLength={50}
                         required
                     />
 
@@ -99,6 +99,7 @@ export default function EditCategoryModal({ isOpen, onClose, categoryData, asset
                         onChange={(e) => setDescription(e.target.value)}
                         className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 min-h-[100px] focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200 placeholder-zinc-400"
                         placeholder="Descrição da categoria"
+                        maxLength={70}
                         required
                     />
 
