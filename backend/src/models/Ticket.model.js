@@ -127,14 +127,28 @@ export class Ticket {
 	}
 
 	static async update({ ticket_id, data, role }) {
-		// Regra de negócio: somente admin pode alterar patrimony_code
-		if (role !== 'admin' && data.patrimony_code)
+		if (role !== 'admin' && data.patrimony_code) {
 			throw new Error('FORBIDDEN');
+		}
 
 		try {
+			const current = await prisma.ticket.findUnique({
+				where: { id: ticket_id },
+				select: { category_id: true, technician_id: true },
+			});
+
+			if (!current) throw new Error('NOT_FOUND');
+
+			let updateData = { ...data };
+
+			if (data.category_id && data.category_id !== current.category_id) {
+				updateData.technician_id = null;
+				updateData.status = 'pending';
+			}
+
 			return await prisma.ticket.update({
 				where: { id: ticket_id },
-				data,
+				data: updateData,
 				select: this._baseSelect,
 			});
 		} catch (error) {
