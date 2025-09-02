@@ -1,595 +1,869 @@
 'use client';
-import { useState, useEffect } from "react";
-import { Headset, X, User, Clock, MessageSquare, Send } from "lucide-react";
+import { useState, useEffect, useRef } from 'react';
+import {
+	Headset,
+	X,
+	User,
+	Clock,
+	MessageSquare,
+	Send,
+	Search,
+} from 'lucide-react';
 
-export default function SeeTicketsModal({ isOpen, onClose, ticketData = {} }) {
-    if (!isOpen) return null;
+export default function SeeTicketsModal({
+	isOpen,
+	onClose,
+	ticketData = {},
+	onTicketUpdated,
+}) {
+	if (!isOpen) return null;
 
-    const [title, setTitle] = useState(ticketData?.title || "");
-    const [patrimony, setPatrimony] = useState(ticketData?.patrimony_code || ticketData?.patrimony_id || "");
-    const [description, setDescription] = useState(ticketData?.description || "");
-    const [category, setCategory] = useState(ticketData?.category_id || "");
-    const [status, setStatus] = useState(ticketData?.status || "");
-    const [apontamento, setApontamento] = useState("");
-    const [tecnicoSelecionado, setTecnicoSelecionado] = useState(ticketData?.assigned_to || "");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
-    const [role, setRole] = useState("");
-    const [tecnicos, setTecnicos] = useState([]);
-    const [categories, setCategories] = useState([]);
-    const [worklogs, setWorklogs] = useState([]);
-    const [patrimonyData, setPatrimonyData] = useState(null);
+	const [title, setTitle] = useState(ticketData?.title || '');
+	const [patrimony, setPatrimony] = useState(
+		ticketData?.patrimony_code || ticketData?.patrimony_id || ''
+	);
+	const [description, setDescription] = useState(
+		ticketData?.description || ''
+	);
+	const [category, setCategory] = useState(ticketData?.category_id || '');
+	const [status, setStatus] = useState(ticketData?.status || '');
+	const [apontamento, setApontamento] = useState('');
+	const [tecnicoSelecionado, setTecnicoSelecionado] = useState(
+		ticketData?.assigned_to ? String(ticketData.assigned_to) : ''
+	);
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState('');
+	const [success, setSuccess] = useState('');
+	const [role, setRole] = useState('');
+	const [tecnicos, setTecnicos] = useState([]);
+	const [categories, setCategories] = useState([]);
+	const [worklogs, setWorklogs] = useState([]);
+	const [patrimonyData, setPatrimonyData] = useState(null);
 
-    // Headers de autenticação
-    const getHeaders = () => {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        if (token && token.trim().length > 0) {
-            return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
-        }
-        return { "Content-Type": "application/json" };
-    };
+	const [patrimonies, setPatrimonies] = useState([]);
+	const [showPatrimonyDropdown, setShowPatrimonyDropdown] = useState(false);
+	const [filteredPatrimonies, setFilteredPatrimonies] = useState([]);
+	const [patrimonyEdited, setPatrimonyEdited] = useState(false);
 
-    // Dados do usuário
-    useEffect(() => {
-        const fetchUserData = async () => {
-            try {
-                const token = localStorage.getItem("token");
-                if (!token) {
-                    console.error("No token found in localStorage");
-                    return;
-                }
-                const response = await fetch("/api/auth/me", {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    const userData = data?.data || data;
-                    setRole(userData?.role || "");
-                } else {
-                    console.error("Failed to fetch user data:", response.status, await response.text());
-                }
-            } catch (error) {
-                console.error("Erro ao buscar dados do usuário:", error);
-            }
-        };
-        fetchUserData();
-    }, []);
+	const patrimonioInputRef = useRef(null);
+	const dropdownRef = useRef(null);
+	const prevTicketIdRef = useRef(null);
 
-    // Técnicos
-    useEffect(() => {
-        const fetchTechnicians = async () => {
-            try {
-                const response = await fetch("/api/users", { headers: getHeaders() });
-                if (response.ok) {
-                    const data = await response.json();
-                    const usersData = data?.data || data || [];
-                    const technicians = usersData.filter(user => user.role === "technician");
-                    setTecnicos(technicians);
-                } else {
-                    console.error("Failed to fetch technicians:", response.status, await response.text());
-                    setTecnicos([]);
-                }
-            } catch (error) {
-                console.error("Error fetching technicians:", error);
-                setTecnicos([]);
-            }
-        };
-        fetchTechnicians();
-    }, []);
+	const getHeaders = () => {
+		const token =
+			typeof window !== 'undefined'
+				? localStorage.getItem('token')
+				: null;
+		if (token && token.trim().length > 0) {
+			return {
+				Authorization: `Bearer ${token}`,
+				'Content-Type': 'application/json',
+			};
+		}
+		return { 'Content-Type': 'application/json' };
+	};
 
-    // Categorias
-    useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                const response = await fetch("/api/categories", { headers: getHeaders() });
-                if (response.ok) {
-                    const data = await response.json();
-                    setCategories(data?.data || data || []);
-                } else {
-                    console.error("Failed to fetch categories:", response.status, await response.text());
-                    setCategories([]);
-                }
-            } catch (error) {
-                console.error("Error fetching categories:", error);
-                setCategories([]);
-            }
-        };
-        fetchCategories();
-    }, []);
+	useEffect(() => {
+		const fetchUserData = async () => {
+			try {
+				const token = localStorage.getItem('token');
+				if (!token) return;
+				const response = await fetch('/api/auth/me', {
+					headers: { Authorization: `Bearer ${token}` },
+				});
+				if (response.ok) {
+					const data = await response.json();
+					const userData = data?.data || data;
+					setRole(userData?.role || '');
+				}
+			} catch {}
+		};
+		fetchUserData();
+	}, []);
 
-    // Worklogs
-    const loadWorklogs = async () => {
-        if (!ticketData?.id) {
-            console.error("No ticket ID provided for fetching worklogs");
-            return;
-        }
-        try {
-            const response = await fetch(`/api/tickets/${ticketData.id}/worklogs`, {
-                headers: getHeaders(),
-            });
-            if (response.ok) {
-                const data = await response.json();
-                console.log("Worklogs response:", data); // Debugging
-                setWorklogs(data?.data || data || []);
-            } else {
-                console.error("Failed to fetch worklogs:", response.status, await response.text());
-                setWorklogs([]);
-                setError("Failed to load worklogs");
-            }
-        } catch (error) {
-            console.error("Error fetching worklogs:", error);
-            setWorklogs([]);
-            setError("Error loading worklogs");
-        }
-    };
+	useEffect(() => {
+		const fetchTechnicians = async () => {
+			try {
+				let url = '/api/users?role=technician';
+				if (category) url += `&category_id=${category}`;
 
-    useEffect(() => {
-        loadWorklogs();
-    }, [ticketData?.id]);
+				const response = await fetch(url, { headers: getHeaders() });
+				if (response.ok) {
+					const data = await response.json();
+					const usersData = data?.data || data || [];
+					const technicians = usersData.filter(
+						(user) => user.role === 'technician'
+					);
+					setTecnicos(technicians);
+				} else {
+					setTecnicos([]);
+				}
+			} catch {
+				setTecnicos([]);
+			}
+		};
+		fetchTechnicians();
+	}, [category]);
 
-    // Patrimônio
-    useEffect(() => {
-        const fetchPatrimonyData = async () => {
-            if (!patrimony) {
-                setPatrimonyData(null);
-                return;
-            }
-            try {
-                const response = await fetch(`/api/patrimonies/${patrimony}`, {
-                    headers: getHeaders(),
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    setPatrimonyData(data?.data || data);
-                } else {
-                    console.error("Failed to fetch patrimony:", response.status, await response.text());
-                    setPatrimonyData(null);
-                }
-            } catch (error) {
-                console.error("Error fetching patrimony:", error);
-                setPatrimonyData(null);
-            }
-        };
-        fetchPatrimonyData();
-    }, [patrimony]);
+	useEffect(() => {
+		const fetchCategories = async () => {
+			try {
+				const response = await fetch('/api/categories', {
+					headers: getHeaders(),
+				});
+				if (response.ok) {
+					const data = await response.json();
+					setCategories(data?.data || data || []);
+				} else {
+					setCategories([]);
+				}
+			} catch {
+				setCategories([]);
+			}
+		};
+		fetchCategories();
+	}, []);
 
-    // Sincronizar dados do ticket
-    useEffect(() => {
-        if (ticketData?.category_id) setCategory(ticketData.category_id);
-        if (ticketData?.assigned_to) setTecnicoSelecionado(ticketData.assigned_to);
-        if (ticketData?.status) setStatus(ticketData.status);
-    }, [ticketData]);
+	useEffect(() => {
+		const fetchPatrimonies = async () => {
+			try {
+				const response = await fetch('/api/patrimonies', {
+					headers: getHeaders(),
+				});
+				if (response.ok) {
+					const data = await response.json();
+					const patrimoniesData = data?.data || data || [];
+					setPatrimonies(
+						Array.isArray(patrimoniesData) ? patrimoniesData : []
+					);
+				} else {
+					setPatrimonies([]);
+				}
+			} catch {
+				setPatrimonies([]);
+			}
+		};
+		fetchPatrimonies();
+	}, []);
 
-    // Atualizar ticket
-    const handleUpdateTicket = async () => {
-        const canEdit = role === "admin" || role === "technician";
-        if (!canEdit || !ticketData?.id) {
-            setError("No permission or invalid ticket ID");
-            return;
-        }
+	useEffect(() => {
+		if (patrimony && String(patrimony).trim()) {
+			const p = String(patrimony).toLowerCase();
+			const filtered = patrimonies.filter(
+				(pat) =>
+					pat.code?.toLowerCase().includes(p) ||
+					pat.name?.toLowerCase().includes(p) ||
+					(pat.description || '').toLowerCase().includes(p) ||
+					(pat.location || '').toLowerCase().includes(p)
+			);
+			setFilteredPatrimonies(filtered);
+			setShowPatrimonyDropdown(filtered.length > 0 && patrimonyEdited);
+		} else {
+			setFilteredPatrimonies([]);
+			setShowPatrimonyDropdown(false);
+			setPatrimonyData(null);
+		}
+	}, [patrimony, patrimonies, patrimonyEdited]);
 
-        if (!title.trim()) return setError("Título é obrigatório");
-        if (!description.trim()) return setError("Descrição é obrigatória");
-        if (!category) return setError("Categoria é obrigatória");
+	useEffect(() => {
+		const handleClickOutside = (event) => {
+			if (
+				dropdownRef.current &&
+				!dropdownRef.current.contains(event.target) &&
+				patrimonioInputRef.current &&
+				!patrimonioInputRef.current.contains(event.target)
+			) {
+				setShowPatrimonyDropdown(false);
+			}
+		};
+		document.addEventListener('mousedown', handleClickOutside);
+		return () =>
+			document.removeEventListener('mousedown', handleClickOutside);
+	}, []);
 
-        setLoading(true);
-        setError("");
-        setSuccess("");
+	const selectPatrimony = (patrimonyItem) => {
+		setPatrimony(patrimonyItem.code);
+		setPatrimonyData(patrimonyItem);
+		setShowPatrimonyDropdown(false);
+		setFilteredPatrimonies([]);
+		setPatrimonyEdited(false);
+		setError('');
+	};
 
-        try {
-            const updateData = {
-                title: title.trim(),
-                description: description.trim(),
-                category_id: Number(category),
-            };
-            if (patrimony && patrimony.trim()) {
-                updateData.patrimony_code = patrimony.trim();
-            }
-            const response = await fetch(`/api/tickets/${ticketData.id}`, {
-                method: "PUT",
-                headers: getHeaders(),
-                body: JSON.stringify(updateData),
-            });
-            if (!response.ok) throw new Error(await response.text());
-            setSuccess("Ticket atualizado com sucesso!");
-            setTimeout(() => setSuccess(""), 3000);
-        } catch (err) {
-            setError(err.message || "Erro ao atualizar ticket");
-        } finally {
-            setLoading(false);
-        }
-    };
+	const clearPatrimonySelection = () => {
+		setPatrimony('');
+		setPatrimonyData(null);
+		setFilteredPatrimonies([]);
+		setShowPatrimonyDropdown(false);
+		setPatrimonyEdited(false);
+	};
 
-    // Atualizar status
-    const handleStatusChange = async (newStatus) => {
-        setStatus(newStatus);
-        if (!ticketData?.id) return;
+	const loadWorklogs = async () => {
+		if (!ticketData?.id) return;
+		try {
+			const response = await fetch(
+				`/api/tickets/${ticketData.id}/worklogs`,
+				{
+					headers: getHeaders(),
+				}
+			);
+			if (response.ok) {
+				const data = await response.json();
+				setWorklogs(data?.data || data || []);
+			} else {
+				setWorklogs([]);
+				setError('Failed to load worklogs');
+			}
+		} catch {
+			setWorklogs([]);
+			setError('Error loading worklogs');
+		}
+	};
 
-        const canEdit = role === "admin" || role === "technician";
-        if (!canEdit) {
-            setError("Sem permissão para alterar status");
-            return;
-        }
+	useEffect(() => {
+		loadWorklogs();
+	}, [ticketData?.id]);
 
-        setLoading(true);
-        setError("");
-        setSuccess("");
+	useEffect(() => {
+		const fetchPatrimonyData = async () => {
+			if (!patrimony) {
+				setPatrimonyData(null);
+				return;
+			}
+			try {
+				const response = await fetch(`/api/patrimonies/${patrimony}`, {
+					headers: getHeaders(),
+				});
+				if (response.ok) {
+					const data = await response.json();
+					setPatrimonyData(data?.data || data);
+				} else {
+					setPatrimonyData(null);
+				}
+			} catch {
+				setPatrimonyData(null);
+			}
+		};
+		fetchPatrimonyData();
+	}, [patrimony]);
 
-        try {
-            const response = await fetch(`/api/tickets/${ticketData.id}/status`, {
-                method: "PATCH",
-                headers: getHeaders(),
-                body: JSON.stringify({ status: newStatus }),
-            });
-            if (!response.ok) throw new Error(await response.text());
-            setSuccess("Status atualizado com sucesso!");
-            setTimeout(() => setSuccess(""), 3000);
-        } catch (err) {
-            setError(err.message || "Erro ao atualizar status");
-            setStatus(ticketData?.status || "");
-        } finally {
-            setLoading(false);
-        }
-    };
+	useEffect(() => {
+		if (!ticketData) return;
+		const currentId = ticketData?.id ?? null;
+		if (prevTicketIdRef.current === currentId) return;
+		prevTicketIdRef.current = currentId;
 
-    // Criar apontamento
-    const handleCreateWorklog = async (e) => {
-        e.preventDefault();
-        if (!apontamento.trim()) return setError("Apontamento é obrigatório");
+		setTitle(ticketData?.title || '');
+		setDescription(ticketData?.description || '');
+		setCategory(ticketData?.category_id || '');
+		setStatus(ticketData?.status || '');
+		setPatrimony(
+			ticketData?.patrimony_code || ticketData?.patrimony_id || ''
+		);
+		setPatrimonyData(null);
+		setPatrimonyEdited(false);
+		const techId =
+			ticketData?.technician_id ??
+			ticketData?.assigned_to ??
+			ticketData?.Technician?.id ??
+			null;
+		setTecnicoSelecionado(techId ? String(techId) : '');
+	}, [ticketData]);
 
-        const canEdit = role === "admin" || role === "technician";
-        if (!canEdit) return setError("Sem permissão para criar apontamentos");
+	useEffect(() => {
+		if (!tecnicoSelecionado) return;
+		const exists = tecnicos.some(
+			(t) => String(t.id) === String(tecnicoSelecionado)
+		);
+		if (!exists) setTecnicoSelecionado('');
+	}, [tecnicos]);
 
-        setLoading(true);
-        setError("");
-        setSuccess("");
+	const handleUpdateTicket = async () => {
+		const canEdit = role === 'admin' || role === 'technician';
+		if (!canEdit || !ticketData?.id) {
+			setError('No permission or invalid ticket ID');
+			return;
+		}
 
-        try {
-            const worklogResponse = await fetch(`/api/tickets/${ticketData.id}/worklogs`, {
-                method: "POST",
-                headers: getHeaders(),
-                body: JSON.stringify({ description: apontamento.trim() }),
-            });
-            if (!worklogResponse.ok) throw new Error(await worklogResponse.text());
-            setSuccess("Apontamento criado com sucesso!");
-            setApontamento("");
-            await loadWorklogs();
-        } catch (err) {
-            console.error("Worklog creation error:", err);
-            setError(err.message || "Erro ao criar apontamento");
-        } finally {
-            setLoading(false);
-        }
-    };
+		if (!title.trim()) return setError('Título é obrigatório');
+		if (!description.trim()) return setError('Descrição é obrigatória');
+		if (!category) return setError('Categoria é obrigatória');
 
-    // Selecionar técnico → atribui + muda status para in_progress
-    const handleSelectTecnico = async (value) => {
-        setTecnicoSelecionado(value);
-        if (!value || !ticketData?.id) return;
+		setLoading(true);
+		setError('');
+		setSuccess('');
 
-        try {
-            const assignResponse = await fetch(`/api/tickets/${ticketData.id}/assign`, {
-                method: "PATCH",
-                headers: getHeaders(),
-                body: JSON.stringify({ technician_id: Number(value) }),
-            });
-            if (!assignResponse.ok) throw new Error(await assignResponse.text());
+		try {
+			const updateData = {
+				title: title.trim(),
+				description: description.trim(),
+				category_id: Number(category),
+			};
+			if (role === 'admin' && patrimony && String(patrimony).trim()) {
+				updateData.patrimony_code = String(patrimony).trim();
+			}
 
-            const statusResponse = await fetch(`/api/tickets/${ticketData.id}/status`, {
-                method: "PATCH",
-                headers: getHeaders(),
-                body: JSON.stringify({ status: "in_progress" }),
-            });
-            if (!statusResponse.ok) throw new Error(await statusResponse.text());
-            setStatus("in_progress");
-        } catch (err) {
-            console.error("Erro ao atribuir técnico:", err);
-            setError(err.message || "Erro ao atribuir técnico");
-        }
-    };
+			const putResponse = await fetch(`/api/tickets/${ticketData.id}`, {
+				method: 'PUT',
+				headers: getHeaders(),
+				body: JSON.stringify(updateData),
+			});
+			if (!putResponse.ok) {
+				const txt = await putResponse.text();
+				throw new Error(txt || 'Failed to update ticket');
+			}
 
-    // Concluir ticket
-    const handleConcluir = async () => {
-        if (!ticketData?.id) return;
-        const canEdit = role === "admin" || role === "technician";
-        if (!canEdit) return setError("Sem permissão para concluir tickets");
+			const originalTech =
+				ticketData?.technician_id ??
+				ticketData?.assigned_to ??
+				ticketData?.Technician?.id ??
+				null;
+			if (
+				String(tecnicoSelecionado || '') !== String(originalTech || '')
+			) {
+				if (tecnicoSelecionado) {
+					const assignResponse = await fetch(
+						`/api/tickets/${ticketData.id}/assign`,
+						{
+							method: 'PATCH',
+							headers: getHeaders(),
+							body: JSON.stringify({
+								technician_id: Number(tecnicoSelecionado),
+							}),
+						}
+					);
+					if (!assignResponse.ok) {
+						const txt = await assignResponse.text();
+						throw new Error(txt || 'Failed to assign technician');
+					}
+				}
+			}
 
-        if (!window.confirm("Tem certeza que deseja concluir este ticket?")) return;
+			if (String(status || '') !== String(ticketData?.status || '')) {
+				const statusResponse = await fetch(
+					`/api/tickets/${ticketData.id}/status`,
+					{
+						method: 'PATCH',
+						headers: getHeaders(),
+						body: JSON.stringify({ status }),
+					}
+				);
+				if (!statusResponse.ok) {
+					const txt = await statusResponse.text();
+					throw new Error(txt || 'Failed to update status');
+				}
+			}
 
-        setLoading(true);
-        setError("");
-        setSuccess("");
+			const finalResp = await fetch(`/api/tickets/${ticketData.id}`, {
+				headers: getHeaders(),
+			});
+			if (!finalResp.ok) {
+				const txt = await finalResp.text();
+				throw new Error(txt || 'Failed to fetch updated ticket');
+			}
+			const finalJson = await finalResp.json();
+			const updatedTicket = finalJson?.data || finalJson;
 
-        try {
-            const response = await fetch(`/api/tickets/${ticketData.id}/status`, {
-                method: "PATCH",
-                headers: getHeaders(),
-                body: JSON.stringify({ status: "completed" }),
-            });
-            if (!response.ok) throw new Error(await response.text());
-            setSuccess("Chamado concluído com sucesso!");
-            setStatus("completed");
-            setTimeout(() => onClose(), 2000);
-        } catch (err) {
-            setError(err.message || "Falha ao concluir chamado");
-        } finally {
-            setLoading(false);
-        }
-    };
+			if (updatedTicket) {
+				setTitle(updatedTicket.title ?? title);
+				setDescription(updatedTicket.description ?? description);
+				setCategory(updatedTicket.category_id ?? category);
+				setStatus(updatedTicket.status ?? status);
 
-    const canEdit = role === "admin" || role === "technician";
+				const finalTechId =
+					updatedTicket?.technician_id ??
+					updatedTicket?.assigned_to ??
+					updatedTicket?.Technician?.id ??
+					null;
+				setTecnicoSelecionado(finalTechId ? String(finalTechId) : '');
 
-    // Status options
-    const statusOptions = [
-        { value: "pending", label: "Pendente" },
-        { value: "in_progress", label: "Em Andamento" },
-        { value: "completed", label: "Concluído" },
-    ];
+				if (updatedTicket?.Patrimony) {
+					setPatrimony(updatedTicket.Patrimony.code ?? patrimony);
+					setPatrimonyData(updatedTicket.Patrimony);
+					setPatrimonyEdited(false);
+				}
+			}
 
-    return (
-        <div
-            role="dialog"
-            aria-modal="true"
-            tabIndex={-1}
-            className="fixed inset-0 z-50 flex justify-center items-center bg-zinc-800/70 backdrop-blur-sm"
-        >
-            <div
-                className="relative w-full max-w-6xl max-h-[90vh] mx-4 bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl"
-                onClick={(e) => e.stopPropagation()}
-            >
-                {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-gray-700/50">
-                    <div className="flex items-center gap-3">
-                        <Headset size={25} className="text-red-500" />
-                        <div>
-                            <h3 className="text-xl font-semibold text-white">
-                                Ticket #{ticketData?.id || 'N/A'}
-                            </h3>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-                        >
-                            <X size={25} />
-                        </button>
-                    </div>
-                </div>
+			setSuccess('Ticket atualizado com sucesso!');
+			if (onTicketUpdated) onTicketUpdated(updatedTicket);
 
-                <div className="flex flex-col lg:flex-row max-h-[calc(90vh-120px)] overflow-hidden">
-                    {/* Informações do Ticket */}
-                    <div className="flex-1 p-6 overflow-y-auto">
-                        <h4 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-                            <User size={20} />
-                            Informações do Chamado
-                        </h4>
+			setTimeout(() => setSuccess(''), 3000);
+		} catch (err) {
+			setError(err.message || 'Erro ao atualizar ticket');
+		} finally {
+			setLoading(false);
+		}
+	};
 
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-2">Título</label>
-                                    <input
-                                        type="text"
-                                        value={title}
-                                        onChange={(e) => {
-                                            console.log("Título alterado:", e.target.value);
-                                            setTitle(e.target.value);
-                                        }}
-                                        disabled={!canEdit}
-                                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50"
-                                    />
-                                </div>
+	const handleCreateWorklog = async (e) => {
+		e.preventDefault();
+		if (!apontamento.trim()) return setError('Apontamento é obrigatório');
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-2">Patrimônio</label>
-                                    <div className="space-y-2">
-                                        <input
-                                            type="text"
-                                            value={patrimony}
-                                            onChange={(e) => {
-                                                console.log("Patrimônio alterado:", e.target.value);
-                                                setPatrimony(e.target.value);
-                                            }}
-                                            disabled={!canEdit}
-                                            className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50"
-                                            placeholder="Código do patrimônio"
-                                        />
-                                        {patrimonyData && (
-                                            <div className="text-sm text-green-400 bg-green-400/10 p-2 rounded">
-                                                <strong>{patrimonyData.name}</strong> - {patrimonyData.location}
-                                                {patrimonyData.description && (
-                                                    <p className="text-xs text-green-300 mt-1">{patrimonyData.description}</p>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
+		const canEdit = role === 'admin' || role === 'technician';
+		if (!canEdit) return setError('Sem permissão para criar apontamentos');
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-2">Categoria</label>
-                                    <select
-                                        value={category}
-                                        onChange={(e) => {
-                                            console.log("Categoria alterada:", e.target.value);
-                                            setCategory(e.target.value);
-                                        }}
-                                        disabled={!canEdit}
-                                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50"
-                                    >
-                                        <option value="">Selecione a categoria</option>
-                                        {categories.map((cat) => (
-                                            <option key={cat.id} value={cat.id}>
-                                                {cat.title || cat.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+		setLoading(true);
+		setError('');
+		setSuccess('');
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
-                                    <select
-                                        value={status}
-                                        onChange={(e) => handleStatusChange(e.target.value)}
-                                        disabled={!canEdit}
-                                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50"
-                                    >
-                                        <option value="">Selecione o status</option>
-                                        {statusOptions.map((option) => (
-                                            <option key={option.value} value={option.value}>
-                                                {option.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
+		try {
+			const worklogResponse = await fetch(
+				`/api/tickets/${ticketData.id}/worklogs`,
+				{
+					method: 'POST',
+					headers: getHeaders(),
+					body: JSON.stringify({ description: apontamento.trim() }),
+				}
+			);
+			if (!worklogResponse.ok)
+				throw new Error(await worklogResponse.text());
+			setSuccess('Apontamento criado com sucesso!');
+			setApontamento('');
+			await loadWorklogs();
+			if (onTicketUpdated) onTicketUpdated();
+		} catch (err) {
+			setError(err.message || 'Erro ao criar apontamento');
+		} finally {
+			setLoading(false);
+		}
+	};
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">Descrição</label>
-                                <textarea
-                                    value={description}
-                                    onChange={(e) => {
-                                        console.log("Descrição alterada:", e.target.value);
-                                        setDescription(e.target.value);
-                                    }}
-                                    disabled={!canEdit}
-                                    className="w-full h-32 resize-none bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50"
-                                    placeholder="Descrição do problema..."
-                                />
-                            </div>
+	const handleConcluir = async () => {
+		if (!ticketData?.id) return;
+		const canEdit = role === 'admin' || role === 'technician';
+		if (!canEdit) return setError('Sem permissão para concluir tickets');
 
-                            {canEdit && (
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => {
-                                            console.log("Botão de salvar clicado");
-                                            handleUpdateTicket();
-                                        }}
-                                        disabled={loading}
-                                       className=" cursor-pointer flex-1 bg-zinc-700/50 hover:bg-zinc-600/50 text-zinc-300 font-medium py-3 px-4 rounded-lg transition-all duration-200 border border-zinc-600/50 w-full"
-                                    >
-                                        {loading ? "Salvando..." : "Salvar Alterações"}
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            console.log("Botão de concluir clicado");
-                                            handleConcluir();
-                                        }}
-                                        disabled={loading || status === "completed"}
-                                         className=" cursor-pointer flex-1 bg-red-700 hover:bg-red-800 text-zinc-300 font-medium py-3 px-4 rounded-lg transition-all duration-200 border border-zinc-600/50 w-full"
-                                    >
-                                        {loading ? "Concluindo..." : "Concluir Ticket"}
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+		if (!window.confirm('Tem certeza que deseja concluir este ticket?'))
+			return;
 
-                    {/* Apontamentos */}
-                    <div className="w-full lg:w-2/5 border-t lg:border-t-0 lg:border-l border-gray-700/50 flex flex-col">
-                        <div className="p-6 border-b border-gray-700/50">
-                            <h4 className="text-lg font-medium text-white flex items-center gap-2 mb-4">
-                                <MessageSquare size={20} />
-                                Apontamentos
-                            </h4>
+		setLoading(true);
+		setError('');
+		setSuccess('');
 
-                            {canEdit && (
-                                <form onSubmit={handleCreateWorklog} className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-2">Técnico Responsável</label>
-                                        <select
-                                            value={tecnicoSelecionado}
-                                            onChange={(e) => handleSelectTecnico(e.target.value)}
-                                            className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50"
-                                        >
-                                            <option value="">Selecione o técnico</option>
-                                            {tecnicos.map((tecnico) => (
-                                                <option key={tecnico.id} value={tecnico.id}>
-                                                    {tecnico.name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
+		try {
+			const response = await fetch(
+				`/api/tickets/${ticketData.id}/status`,
+				{
+					method: 'PATCH',
+					headers: getHeaders(),
+					body: JSON.stringify({ status: 'completed' }),
+				}
+			);
+			if (!response.ok) throw new Error(await response.text());
+			setSuccess('Chamado concluído com sucesso!');
+			setStatus('completed');
+			if (onTicketUpdated) onTicketUpdated();
+			setTimeout(() => onClose(), 2000);
+		} catch (err) {
+			setError(err.message || 'Falha ao concluir chamado');
+		} finally {
+			setLoading(false);
+		}
+	};
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-2">Novo Apontamento</label>
-                                        <textarea
-                                            value={apontamento}
-                                            onChange={(e) => setApontamento(e.target.value)}
-                                            className="w-full h-24 resize-none bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 placeholder-zinc-400"
-                                            placeholder="Digite o apontamento técnico..."
-                                            maxLength={1000}
-                                        />
-                                    </div>
+	const canEdit = role === 'admin' || role === 'technician';
 
-                                    <button
-                                        type="submit"
-                                        disabled={loading}
-                                        className="w-full cursor-pointer bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                                    >
-                                        <Send size={16} />
-                                        {loading ? "Salvando..." : "Adicionar Apontamento"}
-                                    </button>
-                                </form>
-                            )}
-                        </div>
+	const statusOptions = [
+		{ value: 'pending', label: 'Pendente' },
+		{ value: 'in_progress', label: 'Em Andamento' },
+		{ value: 'completed', label: 'Concluído' },
+	];
 
-                        {/* Lista de Worklogs */}
-                        <div className="flex-1 overflow-y-auto p-6">
-                            <div className="space-y-3 max-h-[300px] overflow-y-auto">
-                                {worklogs.length === 0 ? (
-                                    <p className="text-gray-400 text-center py-8">Nenhum apontamento encontrado</p>
-                                ) : (
-                                    worklogs.map((worklog) => (
-                                        <div key={worklog.id} className="bg-zinc-700/30 rounded-lg p-4 border border-zinc-600/30">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <div className="flex items-center gap-2">
-                                                    <Clock size={14} className="text-gray-400" />
-                                                    <span className="text-xs text-gray-400">
-                                                        {worklog.created_at ? new Date(worklog.created_at).toLocaleDateString('pt-BR', {
-                                                            day: '2-digit',
-                                                            month: '2-digit',
-                                                            year: 'numeric',
-                                                            hour: '2-digit',
-                                                            minute: '2-digit'
-                                                        }) : 'Data não disponível'}
-                                                    </span>
-                                                </div>
-                                                {worklog.technician && (
-                                                    <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded">
-                                                        {worklog.technician.name || 'Técnico'}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className="text-sm text-gray-200">{worklog.description}</p>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+	return (
+		<div
+			role="dialog"
+			aria-modal="true"
+			tabIndex={-1}
+			className="fixed inset-0 z-50 flex justify-center items-center bg-zinc-800/70 backdrop-blur-sm"
+		>
+			<div
+				className="relative w-full max-w-6xl max-h-[90vh] mx-4 bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl"
+				onClick={(e) => e.stopPropagation()}
+			>
+				<div className="flex items-center justify-between p-6 border-b border-gray-700/50">
+					<div className="flex items-center gap-3">
+						<Headset size={25} className="text-red-500" />
+						<div>
+							<h3 className="text-xl font-semibold text-white">
+								Ticket #{ticketData?.id || 'N/A'}
+							</h3>
+						</div>
+					</div>
+					<div className="flex items-center gap-3">
+						<button
+							type="button"
+							onClick={onClose}
+							className="text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+						>
+							<X size={25} />
+						</button>
+					</div>
+				</div>
 
-                {/* Feedback Messages */}
-                {(error || success) && (
-                    <div className="p-4 border-t border-gray-700/50">
-                        {error && (
-                            <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg mb-2">
-                                <p className="text-red-300 text-sm text-center">{error}</p>
-                            </div>
-                        )}
-                        {success && (
-                            <div className="p-3 bg-green-500/20 border border-green-500/50 rounded-lg">
-                                <p className="text-green-300 text-sm text-center">{success}</p>
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
-        </div>
-    );
+				<div className="flex flex-col lg:flex-row max-h-[calc(90vh-120px)] overflow-hidden">
+					<div className="flex-1 p-6 overflow-y-auto">
+						<h4 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+							<User size={20} />
+							Informações do Chamado
+						</h4>
+
+						<div className="space-y-4">
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div>
+									<label className="block text-sm font-medium text-gray-300 mb-2">
+										Título
+									</label>
+									<input
+										type="text"
+										value={title}
+										onChange={(e) =>
+											setTitle(e.target.value)
+										}
+										disabled={!canEdit}
+										className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50"
+									/>
+								</div>
+
+								<div>
+									<label className="block text-sm font-medium text-gray-300 mb-2">
+										Patrimônio
+									</label>
+									<div className="space-y-2 relative">
+										<div className="relative">
+											<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+												<Search
+													size={16}
+													className="text-gray-400"
+												/>
+											</div>
+											<input
+												ref={patrimonioInputRef}
+												type="text"
+												value={patrimony}
+												onChange={(e) => {
+													setPatrimony(
+														e.target.value
+													);
+													setPatrimonyEdited(true);
+													if (
+														patrimonyData &&
+														e.target.value !==
+															patrimonyData.code
+													) {
+														setPatrimonyData(null);
+													}
+												}}
+												disabled={!canEdit}
+												className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 pl-10 focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50"
+												placeholder="Digite o código ou nome do patrimônio"
+											/>
+											{patrimonyData && canEdit && (
+												<button
+													type="button"
+													onClick={
+														clearPatrimonySelection
+													}
+													className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white"
+												>
+													×
+												</button>
+											)}
+										</div>
+
+										{showPatrimonyDropdown &&
+											filteredPatrimonies.length > 0 &&
+											canEdit && (
+												<div
+													ref={dropdownRef}
+													className="absolute z-50 w-full mt-1 bg-zinc-700 border border-zinc-600 rounded-lg shadow-lg max-h-40 overflow-y-auto"
+												>
+													{filteredPatrimonies.map(
+														(pat) => (
+															<div
+																key={pat.id}
+																onClick={() =>
+																	selectPatrimony(
+																		pat
+																	)
+																}
+																className="p-3 hover:bg-zinc-600 cursor-pointer text-white border-b border-zinc-600 last:border-b-0"
+															>
+																<div className="font-medium text-sm">
+																	#{pat.code}
+																</div>
+																<div className="text-xs text-zinc-300">
+																	{pat.name ||
+																		pat.description}
+																</div>
+																<div className="text-xs text-zinc-400">
+																	{
+																		pat.location
+																	}
+																</div>
+															</div>
+														)
+													)}
+												</div>
+											)}
+
+										{patrimonyData && (
+											<div className="text-xs text-green-400 bg-green-400/10 border border-green-400/20 rounded-md p-2">
+												<span className="font-medium">
+													#{patrimonyData.code}
+												</span>{' '}
+												-{' '}
+												{patrimonyData.name ||
+													patrimonyData.description}
+												{patrimonyData.location && (
+													<span className="text-green-300/80 ml-1">
+														(
+														{patrimonyData.location}
+														)
+													</span>
+												)}
+											</div>
+										)}
+									</div>
+								</div>
+							</div>
+
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div>
+									<label className="block text-sm font-medium text-gray-300 mb-2">
+										Categoria
+									</label>
+									<select
+										value={category}
+										onChange={(e) =>
+											setCategory(e.target.value)
+										}
+										disabled={!canEdit}
+										className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50"
+									>
+										<option value="">
+											Selecione a categoria
+										</option>
+										{categories.map((cat) => (
+											<option key={cat.id} value={cat.id}>
+												{cat.title || cat.name}
+											</option>
+										))}
+									</select>
+								</div>
+
+								<div>
+									<label className="block text-sm font-medium text-gray-300 mb-2">
+										Status
+									</label>
+									<select
+										value={status}
+										onChange={(e) =>
+											setStatus(e.target.value)
+										}
+										disabled={!canEdit}
+										className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50"
+									>
+										<option value="">
+											Selecione o status
+										</option>
+										{statusOptions.map((option) => (
+											<option
+												key={option.value}
+												value={option.value}
+											>
+												{option.label}
+											</option>
+										))}
+									</select>
+								</div>
+							</div>
+
+							<div>
+								<label className="block text-sm font-medium text-gray-300 mb-2">
+									Descrição
+								</label>
+								<textarea
+									value={description}
+									onChange={(e) =>
+										setDescription(e.target.value)
+									}
+									disabled={!canEdit}
+									className="w-full h-32 resize-none bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50"
+									placeholder="Descrição do problema..."
+								/>
+							</div>
+
+							{error && (
+								<div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
+									<p className="text-red-300 text-sm text-center">
+										{error}
+									</p>
+								</div>
+							)}
+							{success && (
+								<div className="p-3 bg-green-500/20 border border-green-500/50 rounded-lg">
+									<p className="text-green-300 text-sm text-center">
+										{success}
+									</p>
+								</div>
+							)}
+
+							{canEdit && (
+								<div className="flex gap-3">
+									<button
+										onClick={handleUpdateTicket}
+										disabled={loading}
+										className="cursor-pointer flex-1 bg-zinc-700/50 hover:bg-zinc-600/50 text-zinc-300 font-medium py-3 px-4 rounded-lg transition-all duration-200 border border-zinc-600/50 w-full disabled:opacity-50"
+									>
+										{loading
+											? 'Salvando...'
+											: 'Salvar Alterações'}
+									</button>
+									<button
+										onClick={handleConcluir}
+										disabled={
+											loading || status === 'completed'
+										}
+										className="cursor-pointer flex-1 bg-red-700 hover:bg-red-800 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 disabled:opacity-50 w-full"
+									>
+										{loading
+											? 'Concluindo...'
+											: 'Concluir Ticket'}
+									</button>
+								</div>
+							)}
+						</div>
+					</div>
+
+					<div className="w-full lg:w-2/5 border-t lg:border-t-0 lg:border-l border-gray-700/50 flex flex-col">
+						<div className="p-6 border-b border-gray-700/50">
+							<h4 className="text-lg font-medium text-white flex items-center gap-2 mb-4">
+								<MessageSquare size={20} />
+								Apontamentos
+							</h4>
+
+							{canEdit && (
+								<form
+									onSubmit={handleCreateWorklog}
+									className="space-y-4"
+								>
+									<div>
+										<label className="block text-sm font-medium text-gray-300 mb-2">
+											Técnico Responsável
+										</label>
+										<select
+											value={tecnicoSelecionado}
+											onChange={(e) =>
+												setTecnicoSelecionado(
+													e.target.value
+												)
+											}
+											className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+										>
+											<option value="">
+												{category
+													? 'Selecione o técnico'
+													: 'Selecione uma categoria primeiro'}
+											</option>
+											{tecnicos.map((tecnico) => (
+												<option
+													key={tecnico.id}
+													value={String(tecnico.id)}
+												>
+													{tecnico.name}
+												</option>
+											))}
+										</select>
+										{category && tecnicos.length === 0 && (
+											<p className="text-xs text-yellow-400 mt-1">
+												Nenhum técnico disponível para
+												esta categoria
+											</p>
+										)}
+									</div>
+
+									<div>
+										<label className="block text-sm font-medium text-gray-300 mb-2">
+											Novo Apontamento
+										</label>
+										<textarea
+											value={apontamento}
+											onChange={(e) =>
+												setApontamento(e.target.value)
+											}
+											className="w-full h-24 resize-none bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 placeholder-zinc-400"
+											placeholder="Digite o apontamento técnico..."
+											maxLength={1000}
+										/>
+									</div>
+
+									<button
+										type="submit"
+										disabled={loading}
+										className="w-full cursor-pointer bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+									>
+										<Send size={16} />
+										{loading
+											? 'Salvando...'
+											: 'Adicionar Apontamento'}
+									</button>
+								</form>
+							)}
+						</div>
+
+						<div className="flex-1 overflow-y-auto p-6">
+							<div className="space-y-3 max-h-[300px] overflow-y-auto">
+								{worklogs.length === 0 ? (
+									<p className="text-gray-400 text-center py-8">
+										Nenhum apontamento encontrado
+									</p>
+								) : (
+									worklogs.map((worklog) => (
+										<div
+											key={worklog.id}
+											className="bg-zinc-700/30 rounded-lg p-4 border border-zinc-600/30"
+										>
+											<div className="flex items-center justify-between mb-2">
+												<div className="flex items-center gap-2">
+													<Clock
+														size={14}
+														className="text-gray-400"
+													/>
+													<span className="text-xs text-gray-400">
+														{worklog.created_at
+															? new Date(
+																	worklog.created_at
+															  ).toLocaleDateString(
+																	'pt-BR',
+																	{
+																		day: '2-digit',
+																		month: '2-digit',
+																		year: 'numeric',
+																		hour: '2-digit',
+																		minute: '2-digit',
+																	}
+															  )
+															: 'Data não disponível'}
+													</span>
+												</div>
+												{worklog.technician && (
+													<span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded">
+														{worklog.technician
+															.name || 'Técnico'}
+													</span>
+												)}
+											</div>
+											<p className="text-sm text-gray-200">
+												{worklog.description}
+											</p>
+										</div>
+									))
+								)}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }

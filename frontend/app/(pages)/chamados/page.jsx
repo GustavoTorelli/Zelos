@@ -1,4 +1,5 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/app/components/Header/Sidebar';
@@ -20,10 +21,7 @@ export default function Chamados() {
 
 	useEffect(() => {
 		const checkAuth = async () => {
-			console.log('🔍 Verificando autenticação...');
-
 			try {
-				// Verificar se está no cliente
 				if (typeof window === 'undefined') {
 					setIsLoading(false);
 					return;
@@ -32,49 +30,66 @@ export default function Chamados() {
 				const id = localStorage.getItem('user_id');
 				const role = localStorage.getItem('user_role');
 
-				console.log(' Dados de autenticação:', {
-					id: !!id,
-					role: role,
-					hasId: !!id,
-					hasRole: !!role,
-				});
-
-				// Verificar se AMBOS existem E não são strings vazias
-				if (id && role && id.trim() !== '' && role.trim() !== '') {
-					console.log('✅ Usuário autenticado');
-					setIsAuthenticated(true);
-				} else {
-					console.log(
-						'❌ Dados de autenticação inválidos ou ausentes'
-					);
-					console.log(' ID:', id);
-					console.log(' Role:', role);
-
-					// Apenas redirecionar, SEM fazer logout no backend
-					// (o usuário pode não estar logado mesmo)
+				// Verificar se dados locais existem
+				if (!id || !role || id.trim() === '' || role.trim() === '') {
 					localStorage.removeItem('user_id');
 					localStorage.removeItem('user_role');
 					router.push('/');
 					return;
 				}
+
+				const token = localStorage.getItem('token');
+
+				if (!token) {
+					localStorage.removeItem('user_id');
+					localStorage.removeItem('user_role');
+					localStorage.removeItem('token');
+					router.push('/');
+					return;
+				}
+
+				const response = await fetch('/api/auth/me', {
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`,
+					},
+				});
+
+				if (response.ok) {
+					const result = await response.json();
+					const userData = result.data;
+
+					if (
+						userData.id.toString() === id &&
+						userData.role === role
+					) {
+						setIsAuthenticated(true);
+					} else {
+						localStorage.removeItem('user_id');
+						localStorage.removeItem('user_role');
+						localStorage.removeItem('token');
+						router.push('/');
+					}
+				} else {
+					localStorage.removeItem('user_id');
+					localStorage.removeItem('user_role');
+					localStorage.removeItem('token');
+					router.push('/');
+				}
 			} catch (error) {
-				console.error(' Erro na verificação de autenticação:', error);
+				localStorage.removeItem('user_id');
+				localStorage.removeItem('user_role');
+				localStorage.removeItem('token');
 				router.push('/');
 			} finally {
 				setIsLoading(false);
 			}
 		};
 
-		// Executar verificação apenas uma vez
 		checkAuth();
-	}, []); // ⚠️ IMPORTANTE: Array vazio para executar apenas uma vez
+	}, [router]);
 
-	// Debug: monitorar mudanças de estado
-	useEffect(() => {
-		console.log('📈 Estado atual:', { isLoading, isAuthenticated });
-	}, [isLoading, isAuthenticated]);
-
-	// Loading state
 	if (isLoading) {
 		return (
 			<div className="flex justify-center items-center h-screen">
@@ -86,7 +101,6 @@ export default function Chamados() {
 		);
 	}
 
-	// Not authenticated state
 	if (!isAuthenticated) {
 		return (
 			<div className="flex justify-center items-center h-screen">
@@ -95,18 +109,14 @@ export default function Chamados() {
 		);
 	}
 
-	// Authenticated - render main content
 	return (
 		<div className="flex flex-col h-screen">
-			{/* Header com função de logout disponível */}
-			<Header toggleSidebar={toggleSidebar}  />
-
-			{/* Conteúdo com Sidebar */}
+			<Header toggleSidebar={toggleSidebar} />
 			<div className="flex flex-1 pt-16">
 				<Sidebar onSelect={setActiveComponent} isOpen={sidebarOpen} />
 				<section className="flex w-full overflow-y-auto p-6 bg-zinc-100 dark:bg-zinc-800 justify-center items-center md:ml-60">
-					{activeComponent === 1 && <TicketsPage/> }
-					{activeComponent === 2 && <AdminPage/>}
+					{activeComponent === 1 && <TicketsPage />}
+					{activeComponent === 2 && <AdminPage />}
 					{activeComponent === 3 && <Relatorio />}
 				</section>
 			</div>
