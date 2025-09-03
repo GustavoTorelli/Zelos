@@ -73,7 +73,7 @@ export default async function seedCategories() {
 	} catch (error) {
 		if (error instanceof ZodError) {
 			console.error('Error seeding categories: Invalid category data');
-			return;
+			process.exit(1);
 		}
 
 		console.error('Error seeding categories:', error);

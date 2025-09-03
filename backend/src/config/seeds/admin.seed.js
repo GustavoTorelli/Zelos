@@ -27,7 +27,7 @@ export default async function seedAdmin() {
 	} catch (error) {
 		if (error instanceof ZodError) {
 			console.log('Error seeding admin: Invalid email address');
-			return;
+			process.exit(1);
 		}
 
 		console.error('Error seeding admin:', error);

@@ -15,70 +15,70 @@ export default async function seedPatrimonies() {
 				location: 'Sala de Reuniões - Andar 3',
 				description:
 					'Notebook empresarial utilizado para apresentações e reuniões. Equipado com Intel i7, 16GB RAM e SSD 512GB.',
-				code: 'NTB-DELL-XPS13-001',
+				code: '7301542',
 			},
 			{
 				name: 'Projetor Epson PowerLite',
 				location: 'Auditório Principal',
 				description:
 					'Projetor de alta definição para apresentações corporativas. Resolução 4K, 5000 lumens de brilho e conectividade HDMI/Wi-Fi.',
-				code: 'PROJ-EPSON-4K-002',
+				code: '8916723',
 			},
 			{
 				name: 'Mesa de Reunião Executiva',
 				location: 'Sala da Diretoria',
 				description:
 					'Mesa de madeira maciça com capacidade para 12 pessoas. Dimensões: 3m x 1,2m x 0,75m. Inclui sistema de cabos integrado.',
-				code: 'MESA-EXEC-MOGNO-003',
+				code: '4257891',
 			},
 			{
 				name: 'Ar Condicionado Split',
 				location: 'Departamento de TI',
 				description:
 					'Ar condicionado split 30.000 BTUs com sistema inverter. Manutenção realizada trimestralmente. Instalado em 2023.',
-				code: 'AC-SPLIT-30K-004',
+				code: '9632187',
 			},
 			{
 				name: 'Servidor Dell PowerEdge',
 				location: 'Data Center - Piso Técnico',
 				description:
 					'Servidor rack 2U com processador Xeon Gold, 64GB RAM, 4x SSD 1TB NVMe. Responsável pelo sistema ERP corporativo.',
-				code: 'SRV-DELL-R740-005',
+				code: '5874963',
 			},
 			{
 				name: 'Cadeira Ergonômica Presidente',
 				location: 'Escritório do CEO',
 				description:
 					'Cadeira executiva com ajuste lombar, apoio de cabeça e braços reguláveis. Estofamento em couro legítimo.',
-				code: 'CAD-ERG-PRES-006',
+				code: '2148369',
 			},
 			{
 				name: 'Impressora Multifuncional HP',
 				location: 'Área de Copiadora - Andar 2',
 				description:
 					'Impressora laser colorida com funções de impressão, digitalização, cópia e fax. Capacidade: 5000 páginas/mês.',
-				code: 'IMP-HP-MFC-007',
+				code: '6983274',
 			},
 			{
 				name: 'Tablet Samsung Galaxy Tab S9',
 				location: 'Departamento de Vendas',
 				description:
 					"Tablet utilizado pela equipe comercial para demonstrações de produtos. Tela 11', 256GB de armazenamento.",
-				code: 'TAB-SAMSUNG-S9-008',
+				code: '3419825',
 			},
 			{
 				name: 'Armário de Arquivo Metálico',
 				location: 'Arquivo Morto - Subsolo',
 				description:
 					'Armário de aço com 4 gavetas para documentação. Dimensões: 0,9m x 0,45m x 1,8m. Chave de segurança incluída.',
-				code: 'ARM-MET-4GV-009',
+				code: '8765432',
 			},
 			{
 				name: 'Switch Cisco Catalyst',
 				location: 'Rack de Rede - Sala Server',
 				description:
 					'Switch gerenciável 48 portas Gigabit Ethernet com 4 portas SFP+. Utilizado para infraestrutura de rede principal.',
-				code: 'SW-CISCO-48P-010',
+				code: '1592637',
 			},
 		];
 
@@ -100,7 +100,7 @@ export default async function seedPatrimonies() {
 	} catch (error) {
 		if (error instanceof ZodError) {
 			console.error('Error seeding patrimonies: Invalid patrimony data');
-			return;
+			process.exit(1);
 		}
 
 		console.error('Error seeding categories:', error);

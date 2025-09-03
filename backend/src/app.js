@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import apiResponse from './utils/api-response.js';
+import { ensureBrowser } from './utils/report-generator.js';
 import setupSwagger from './config/swagger.js';
 import seedAdmin from './config/seeds/admin.seed.js';
 import seedCategories from './config/seeds/categories.seed.js';
@@ -44,6 +45,14 @@ async function start() {
 	await seedAdmin();
 	await seedCategories();
 	await seedPatrimonies();
+	await ensureBrowser()
+		.then(() => {
+			console.log('correctPuppeteer browser launched');
+		})
+		.catch((error) => {
+			console.error('Error launching puppeteer browser:', error);
+			process.exit(1);
+		});
 	app.listen(port, () => {
 		console.log(`Server is running at http://localhost:${port}`);
 		console.log(`API docs available at http://localhost:${port}/docs`);

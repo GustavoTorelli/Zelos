@@ -682,13 +682,14 @@ async function _importPuppeteer() {
  * Ensures browser instance is available (singleton pattern)
  * @returns {Object} - Puppeteer browser instance
  */
-async function ensureBrowser() {
+export async function ensureBrowser() {
 	if (_browser) return _browser;
 
 	const puppeteer = await _importPuppeteer();
 	_browser = await puppeteer.launch({
 		headless: true,
 		args: ['--no-sandbox', '--disable-setuid-sandbox'],
+		timeout: 60000,
 	});
 
 	return _browser;
