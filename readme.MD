@@ -13,6 +13,7 @@ Zelos/
 # Obs: para rodar  o projeto você deve possuir instalado: Node.js, XAMPP e MySQL
 ```
 ###  🗃️ Banco de Dados
+
 ```bash 
 MySQL/
 ├─ _prisma_migrations   # Tabela que interage com o prisma. 
@@ -25,6 +26,7 @@ MySQL/
 
 # Obs: as tabelas são geradas pelo prisma.
 ```
+
 
 ### 🛠️ Tecnologias Utilizadas
 ```bash
@@ -133,3 +135,5 @@ npm run dev
 
 
 © 2025 Zelos. Todos os direitos reservados.
+
+

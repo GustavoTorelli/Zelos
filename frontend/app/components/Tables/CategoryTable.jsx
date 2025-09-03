@@ -170,7 +170,7 @@ export default function TabelaDeCategorias({ loading, error: externalError, onEd
                 const itemIsActive = isActive(item);
                 return (
                     <div className="flex justify-center">
-                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${itemIsActive
+                        <span className={`text-xs font-medium w-22 text-center px-2 py-1 rounded-full ${itemIsActive
                             ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
                             : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
                             }`}>
@@ -191,7 +191,7 @@ export default function TabelaDeCategorias({ loading, error: externalError, onEd
                         </button>
                         <button
                             onClick={() => handleToggleCategory(item.id, itemIsActiveForActions)}
-                            className="cursor-pointer px-3 py-1 rounded text-xs font-medium transition-colors duration-200 bg-zinc-700/50 hover:bg-zinc-600/50 text-white"
+                            className="cursor-pointer px-3 py-1 w-20 rounded text-xs font-medium transition-colors duration-200 bg-zinc-700/50 hover:bg-zinc-600/50 text-white"
                         >
                             {itemIsActiveForActions ? 'Desabilitar' : 'Habilitar'}
                         </button>
