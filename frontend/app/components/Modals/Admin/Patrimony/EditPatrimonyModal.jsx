@@ -72,6 +72,9 @@ export default function EditPatrimonyModal({ isOpen, onClose, assetData }) {
 
                 {/* Formulário */}
                 <form className="space-y-4" onSubmit={handleSubmit}>
+                    <label className="block text-zinc-300 text-sm font-medium mb-1">
+                        Nome
+                    </label>
                     <input
                         type="text"
                         value={name}
@@ -81,7 +84,9 @@ export default function EditPatrimonyModal({ isOpen, onClose, assetData }) {
                         maxLength={50}
                         required
                     />
-
+                    <label className="block text-zinc-300 text-sm font-medium mb-1">
+                        Localização
+                    </label>
                     <input
                         type="text"
                         value={location}
@@ -91,7 +96,9 @@ export default function EditPatrimonyModal({ isOpen, onClose, assetData }) {
                         maxLength={50}
                         required
                     />
-
+                    <label className="block text-zinc-300 text-sm font-medium mb-1">
+                        Código
+                    </label>
                     <input
                         type="text"
                         value={code}
@@ -101,7 +108,9 @@ export default function EditPatrimonyModal({ isOpen, onClose, assetData }) {
                         maxLength={50}
                         required
                     />
-
+                    <label className="block text-zinc-300 text-sm font-medium mb-1">
+                        Descrição
+                    </label>
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}

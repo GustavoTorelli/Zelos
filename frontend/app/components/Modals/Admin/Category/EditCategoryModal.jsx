@@ -83,6 +83,9 @@ export default function EditCategoryModal({ isOpen, onClose, categoryData, asset
                 <form className="space-y-4" onSubmit={handleSubmit}>
 
                     {/* Título */}
+                    <label className="block text-zinc-300 text-sm font-medium mb-1">
+                        Nome
+                    </label>
                     <input
                         type="text"
                         value={title}
@@ -94,6 +97,9 @@ export default function EditCategoryModal({ isOpen, onClose, categoryData, asset
                     />
 
                     {/* Descrição */}
+                    <label className="block text-zinc-300 text-sm font-medium mb-1">
+                        Descrição
+                    </label>
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
