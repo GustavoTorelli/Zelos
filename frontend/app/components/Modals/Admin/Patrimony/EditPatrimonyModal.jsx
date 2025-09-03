@@ -96,7 +96,8 @@ export default function EditPatrimonyModal({ isOpen, onClose, assetData }) {
                         maxLength={50}
                         required
                     />
-                    <label className="block text-zinc-300 text-sm font-medium mb-1">
+                    {/* input de codigo desabiblitado */}
+                    {/* <label className="block text-zinc-300 text-sm font-medium mb-1">
                         Código
                     </label>
                     <input
@@ -107,7 +108,8 @@ export default function EditPatrimonyModal({ isOpen, onClose, assetData }) {
                         placeholder="Código do patrimônio"
                         maxLength={50}
                         required
-                    />
+                        disabled
+                    /> */}
                     <label className="block text-zinc-300 text-sm font-medium mb-1">
                         Descrição
                     </label>
