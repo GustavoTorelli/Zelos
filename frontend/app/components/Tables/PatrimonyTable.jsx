@@ -248,15 +248,58 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
     }
 
     if (error || errorState) {
+        // se tentar excluir um patrimonio associado a um ticket
         return (
-            <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl min-h-[400px] p-4 flex items-center justify-center">
-                <div className="text-red-400">Erro ao carregar patrimônios: {error || errorState}</div>
+            <div className="mb-8 mt-8">
+                {/* filtro falso */}
+                <div className="mb-8 mt-8">
+                    <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 shadow-xl">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                                <Funnel size={20} className="text-red-500" />
+                                Filtros de Patrimônio
+                            </h3>
+                            {hasActiveFilters && (
+                                <button
+                                    onClick={clearFilters}
+                                    className="text-sm text-red-400 hover:text-red-300 transition-colors duration-200"
+                                >
+                                    Limpar filtros
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Search size={20} className="text-gray-400" />
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Buscar por ID, código, nome, localização ou descrição"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full bg-gray-700/50 border border-gray-600/50 text-white placeholder-gray-400 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all duration-200"
+                            />
+                        </div>
+                    </div>
+                </div>
+                {/* card de erro */}
+                <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl min-h-[400px] p-4 flex flex-col items-center justify-center gap-5">
+                    <div className="text-white font-semibold mb-4">Você não pode excluir um patrimonio associado a um chamado.</div>
+                    <button
+                        onClick={() => setError('')}
+                        className="relative min-w-0 sm:min-w-[220px] h-12 cursor-pointer flex items-center justify-center font-semibold bg-red-700 hover:bg-red-800 group rounded-lg overflow-hidden text-center text-white" 
+                    >
+                        OK
+                    </button>
+                </div>
             </div>
         );
     }
 
     return (
         <section>
+            {/* filtro */}
             <div className="mb-8 mt-8">
                 <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 shadow-xl">
                     <div className="flex items-center justify-between mb-4">
