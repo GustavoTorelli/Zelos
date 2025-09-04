@@ -2,6 +2,41 @@
 import { useState, useEffect } from "react";
 import { LibraryBig } from "lucide-react";
 
+// CategoryEventEmitter para comunicação entre componentes
+class CategoryEventEmitter {
+    constructor() {
+        this.events = {};
+    }
+
+    on(event, callback) {
+        if (!this.events[event]) {
+            this.events[event] = [];
+        }
+        this.events[event].push(callback);
+    }
+
+    off(event, callback) {
+        if (this.events[event]) {
+            this.events[event] = this.events[event].filter(cb => cb !== callback);
+        }
+    }
+
+    emit(event, data) {
+        if (this.events[event]) {
+            this.events[event].forEach(callback => callback(data));
+        }
+    }
+}
+
+// Instância global do event emitter
+const categoryEvents = typeof window !== 'undefined' && window.categoryEvents
+    ? window.categoryEvents
+    : new CategoryEventEmitter();
+
+if (typeof window !== 'undefined') {
+    window.categoryEvents = categoryEvents;
+}
+
 export default function EditCategoryModal({ isOpen, onClose, categoryData, assetData }) {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
@@ -50,6 +85,9 @@ export default function EditCategoryModal({ isOpen, onClose, categoryData, asset
 
             setSuccess("Categoria atualizada com sucesso!");
 
+            // Emitir evento de atualização de categoria
+            categoryEvents.emit('categoryUpdated', { id: categoryData.id, title, description });
+
             setTimeout(() => {
                 onClose();
             }, 1500);
@@ -81,7 +119,6 @@ export default function EditCategoryModal({ isOpen, onClose, categoryData, asset
 
                 {/* Formulário */}
                 <form className="space-y-4" onSubmit={handleSubmit}>
-
                     {/* Título */}
                     <label className="block text-zinc-300 text-sm font-medium mb-1">
                         Nome
@@ -144,3 +181,13 @@ export default function EditCategoryModal({ isOpen, onClose, categoryData, asset
         </div>
     );
 }
+
+// Função utilitária para ser usada em outros componentes
+export const triggerCategoryRefresh = {
+    created: (categoryData) => categoryEvents.emit('categoryCreated', categoryData),
+    updated: (categoryData) => categoryEvents.emit('categoryUpdated', categoryData),
+    deleted: (categoryId) => categoryEvents.emit('categoryDeleted', { id: categoryId }),
+};
+
+// Export do event emitter para uso avançado
+export { categoryEvents };
