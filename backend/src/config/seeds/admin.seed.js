@@ -16,7 +16,8 @@ export default async function seedAdmin() {
 		await prisma.user.upsert({
 			where: { email: adminData.email },
 			update: {
-				...adminData,
+				role: adminData.role,
+				is_active: adminData.is_active,
 			},
 			create: adminData,
 		});
