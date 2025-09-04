@@ -50,11 +50,7 @@ cd Zelos
 
 1. Inicie o **Docker Engine**
 2. Navegue até o diretório **`Zelos/backend`**
-3. Execute o comando:
-
-```bash
-docker compose up -d
-```
+3. Execute o comando: **`docker compose up -d`**
 
 ---
 
