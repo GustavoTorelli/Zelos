@@ -114,8 +114,6 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
 			if (password.trim()) body.password = password;
 			if (role === 'technician' && String(category_id).trim()) {
 				body.categories = [Number(category_id)];
-			} else {
-				body.categories = []; // make explicit if backend expects removal when not technician
 			}
 
 			const res = await fetch(`/api/users/${userData.id}`, {
