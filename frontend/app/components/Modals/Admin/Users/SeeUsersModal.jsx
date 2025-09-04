@@ -2,6 +2,44 @@
 import { useState, useEffect } from 'react';
 import { Users, X } from 'lucide-react';
 
+// UserEventEmitter para comunicação entre componentes
+class UserEventEmitter {
+	constructor() {
+		this.events = {};
+	}
+
+	on(event, callback) {
+		if (!this.events[event]) {
+			this.events[event] = [];
+		}
+		this.events[event].push(callback);
+	}
+
+	off(event, callback) {
+		if (this.events[event]) {
+			this.events[event] = this.events[event].filter(
+				(cb) => cb !== callback
+			);
+		}
+	}
+
+	emit(event, data) {
+		if (this.events[event]) {
+			this.events[event].forEach((callback) => callback(data));
+		}
+	}
+}
+
+// Instância global do event emitter
+const userEvents =
+	typeof window !== 'undefined' && window.userEvents
+		? window.userEvents
+		: new UserEventEmitter();
+
+if (typeof window !== 'undefined') {
+	window.userEvents = userEvents;
+}
+
 export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
 	if (!isOpen) return null;
 
@@ -131,6 +169,18 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
 			}
 
 			setSuccess('Usuário atualizado com sucesso!');
+			// Emitir evento de atualização de usuário
+			userEvents.emit('userUpdated', {
+				id: userData.id,
+				name,
+				email,
+				role,
+				categories:
+					role === 'technician' && String(category_id).trim()
+						? [Number(category_id)]
+						: [],
+			});
+
 			setPassword('');
 			setTimeout(() => onClose(), 1200);
 		} catch (err) {
@@ -234,6 +284,20 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
 						</div>
 					)}
 
+					<div>
+						<label className="block text-zinc-300 text-sm font-medium mb-1">
+							Senha (opcional)
+						</label>
+						<input
+							type="password"
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
+							placeholder="Nova senha (opcional)"
+							maxLength={128}
+							className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200"
+						/>
+					</div>
+
 					{error && (
 						<div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
 							<p className="text-red-300 text-sm text-center">
@@ -271,3 +335,13 @@ export default function SeeUsersModal({ isOpen, onClose, userData = {} }) {
 		</div>
 	);
 }
+
+// Função utilitária para ser usada em outros componentes
+export const triggerUserRefresh = {
+	created: (userData) => userEvents.emit('userCreated', userData),
+	updated: (userData) => userEvents.emit('userUpdated', userData),
+	deleted: (userId) => userEvents.emit('userDeleted', { id: userId }),
+};
+
+// Export do event emitter para uso avançado
+export { userEvents };

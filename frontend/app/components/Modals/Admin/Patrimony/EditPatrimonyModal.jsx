@@ -1,6 +1,7 @@
 'use client';
 import { useState } from "react";
 import { HousePlus } from "lucide-react";
+import { patrimonyEvents } from '../../../Tables/PatrimonyTable'; // Importa o patrimonyEvents do TabelaDePatrimonios
 
 export default function EditPatrimonyModal({ isOpen, onClose, assetData }) {
     if (!isOpen || !assetData) return null;
@@ -45,6 +46,10 @@ export default function EditPatrimonyModal({ isOpen, onClose, assetData }) {
             }
 
             setSuccess("Patrimônio atualizado com sucesso!");
+
+            // Emitir evento de atualização de patrimônio
+            patrimonyEvents.emit('patrimonyUpdated', { id: assetData.id, code, name, location, description });
+
             setTimeout(() => onClose(), 1200);
         } catch (err) {
             setError(err.message);
