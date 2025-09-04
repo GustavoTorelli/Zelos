@@ -9,6 +9,259 @@ import apiResponse from '../utils/api-response.js';
 import { ZodError } from 'zod';
 import zodErrorFormatter from '../utils/zod-error-formatter.js';
 
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           example: 1
+ *         name:
+ *           type: string
+ *           example: "João Silva"
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: "joao.silva@empresa.com"
+ *         role:
+ *           type: string
+ *           enum: [user, admin, technician]
+ *           example: "technician"
+ *         is_active:
+ *           type: boolean
+ *           example: true
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-09-02T09:00:00.000Z"
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-09-03T12:15:00.000Z"
+ *         Technician_Category:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               Category:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     example: 1
+ *                   title:
+ *                     type: string
+ *                     example: "Hardware"
+ *           example:
+ *             - Category:
+ *                 id: 1
+ *                 title: "Hardware"
+ *             - Category:
+ *                 id: 2
+ *                 title: "Software"
+ *
+ *   examples:
+ *     UserValidationErrors:
+ *       summary: Erro de validação dos dados de usuário
+ *       value:
+ *         success: false
+ *         message: "Validation error"
+ *         code: 400
+ *         data: null
+ *         errors:
+ *           - path: ["name"]
+ *             message: "Name must be at least 3 characters long"
+ *             expected: undefined
+ *
+ *     CategoriesOnlyForTechnicians:
+ *       summary: Categorias podem ser atribuídas apenas a técnicos
+ *       value:
+ *         success: false
+ *         message: "Categories can only be assigned to technicians"
+ *         code: 400
+ *         data: null
+ *
+ *     InvalidCategories:
+ *       summary: Categorias inválidas ou inativas
+ *       value:
+ *         success: false
+ *         message: "Some categories are invalid or inactive"
+ *         code: 422
+ *         data: null
+ *         errors:
+ *           invalid: [99, 100]
+ *           inactive: [2, 5]
+ *
+ *   responses:
+ *     UsersFound:
+ *       description: Lista de usuários encontrada
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: true
+ *             message: "Users found successfully"
+ *             code: 200
+ *             data:
+ *               - id: 1
+ *                 name: "João Silva"
+ *                 email: "joao.silva@empresa.com"
+ *                 role: "technician"
+ *                 is_active: true
+ *                 created_at: "2025-09-02T09:00:00.000Z"
+ *                 updated_at: "2025-09-03T12:15:00.000Z"
+ *                 Technician_Category:
+ *                   - Category:
+ *                       id: 1
+ *                       title: "Hardware"
+ *
+ *     UserFound:
+ *       description: Usuário encontrado
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: true
+ *             message: "User found Successfully"
+ *             code: 200
+ *             data:
+ *               id: 1
+ *               name: "João Silva"
+ *               email: "joao.silva@empresa.com"
+ *               role: "technician"
+ *               is_active: true
+ *               created_at: "2025-09-02T09:00:00.000Z"
+ *               updated_at: "2025-09-03T12:15:00.000Z"
+ *               Technician_Category:
+ *                 - Category:
+ *                     id: 1
+ *                     title: "Hardware"
+ *
+ *     UserCreated:
+ *       description: Usuário criado com sucesso
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: true
+ *             message: "User created successfully"
+ *             code: 201
+ *             data:
+ *               id: 3
+ *               name: "Maria Santos"
+ *               email: "maria.santos@empresa.com"
+ *               role: "user"
+ *               is_active: true
+ *               created_at: "2025-09-04T08:00:00.000Z"
+ *               updated_at: "2025-09-04T08:00:00.000Z"
+ *               Technician_Category: []
+ *
+ *     UserUpdated:
+ *       description: Usuário atualizado com sucesso
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: true
+ *             message: "User updated successfully"
+ *             code: 200
+ *             data:
+ *               id: 1
+ *               name: "João Silva Santos"
+ *               email: "joao.silva@empresa.com"
+ *               role: "admin"
+ *               is_active: true
+ *               created_at: "2025-09-02T09:00:00.000Z"
+ *               updated_at: "2025-09-05T10:00:00.000Z"
+ *               Technician_Category: []
+ *
+ *     UserDeleted:
+ *       description: Usuário deletado com sucesso
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: true
+ *             message: "User deleted successfully"
+ *             code: 200
+ *             data: null
+ *
+ *     UserActivated:
+ *       description: Usuário ativado com sucesso
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: true
+ *             message: "User account has been activated"
+ *             code: 200
+ *             data:
+ *               id: 1
+ *               name: "João Silva"
+ *               email: "joao.silva@empresa.com"
+ *               role: "user"
+ *               is_active: true
+ *               created_at: "2025-09-02T09:00:00.000Z"
+ *               updated_at: "2025-09-05T10:00:00.000Z"
+ *               Technician_Category: []
+ *
+ *     UserDeactivated:
+ *       description: Usuário desativado com sucesso
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: true
+ *             message: "User account has been deactivated"
+ *             code: 200
+ *             data:
+ *               id: 1
+ *               name: "João Silva"
+ *               email: "joao.silva@empresa.com"
+ *               role: "user"
+ *               is_active: false
+ *               created_at: "2025-09-02T09:00:00.000Z"
+ *               updated_at: "2025-09-05T10:00:00.000Z"
+ *               Technician_Category: []
+ *
+ *     EmailAlreadyExists:
+ *       description: Email já existe no sistema
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: false
+ *             message: "Email already exists"
+ *             code: 409
+ *             data: null
+ *
+ *     NotFoundUser:
+ *       description: Usuário não encontrado
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: false
+ *             message: "User not found"
+ *             code: 404
+ *             data: null
+ *
+ *     InvalidUserData:
+ *       description: Erro de validação dos dados do usuário
+ *       content:
+ *         application/json:
+ *           examples:
+ *             validationErrors:
+ *               $ref: '#/components/examples/UserValidationErrors'
+ *             categoriesOnlyForTechnicians:
+ *               $ref: '#/components/examples/CategoriesOnlyForTechnicians'
+ *             invalidCategories:
+ *               $ref: '#/components/examples/InvalidCategories'
+ *
+ *     UnauthorizedUserAccess:
+ *       description: Acesso negado — usuário sem permissão para acessar este recurso
+ *       content:
+ *         application/json:
+ *           example:
+ *             success: false
+ *             message: "You are not authorized to access this resource"
+ *             code: 403
+ *             data: null
+ */
 export class UserController {
 	constructor() {}
 
