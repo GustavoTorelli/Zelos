@@ -1,6 +1,39 @@
-'use client'
+'use client';
 import { useState, useEffect } from "react";
 import { Users } from "lucide-react";
+
+// Event emitter para comunicação entre componentes
+class UserEventEmitter {
+    constructor() {
+        this.events = {};
+    }
+
+    on(event, callback) {
+        if (!this.events[event]) this.events[event] = [];
+        this.events[event].push(callback);
+    }
+
+    off(event, callback) {
+        if (this.events[event]) {
+            this.events[event] = this.events[event].filter(cb => cb !== callback);
+        }
+    }
+
+    emit(event, data) {
+        if (this.events[event]) {
+            this.events[event].forEach(cb => cb(data));
+        }
+    }
+}
+
+// Instância global (deve ser a mesma usada na TabelaDeUsuarios)
+const userEvents = typeof window !== 'undefined' && window.userEvents
+    ? window.userEvents
+    : new UserEventEmitter();
+
+if (typeof window !== 'undefined') {
+    window.userEvents = userEvents;
+}
 
 export default function NewUserModal({ isOpen, onClose, userData = null }) {
     if (!isOpen) return null;
@@ -9,21 +42,20 @@ export default function NewUserModal({ isOpen, onClose, userData = null }) {
     const [email, setEmail] = useState(userData?.email || "");
     const [password, setPassword] = useState("");
     const [role, setRole] = useState(userData?.role || "");
-    const [categoryId, setCategoryId] = useState(userData?.categories?.[0] || ""); // Categoria do técnico
-    const [categories, setCategories] = useState([]); // Lista de categorias
+    const [categoryId, setCategoryId] = useState(userData?.categories?.[0] || "");
+    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
     const isEditing = Boolean(userData);
 
-    // Carregar categorias (mesma lógica do TabelaDeCategorias)
+    // Carregar categorias
     useEffect(() => {
         async function fetchCategories() {
             try {
                 const res = await fetch('/api/categories');
                 if (!res.ok) throw new Error('Falha ao carregar categorias');
-
                 const data = await res.json();
                 const arr = Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
                 setCategories(arr);
@@ -32,7 +64,6 @@ export default function NewUserModal({ isOpen, onClose, userData = null }) {
                 setCategories([]);
             }
         }
-
         fetchCategories();
     }, []);
 
@@ -59,7 +90,7 @@ export default function NewUserModal({ isOpen, onClose, userData = null }) {
             };
 
             const body = { name, email, role };
-            if (role === "technician") body.categories = [categoryId]; // Envia como array
+            if (role === "technician") body.categories = [categoryId];
             if (!isEditing || password.trim()) body.password = password;
 
             const url = isEditing ? `/api/users/${userData.id}` : '/api/users';
@@ -71,7 +102,14 @@ export default function NewUserModal({ isOpen, onClose, userData = null }) {
                 throw new Error(payload?.message || `Falha ao ${isEditing ? 'atualizar' : 'criar'} usuário`);
             }
 
+            const responseData = await res.json();
+            const userResult = responseData.data || responseData;
+
             setSuccess(`Usuário ${isEditing ? 'atualizado' : 'criado'} com sucesso!`);
+
+            // 🚀 Dispara evento de atualização para a tabela
+            console.log(`Disparando evento ${isEditing ? 'userUpdated' : 'userCreated'}:`, userResult);
+            userEvents.emit(isEditing ? 'userUpdated' : 'userCreated', userResult);
 
             if (!isEditing) {
                 setName("");
@@ -131,7 +169,7 @@ export default function NewUserModal({ isOpen, onClose, userData = null }) {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3"
-                        placeholder={isEditing ? "Nova senha (deixe vazio para manter)" : "Senha"}
+                        placeholder={isEditing ? "Nova senha (opcional)" : "Senha"}
                         minLength={6}
                         required={!isEditing}
                     />
@@ -185,3 +223,10 @@ export default function NewUserModal({ isOpen, onClose, userData = null }) {
         </div>
     );
 }
+
+// Função utilitária para disparar eventos em outros lugares (opcional)
+export const triggerUserRefresh = {
+    created: (userData) => userEvents.emit('userCreated', userData),
+    updated: (userData) => userEvents.emit('userUpdated', userData),
+    deleted: (userId) => userEvents.emit('userDeleted', { id: userId }),
+};

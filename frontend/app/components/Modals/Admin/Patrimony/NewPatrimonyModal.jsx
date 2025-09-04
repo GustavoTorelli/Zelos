@@ -2,6 +2,41 @@
 import { useState } from "react";
 import { HousePlus } from "lucide-react";
 
+// Event emitter para comunicação entre componentes
+class PatrimonyEventEmitter {
+    constructor() {
+        this.events = {};
+    }
+
+    on(event, callback) {
+        if (!this.events[event]) {
+            this.events[event] = [];
+        }
+        this.events[event].push(callback);
+    }
+
+    off(event, callback) {
+        if (this.events[event]) {
+            this.events[event] = this.events[event].filter(cb => cb !== callback);
+        }
+    }
+
+    emit(event, data) {
+        if (this.events[event]) {
+            this.events[event].forEach(callback => callback(data));
+        }
+    }
+}
+
+// Instância global (deve ser a mesma usada na TabelaDePatrimonios)
+const patrimonyEvents = typeof window !== 'undefined' && window.patrimonyEvents 
+    ? window.patrimonyEvents 
+    : new PatrimonyEventEmitter();
+
+if (typeof window !== 'undefined') {
+    window.patrimonyEvents = patrimonyEvents;
+}
+
 export default function NewPatrimonyModal({ isOpen, onClose }) {
     if (!isOpen) return null;
 
@@ -43,12 +78,22 @@ export default function NewPatrimonyModal({ isOpen, onClose }) {
                 throw new Error(payload?.message || "Falha ao criar patrimônio");
             }
 
+            const responseData = await res.json();
+            const patrimonyResult = responseData.data || responseData;
+
             setSuccess("Patrimônio criado com sucesso!");
+
+            // 🚀 AQUI É A MÁGICA - Dispara o evento para atualizar a tabela automaticamente
+            console.log('Disparando evento patrimonyCreated para:', patrimonyResult);
+            patrimonyEvents.emit('patrimonyCreated', patrimonyResult);
+
             setName("");
             setLocation("");
             setCode("");
             setDescription("");
+
             setTimeout(() => onClose(), 1200);
+
         } catch (err) {
             setError(err.message);
         } finally {
@@ -79,9 +124,9 @@ export default function NewPatrimonyModal({ isOpen, onClose }) {
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3"
+                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200 placeholder-zinc-400"
                         placeholder="Nome do patrimônio"
-                        maxLength={50}
+                        maxLength={30}
                         required
                     />
 
@@ -89,7 +134,7 @@ export default function NewPatrimonyModal({ isOpen, onClose }) {
                         type="text"
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
-                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3"
+                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200 placeholder-zinc-400"
                         placeholder="Localização (ex: Sala 3)"
                         maxLength={50}
                         required
@@ -99,18 +144,18 @@ export default function NewPatrimonyModal({ isOpen, onClose }) {
                         type="text"
                         value={code}
                         onChange={(e) => setCode(e.target.value)}
-                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3"
+                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200 placeholder-zinc-400"
                         placeholder="Código do patrimônio"
-                        maxLength={50}
+                        maxLength={20}
                         required
                     />
 
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 min-h-[100px]"
+                        className="w-full bg-zinc-700/50 text-white border border-zinc-600/50 rounded-lg p-3 min-h-[100px] focus:bg-zinc-700 focus:border-zinc-500 focus:outline-none transition-all duration-200 placeholder-zinc-400"
                         placeholder="Descrição detalhada"
-                        maxLength={150}
+                        maxLength={120}
                         required
                     />
 
@@ -130,14 +175,14 @@ export default function NewPatrimonyModal({ isOpen, onClose }) {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="cursor-pointer flex-1 bg-zinc-700/50 hover:bg-zinc-600/50 text-zinc-300 font-medium py-3 px-4 rounded-lg border border-zinc-600/50"
+                            className="cursor-pointer flex-1 bg-zinc-700/50 hover:bg-zinc-600/50 text-zinc-300 font-medium py-3 px-4 rounded-lg border border-zinc-600/50 transition-all duration-200"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="cursor-pointer flex-1 bg-red-700 hover:bg-red-800 text-white font-medium py-3 px-4 rounded-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="cursor-pointer flex-1 bg-red-700 hover:bg-red-800 text-white font-medium py-3 px-4 rounded-lg disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200"
                         >
                             {loading ? "Criando..." : "Criar"}
                         </button>
@@ -147,3 +192,10 @@ export default function NewPatrimonyModal({ isOpen, onClose }) {
         </div>
     );
 }
+
+// Função utilitária para uso em outros componentes (opcional)
+export const triggerPatrimonyRefresh = {
+    created: (patrimonyData) => patrimonyEvents.emit('patrimonyCreated', patrimonyData),
+    updated: (patrimonyData) => patrimonyEvents.emit('patrimonyUpdated', patrimonyData),
+    deleted: (patrimonyCode) => patrimonyEvents.emit('patrimonyDeleted', { code: patrimonyCode })
+};

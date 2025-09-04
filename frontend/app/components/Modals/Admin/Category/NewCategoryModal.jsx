@@ -2,6 +2,41 @@
 import { useState } from "react";
 import { LibraryBig } from "lucide-react"; 
 
+// Event emitter para comunicação entre componentes
+class CategoryEventEmitter {
+    constructor() {
+        this.events = {};
+    }
+
+    on(event, callback) {
+        if (!this.events[event]) {
+            this.events[event] = [];
+        }
+        this.events[event].push(callback);
+    }
+
+    off(event, callback) {
+        if (this.events[event]) {
+            this.events[event] = this.events[event].filter(cb => cb !== callback);
+        }
+    }
+
+    emit(event, data) {
+        if (this.events[event]) {
+            this.events[event].forEach(callback => callback(data));
+        }
+    }
+}
+
+// Instância global (deve ser a mesma usada na TabelaDeCategorias)
+const categoryEvents = typeof window !== 'undefined' && window.categoryEvents 
+    ? window.categoryEvents 
+    : new CategoryEventEmitter();
+
+if (typeof window !== 'undefined') {
+    window.categoryEvents = categoryEvents;
+}
+
 export default function NewCategoryModal({ isOpen, onClose, categoryData = null }) {
     if (!isOpen) return null;
 
@@ -44,7 +79,19 @@ export default function NewCategoryModal({ isOpen, onClose, categoryData = null 
                 throw new Error(payload?.message || `Falha ao ${isEditing ? 'atualizar' : 'criar'} categoria`);
             }
 
+            const responseData = await res.json();
+            const categoryResult = responseData.data || responseData;
+
             setSuccess(`Categoria ${isEditing ? 'atualizada' : 'criada'} com sucesso!`);
+
+
+            if (isEditing) {
+                console.log('Disparando evento categoryUpdated para:', categoryResult);
+                categoryEvents.emit('categoryUpdated', categoryResult);
+            } else {
+                console.log('Disparando evento categoryCreated para:', categoryResult);
+                categoryEvents.emit('categoryCreated', categoryResult);
+            }
 
             if (!isEditing) {
                 setTitle("");
@@ -54,6 +101,7 @@ export default function NewCategoryModal({ isOpen, onClose, categoryData = null 
             setTimeout(() => {
                 onClose();
             }, 1500);
+            
         } catch (err) {
             setError(err.message);
         } finally {
@@ -139,3 +187,10 @@ export default function NewCategoryModal({ isOpen, onClose, categoryData = null 
         </div>
     );
 }
+
+// Função utilitária para uso em outros componentes (opcional)
+export const triggerCategoryRefresh = {
+    created: (categoryData) => categoryEvents.emit('categoryCreated', categoryData),
+    updated: (categoryData) => categoryEvents.emit('categoryUpdated', categoryData),
+    deleted: (categoryId) => categoryEvents.emit('categoryDeleted', { id: categoryId })
+};

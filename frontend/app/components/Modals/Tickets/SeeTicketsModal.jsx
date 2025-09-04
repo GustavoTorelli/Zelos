@@ -759,7 +759,7 @@ export default function SeeTicketsModal({
 							{error && (
 								<div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
 									<p className="text-red-300 text-sm text-center">
-										{error}
+										Você não tem permissão, ou alguma exigencia não foi atendida.
 									</p>
 								</div>
 							)}

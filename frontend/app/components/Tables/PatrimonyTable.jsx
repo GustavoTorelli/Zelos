@@ -4,12 +4,48 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { Funnel, Search } from "lucide-react";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react";
 
+// Event emitter para comunicação entre componentes
+class PatrimonyEventEmitter {
+    constructor() {
+        this.events = {};
+    }
+
+    on(event, callback) {
+        if (!this.events[event]) {
+            this.events[event] = [];
+        }
+        this.events[event].push(callback);
+    }
+
+    off(event, callback) {
+        if (this.events[event]) {
+            this.events[event] = this.events[event].filter(cb => cb !== callback);
+        }
+    }
+
+    emit(event, data) {
+        if (this.events[event]) {
+            this.events[event].forEach(callback => callback(data));
+        }
+    }
+}
+
+// Instância global do event emitter (compartilhada entre componentes)
+const patrimonyEvents = typeof window !== 'undefined' && window.patrimonyEvents
+    ? window.patrimonyEvents
+    : new PatrimonyEventEmitter();
+
+if (typeof window !== 'undefined') {
+    window.patrimonyEvents = patrimonyEvents;
+}
+
 export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }) {
     const [patrimonios, setPatrimonios] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [errorState, setError] = useState('');
     const [isDeleting, setIsDeleting] = useState(null);
     const [role, setRole] = useState(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const clearFilters = () => setSearchTerm('');
     const hasActiveFilters = searchTerm !== '';
@@ -61,33 +97,68 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
         getUserRole();
     }, []);
 
-    // Buscar patrimônios
+    // Função para buscar patrimônios
+    const fetchPatrimonios = useCallback(async (showRefreshIndicator = false) => {
+        try {
+            if (showRefreshIndicator) setIsRefreshing(true);
+            setError('');
+
+            const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+            const isJwt = token && token.includes(".");
+            const authHeaders = isJwt ? { Authorization: `Bearer ${token}` } : {};
+
+            const res = await fetch('/api/patrimonies', {
+                headers: { ...authHeaders },
+                credentials: 'include'
+            });
+
+            if (!res.ok) throw new Error('Falha ao carregar patrimônios');
+
+            const data = await res.json();
+            setPatrimonios(data?.data || []);
+        } catch (err) {
+            console.error(err);
+            setPatrimonios([]);
+            setError('Erro ao carregar patrimônios');
+        } finally {
+            if (showRefreshIndicator) setIsRefreshing(false);
+        }
+    }, []);
+
+    // Buscar patrimônios na inicialização
     useEffect(() => {
-        const fetchPatrimonios = async () => {
-            try {
-                const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-                const isJwt = token && token.includes(".");
-                const authHeaders = isJwt ? { Authorization: `Bearer ${token}` } : {};
+        fetchPatrimonios();
+    }, [fetchPatrimonios]);
 
-                const res = await fetch('/api/patrimonies', {
-                    headers: { ...authHeaders },
-                    credentials: 'include'
-                });
-
-                if (!res.ok) throw new Error('Falha ao carregar patrimônios');
-
-                const data = await res.json();
-                setPatrimonios(data?.data || []);
-                setError('');
-            } catch (err) {
-                console.error(err);
-                setPatrimonios([]);
-                setError('Erro ao carregar patrimônios');
-            }
+    // Effect para escutar eventos de criação/atualização/exclusão de patrimônios
+    useEffect(() => {
+        const handlePatrimonyCreated = () => {
+            console.log('Novo patrimônio criado, atualizando lista...');
+            fetchPatrimonios(true);
         };
 
-        fetchPatrimonios();
-    }, []);
+        const handlePatrimonyUpdated = () => {
+            console.log('Patrimônio atualizado, atualizando lista...');
+            fetchPatrimonios(true);
+        };
+
+        const handlePatrimonyDeleted = () => {
+            console.log('Patrimônio deletado, atualizando lista...');
+            fetchPatrimonios(true);
+        };
+
+        // Registrar os listeners
+        patrimonyEvents.on('patrimonyCreated', handlePatrimonyCreated);
+        patrimonyEvents.on('patrimonyUpdated', handlePatrimonyUpdated);
+        patrimonyEvents.on('patrimonyDeleted', handlePatrimonyDeleted);
+
+        // Cleanup dos listeners
+        return () => {
+            patrimonyEvents.off('patrimonyCreated', handlePatrimonyCreated);
+            patrimonyEvents.off('patrimonyUpdated', handlePatrimonyUpdated);
+            patrimonyEvents.off('patrimonyDeleted', handlePatrimonyDeleted);
+        };
+    }, [fetchPatrimonios]);
 
     const handleDeletePatrimony = useCallback(async (patrimony) => {
         const patrimonyCode = patrimony.code;
@@ -127,6 +198,10 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
 
             setPatrimonios(prev => prev.filter(p => p.code !== patrimonyCode));
             console.log('Patrimônio excluído com sucesso:', patrimonyCode);
+
+
+            patrimonyEvents.emit('patrimonyDeleted', { code: patrimonyCode });
+
         } catch (error) {
             console.error('Erro ao excluir patrimônio:', error);
 
@@ -151,15 +226,19 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
 
     const filteredPatrimonios = useMemo(() => {
         return Array.isArray(patrimonios)
-            ? patrimonios.filter(item => {
-                const term = searchTerm.toLowerCase();
-                return term === '' ||
-                    (item.id && item.id.toString().toLowerCase().includes(term)) ||
-                    (item.code && item.code.toString().toLowerCase().includes(term)) ||
-                    (item.name && item.name.toLowerCase().includes(term)) ||
-                    (item.location && item.location.toLowerCase().includes(term)) ||
-                    (item.description && item.description.toLowerCase().includes(term));
-            })
+            ? patrimonios
+                .filter(item => {
+                    const term = searchTerm.toLowerCase();
+                    return (
+                        term === '' ||
+                        (item.id && item.id.toString().toLowerCase().includes(term)) ||
+                        (item.code && item.code.toString().toLowerCase().includes(term)) ||
+                        (item.name && item.name.toLowerCase().includes(term)) ||
+                        (item.location && item.location.toLowerCase().includes(term)) ||
+                        (item.description && item.description.toLowerCase().includes(term))
+                    );
+                })
+                .sort((a, b) => a.id - b.id) // Ordena por ID crescente
             : [];
     }, [patrimonios, searchTerm]);
 
@@ -288,7 +367,7 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
                     <div className="text-white font-semibold mb-4">Você não pode excluir um patrimonio associado a um chamado.</div>
                     <button
                         onClick={() => setError('')}
-                        className="relative min-w-0 sm:min-w-[220px] h-12 cursor-pointer flex items-center justify-center font-semibold bg-red-700 hover:bg-red-800 group rounded-lg overflow-hidden text-center text-white" 
+                        className="relative min-w-0 sm:min-w-[220px] h-12 cursor-pointer flex items-center justify-center font-semibold bg-red-700 hover:bg-red-800 group rounded-lg overflow-hidden text-center text-white"
                     >
                         OK
                     </button>
@@ -306,6 +385,9 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
                         <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                             <Funnel size={20} className="text-red-500" />
                             Filtros de Patrimônio
+                            {isRefreshing && (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-500 ml-2"></div>
+                            )}
                         </h3>
                         {hasActiveFilters && (
                             <button
@@ -378,3 +460,13 @@ export default function TabelaDePatrimonios({ loading, error, onEditPatrimonio }
         </section>
     );
 }
+
+// Função utilitária para ser usada em outros componentes
+export const triggerPatrimonyRefresh = {
+    created: (patrimonyData) => patrimonyEvents.emit('patrimonyCreated', patrimonyData),
+    updated: (patrimonyData) => patrimonyEvents.emit('patrimonyUpdated', patrimonyData),
+    deleted: (patrimonyCode) => patrimonyEvents.emit('patrimonyDeleted', { code: patrimonyCode })
+};
+
+// Export do event emitter para uso avançado
+export { patrimonyEvents };

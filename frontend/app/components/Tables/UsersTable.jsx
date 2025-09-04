@@ -1,44 +1,84 @@
 'use client'
+
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { Funnel, Search } from "lucide-react";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react";
 import NewUserModal from "../Modals/Admin/Users/NewUserModal";
 import SeeUsersModal from "../Modals/Admin/Users/SeeUsersModal";
 
+// Event emitter para comunicação entre componentes
+class UserEventEmitter {
+    constructor() {
+        this.events = {};
+    }
+
+    on(event, callback) {
+        if (!this.events[event]) {
+            this.events[event] = [];
+        }
+        this.events[event].push(callback);
+    }
+
+    off(event, callback) {
+        if (this.events[event]) {
+            this.events[event] = this.events[event].filter(cb => cb !== callback);
+        }
+    }
+
+    emit(event, data) {
+        if (this.events[event]) {
+            this.events[event].forEach(callback => callback(data));
+        }
+    }
+}
+
+// Instância global do event emitter (compartilhada entre componentes)
+const userEvents = typeof window !== 'undefined' && window.userEvents 
+    ? window.userEvents 
+    : new UserEventEmitter();
+
+if (typeof window !== 'undefined') {
+    window.userEvents = userEvents;
+}
+
 export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
-    // filtros
+    // Filtros
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'active', 'inactive'
 
-    // modais
+    // Modais
     const [isOpenNewUser, setIsOpenNewUser] = useState(false);
     const [isOpenSeeUsers, setIsOpenSeeUsers] = useState(false);
 
-    // role do usuário atual
+    // Role do usuário atual
     const [currentUserRole, setCurrentUserRole] = useState('');
     const [selectedUser, setSelectedUser] = useState(null);
 
-    // estados de carregamento
+    // Estados de carregamento
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [toggleError, setToggleError] = useState(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '/api';
 
     // Headers de autenticação
     const authHeaders = useMemo(() => {
         const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-        const isJwt = token && token.includes('.')
+        const isJwt = token && token.includes('.');
         return isJwt ? { Authorization: `Bearer ${token}` } : {};
     }, []);
 
-    // role do usuário atual
+    // Role do usuário atual
     useEffect(() => {
         async function loadRole() {
             try {
-                const res = await fetch('/api/auth/me', { credentials: 'include' });
+                const res = await fetch('/api/auth/me', { 
+                    headers: { ...authHeaders },
+                    credentials: 'include' 
+                });
                 const payload = await res.json();
                 if (res.ok) setCurrentUserRole(payload?.data?.role || '');
             } catch (_) {
@@ -46,9 +86,9 @@ export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
             }
         }
         loadRole();
-    }, []);
+    }, [authHeaders]);
 
-    // limpar filtros
+    // Limpar filtros
     const clearFilters = () => {
         setSearchTerm('');
         setRoleFilter('');
@@ -57,12 +97,14 @@ export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
 
     const hasActiveFilters = searchTerm || roleFilter || statusFilter !== 'all';
 
-    // busca usuários da API com filtros de status
-    const fetchUsers = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        setToggleError(null);
+    // Busca usuários da API com filtros de status
+    const fetchUsers = useCallback(async (showRefreshIndicator = false) => {
         try {
+            if (showRefreshIndicator) setIsRefreshing(true);
+            setLoading(true);
+            setError(null);
+            setToggleError(null);
+
             let url = `${API_BASE}/users`;
             const params = new URLSearchParams();
             if (statusFilter === 'all') {
@@ -81,24 +123,61 @@ export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'Erro ao carregar usuários');
 
-            // garante que é array
-            const arr = Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : Array.isArray(data.users) ? data.users : [];
-            setUsers(arr);
-
+            // Garante que é array e ordena por ID crescente
+            const arr = Array.isArray(data) 
+                ? data 
+                : Array.isArray(data.data) 
+                    ? data.data 
+                    : Array.isArray(data.users) 
+                        ? data.users 
+                        : [];
+            setUsers(arr.sort((a, b) => a.id - b.id));
         } catch (err) {
             console.error(err);
             setError(err.message || 'Erro desconhecido');
             setUsers([]);
         } finally {
             setLoading(false);
+            if (showRefreshIndicator) setIsRefreshing(false);
         }
     }, [authHeaders, API_BASE, statusFilter]);
 
+    // Busca usuários na inicialização
     useEffect(() => {
         fetchUsers();
     }, [fetchUsers]);
 
-    // centraliza checagem de status e considera is_active do backend
+    // Effect para escutar eventos de criação/atualização/exclusão de usuários
+    useEffect(() => {
+        const handleUserCreated = () => {
+            console.log('Novo usuário criado, atualizando lista...');
+            fetchUsers(true);
+        };
+
+        const handleUserUpdated = () => {
+            console.log('Usuário atualizado, atualizando lista...');
+            fetchUsers(true);
+        };
+
+        const handleUserDeleted = () => {
+            console.log('Usuário deletado, atualizando lista...');
+            fetchUsers(true);
+        };
+
+        // Registrar os listeners
+        userEvents.on('userCreated', handleUserCreated);
+        userEvents.on('userUpdated', handleUserUpdated);
+        userEvents.on('userDeleted', handleUserDeleted);
+
+        // Cleanup dos listeners
+        return () => {
+            userEvents.off('userCreated', handleUserCreated);
+            userEvents.off('userUpdated', handleUserUpdated);
+            userEvents.off('userDeleted', handleUserDeleted);
+        };
+    }, [fetchUsers]);
+
+    // Centraliza checagem de status e considera is_active do backend
     const isActive = useCallback((user) => {
         if (!user) return true;
         if (Object.prototype.hasOwnProperty.call(user, 'is_active')) {
@@ -113,11 +192,11 @@ export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
         return true;
     }, []);
 
-    // optimistic update: altera localmente antes da resposta, faz rollback se erro
+    // Optimistic update: altera localmente antes da resposta, faz rollback se erro
     const handleToggleUser = useCallback(async (userId, currentIsActive) => {
         setToggleError(null);
 
-        // optimistic update: inverte is_active/active/inactive localmente
+        // Optimistic update: inverte is_active/active/inactive localmente
         setUsers(prev => prev.map(u => {
             if (u.id !== userId) return u;
             return {
@@ -129,19 +208,16 @@ export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
         }));
 
         try {
-            const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-            const isJwt = token && token.includes('.');
-            const authHeader = isJwt ? { Authorization: `Bearer ${token}` } : {};
-
             const endpoint = currentIsActive ? 'deactivate' : 'activate';
             const url = `${API_BASE}/users/${userId}/${endpoint}`;
 
             const response = await fetch(url, {
                 method: 'PATCH',
                 headers: {
-                    ...authHeader,
+                    ...authHeaders,
                     'Content-Type': 'application/json'
-                }
+                },
+                credentials: 'include'
             });
 
             if (!response.ok) {
@@ -150,17 +226,18 @@ export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
                 throw new Error(errorData.message || `HTTP ${response.status}`);
             }
 
-            // se a API retornar o item atualizado no body, atualizamos localmente com ele
+            // Se a API retornar o item atualizado no body, atualizamos localmente com ele
             const respBody = await response.json().catch(() => null);
-            // exemplo de payload: { success: true, data: { ...usuarioAtualizado } }
             const updatedItem = respBody && (respBody.data || respBody);
             if (updatedItem && updatedItem.id) {
-                setUsers(prev => prev.map(u => u.id === updatedItem.id ? { ...u, ...updatedItem } : u));
+                setUsers(prev => prev.map(u => u.id === updatedItem.id ? { ...u, ...updatedItem } : u).sort((a, b) => a.id - b.id));
             }
 
+            // Emite evento de atualização
+            userEvents.emit('userUpdated', { id: userId });
         } catch (error) {
             console.error('Erro ao alternar status do usuário:', error);
-            // rollback - volta ao estado anterior
+            // Rollback - volta ao estado anterior
             setUsers(prev => prev.map(u => {
                 if (u.id !== userId) return u;
                 return {
@@ -169,12 +246,12 @@ export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
                     active: currentIsActive,
                     inactive: !currentIsActive
                 };
-            }));
+            }).sort((a, b) => a.id - b.id));
             setToggleError(`Erro ao ${currentIsActive ? 'desabilitar' : 'habilitar'} usuário. ${error.message || ''}`);
         }
-    }, [API_BASE]);
+    }, [authHeaders, API_BASE]);
 
-    // aplica filtros
+    // Aplica filtros
     const filteredUsers = useMemo(() => {
         return users.filter(user => {
             const matchesSearch = searchTerm === '' ||
@@ -190,10 +267,10 @@ export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
                 (statusFilter === 'inactive' && !userIsActive);
 
             return matchesSearch && matchesRole && matchesStatus;
-        });
+        }).sort((a, b) => a.id - b.id); // Ordena por ID crescente
     }, [users, searchTerm, roleFilter, statusFilter, isActive]);
 
-    // colunas
+    // Colunas
     const columns = [
         { key: "id", label: "ID" },
         { key: "name", label: "Nome" },
@@ -326,6 +403,9 @@ export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
                         <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                             <Funnel size={20} className="text-red-500" />
                             Filtros De Usuário
+                            {isRefreshing && (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-500 ml-2"></div>
+                            )}
                         </h3>
                         {hasActiveFilters && (
                             <button
@@ -447,3 +527,13 @@ export default function TabelaDeUsuarios({ onEditUser, onViewUser }) {
         </section>
     );
 }
+
+// Função utilitária para ser usada em outros componentes
+export const triggerUserRefresh = {
+    created: (userData) => userEvents.emit('userCreated', userData),
+    updated: (userData) => userEvents.emit('userUpdated', userData),
+    deleted: (userId) => userEvents.emit('userDeleted', { id: userId })
+};
+
+// Export do event emitter para uso avançado
+export { userEvents };

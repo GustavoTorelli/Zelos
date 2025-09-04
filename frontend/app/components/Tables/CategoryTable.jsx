@@ -4,11 +4,47 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react";
 import { Funnel, Search } from "lucide-react";
 
+// Event emitter customizado para comunicação entre componentes
+class CategoryEventEmitter {
+    constructor() {
+        this.events = {};
+    }
+
+    on(event, callback) {
+        if (!this.events[event]) {
+            this.events[event] = [];
+        }
+        this.events[event].push(callback);
+    }
+
+    off(event, callback) {
+        if (this.events[event]) {
+            this.events[event] = this.events[event].filter(cb => cb !== callback);
+        }
+    }
+
+    emit(event, data) {
+        if (this.events[event]) {
+            this.events[event].forEach(callback => callback(data));
+        }
+    }
+}
+
+// Instância global do event emitter (compartilhada entre componentes)
+const categoryEvents = typeof window !== 'undefined' && window.categoryEvents 
+    ? window.categoryEvents 
+    : new CategoryEventEmitter();
+
+if (typeof window !== 'undefined') {
+    window.categoryEvents = categoryEvents;
+}
+
 export default function TabelaDeCategorias({ loading, error: externalError, onEditCategoria }) {
     const [categorias, setCategorias] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'active', 'inactive'
+    const [statusFilter, setStatusFilter] = useState('all');
     const [toggleError, setToggleError] = useState(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '/api';
 
@@ -18,9 +54,11 @@ export default function TabelaDeCategorias({ loading, error: externalError, onEd
     };
     const hasActiveFilters = searchTerm !== '' || statusFilter !== 'all';
 
-    const fetchCategorias = useCallback(async () => {
+    const fetchCategorias = useCallback(async (showRefreshIndicator = false) => {
         try {
+            if (showRefreshIndicator) setIsRefreshing(true);
             setToggleError(null);
+            
             let url = `${API_BASE}/categories`;
             const params = new URLSearchParams();
             if (statusFilter === 'all') {
@@ -40,11 +78,44 @@ export default function TabelaDeCategorias({ loading, error: externalError, onEd
         } catch (err) {
             console.error('Erro ao buscar categorias:', err);
             setCategorias([]);
+        } finally {
+            if (showRefreshIndicator) setIsRefreshing(false);
         }
     }, [API_BASE, statusFilter]);
 
+    // Effect para carregar dados iniciais
     useEffect(() => {
         fetchCategorias();
+    }, [fetchCategorias]);
+
+    // Effect para escutar eventos de criação/atualização de categorias
+    useEffect(() => {
+        const handleCategoryCreated = () => {
+            console.log('Nova categoria criada, atualizando lista...');
+            fetchCategorias(true);
+        };
+
+        const handleCategoryUpdated = () => {
+            console.log('Categoria atualizada, atualizando lista...');
+            fetchCategorias(true);
+        };
+
+        const handleCategoryDeleted = () => {
+            console.log('Categoria deletada, atualizando lista...');
+            fetchCategorias(true);
+        };
+
+        // Registrar os listeners
+        categoryEvents.on('categoryCreated', handleCategoryCreated);
+        categoryEvents.on('categoryUpdated', handleCategoryUpdated);
+        categoryEvents.on('categoryDeleted', handleCategoryDeleted);
+
+        // Cleanup dos listeners
+        return () => {
+            categoryEvents.off('categoryCreated', handleCategoryCreated);
+            categoryEvents.off('categoryUpdated', handleCategoryUpdated);
+            categoryEvents.off('categoryDeleted', handleCategoryDeleted);
+        };
     }, [fetchCategorias]);
 
     // centraliza checagem de status e considera is_active do backend
@@ -101,11 +172,13 @@ export default function TabelaDeCategorias({ loading, error: externalError, onEd
 
             // se a API retornar o item atualizado no body, atualizamos localmente com ele
             const respBody = await response.json().catch(() => null);
-            // exemplo de payload: { success: true, data: { ...categoriaAtualizada } }
             const updatedItem = respBody && (respBody.data || respBody);
             if (updatedItem && updatedItem.id) {
                 setCategorias(prev => prev.map(c => c.id === updatedItem.id ? { ...c, ...updatedItem } : c));
             }
+
+            // Emitir evento de atualização para outros componentes
+            categoryEvents.emit('categoryUpdated', { id: categoryId, isActive: !currentIsActive });
 
         } catch (error) {
             console.error('Erro ao alternar status da categoria:', error);
@@ -227,6 +300,9 @@ export default function TabelaDeCategorias({ loading, error: externalError, onEd
                         <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                             <Funnel size={20} className="text-red-500" />
                             Filtros de Categoria
+                            {isRefreshing && (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-500 ml-2"></div>
+                            )}
                         </h3>
                         {hasActiveFilters && (
                             <button
@@ -325,3 +401,13 @@ export default function TabelaDeCategorias({ loading, error: externalError, onEd
         </section>
     );
 }
+
+// Função utilitária para ser usada em outros componentes
+export const triggerCategoryRefresh = {
+    created: (categoryData) => categoryEvents.emit('categoryCreated', categoryData),
+    updated: (categoryData) => categoryEvents.emit('categoryUpdated', categoryData),
+    deleted: (categoryId) => categoryEvents.emit('categoryDeleted', { id: categoryId })
+};
+
+// Export do event emitter para uso avançado
+export { categoryEvents };

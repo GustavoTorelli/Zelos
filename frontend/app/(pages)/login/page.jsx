@@ -209,7 +209,7 @@ export default function LoginPage() {
 								<input
 									placeholder="Senha"
 									className="bg-gray-600/80 text-white border-0 rounded-md p-2 pr-10 w-full focus:bg-gray-600 focus:outline-none transition ease-in-out duration-150 hover:bg-gray-600/90"
-									type={showPassword ? 'text' : 'password'}
+								
 									value={password}
 									onChange={(e) =>
 										setPassword(e.target.value)
